@@ -279,38 +279,35 @@
         let inventory = []; let sales = []; let expenses = []; let customers = [{id:1, name:'Walk-in', phone:'--', spent:0}];
         let cart = []; let custTrigger = "list"; let tempBase64Img = ""; let editingProductId = null;
 
-        // SMART DATA LOADER & RECOVERY
+        // SMART DATA LOADER (100% ISOLATED)
         function loadLocalData() {
-            // Reset to defaults
+            // 1. Completely reset data so users don't see each other's items
             appPass = '1234';
             settings = { name: 'Lamination Hub', city: 'Kurebhar', address: '', gst: '', phone: '', profilePic: '' };
             inventory = []; sales = []; expenses = []; customers = [{id:1, name:'Walk-in', phone:'--', spent:0}];
             
-            let hasNewData = localStorage.getItem(`l_settings_${currentUid}`);
-            
-            if (hasNewData) {
-                // Load the User's Unique Offline Data
-                try { if(localStorage.getItem(`l_pass_${currentUid}`)) appPass = localStorage.getItem(`l_pass_${currentUid}`); } catch(e){}
-                try { if(localStorage.getItem(`l_settings_${currentUid}`)) settings = JSON.parse(localStorage.getItem(`l_settings_${currentUid}`)); } catch(e){}
-                try { if(localStorage.getItem(`l_inv_${currentUid}`)) inventory = JSON.parse(localStorage.getItem(`l_inv_${currentUid}`)); } catch(e){}
-                try { if(localStorage.getItem(`l_sales_${currentUid}`)) sales = JSON.parse(localStorage.getItem(`l_sales_${currentUid}`)); } catch(e){}
-                try { if(localStorage.getItem(`l_exp_${currentUid}`)) expenses = JSON.parse(localStorage.getItem(`l_exp_${currentUid}`)); } catch(e){}
-                try { if(localStorage.getItem(`l_cust_${currentUid}`)) customers = JSON.parse(localStorage.getItem(`l_cust_${currentUid}`)); } catch(e){}
-            } else {
-                // RECOVERY MODE: Find old existing data so the user loses nothing!
+            if (currentUid === "local") {
+                // If using offline password mode, load general offline memory
                 try { if(localStorage.getItem('l_pass')) appPass = localStorage.getItem('l_pass'); } catch(e){}
                 try { if(localStorage.getItem('l_settings')) settings = JSON.parse(localStorage.getItem('l_settings')); } catch(e){}
                 try { if(localStorage.getItem('l_inv')) inventory = JSON.parse(localStorage.getItem('l_inv')); } catch(e){}
                 try { if(localStorage.getItem('l_sales')) sales = JSON.parse(localStorage.getItem('l_sales')); } catch(e){}
                 try { if(localStorage.getItem('l_exp')) expenses = JSON.parse(localStorage.getItem('l_exp')); } catch(e){}
                 try { if(localStorage.getItem('l_cust')) customers = JSON.parse(localStorage.getItem('l_cust')); } catch(e){}
+            } else {
+                // If logged in via Google, strictly load their unique memory
+                try { if(localStorage.getItem(`l_pass_${currentUid}`)) appPass = localStorage.getItem(`l_pass_${currentUid}`); } catch(e){}
+                try { if(localStorage.getItem(`l_settings_${currentUid}`)) settings = JSON.parse(localStorage.getItem(`l_settings_${currentUid}`)); } catch(e){}
+                try { if(localStorage.getItem(`l_inv_${currentUid}`)) inventory = JSON.parse(localStorage.getItem(`l_inv_${currentUid}`)); } catch(e){}
+                try { if(localStorage.getItem(`l_sales_${currentUid}`)) sales = JSON.parse(localStorage.getItem(`l_sales_${currentUid}`)); } catch(e){}
+                try { if(localStorage.getItem(`l_exp_${currentUid}`)) expenses = JSON.parse(localStorage.getItem(`l_exp_${currentUid}`)); } catch(e){}
+                try { if(localStorage.getItem(`l_cust_${currentUid}`)) customers = JSON.parse(localStorage.getItem(`l_cust_${currentUid}`)); } catch(e){}
             }
         }
 
         // AUTO LOGIN
         auth.onAuthStateChanged(user => {
             if (user) {
-                console.log("Auto-logged in as:", user.email);
                 currentUid = user.uid; 
                 docRef = db.collection("shops").doc(currentUid); 
                 let emailEl = document.getElementById('current-user-email');
@@ -322,8 +319,6 @@
         // GMAIL LOGIN WITH LOCAL FILE SAFETY CHECK
         async function handleGoogleLogin() {
             const btn = document.getElementById('googleLoginBtn');
-            
-            // Check if user opened file locally
             if (window.location.protocol === 'file:') {
                 alert("Cloud Sync & Google Login cannot run when you double-click the file to open it directly (file://). \n\nPlease use the 'Unlock with Password' option below to use Local Mode, or upload this file to your GitHub Pages website for full features!");
                 return;
@@ -353,7 +348,7 @@
             let emailEl = document.getElementById('current-user-email');
             if(emailEl) emailEl.innerText = "Local Mode";
             
-            loadLocalData(); // Load local data first
+            loadLocalData(); 
 
             if (passInput === appPass) {
                 await syncAndEnterApp();
@@ -383,9 +378,10 @@
                             sales = d.sales || sales;
                             expenses = d.expenses || expenses;
                             customers = d.customers || customers;
+                            saveToStorage(); // Push fresh cloud data down to local device memory
                         }
                     } else {
-                        // If Cloud folder is empty, Push recovered data to the cloud immediately!
+                        // Brand new user! Save their empty lists to the cloud so it doesn't crash later
                         saveToStorage();
                     }
                 }
@@ -402,24 +398,34 @@
             const syncText = document.getElementById('sync-text');
             if(syncText) { syncText.innerText = "Saving..."; syncText.style.color = "#ffc107"; }
 
-            // Save locally using the UNIQUE ID to prevent crossing data
-            localStorage.setItem(`l_pass_${currentUid}`, appPass);
-            localStorage.setItem(`l_settings_${currentUid}`, JSON.stringify(settings));
-            localStorage.setItem(`l_inv_${currentUid}`, JSON.stringify(inventory));
-            localStorage.setItem(`l_sales_${currentUid}`, JSON.stringify(sales));
-            localStorage.setItem(`l_exp_${currentUid}`, JSON.stringify(expenses));
-            localStorage.setItem(`l_cust_${currentUid}`, JSON.stringify(customers));
-            
-            try { 
-                if (docRef && window.location.protocol !== 'file:') {
-                    await docRef.set({ appPass, settings, inventory, sales, expenses, customers }); 
-                    if(syncText) { syncText.innerText = "Synced"; syncText.style.color = "#28a745"; }
-                } else {
-                    if(syncText) { syncText.innerText = "Local Mode Only"; syncText.style.color = "#6c757d"; }
+            if (currentUid === "local") {
+                // Save safely offline
+                localStorage.setItem('l_pass', appPass);
+                localStorage.setItem('l_settings', JSON.stringify(settings));
+                localStorage.setItem('l_inv', JSON.stringify(inventory));
+                localStorage.setItem('l_sales', JSON.stringify(sales));
+                localStorage.setItem('l_exp', JSON.stringify(expenses));
+                localStorage.setItem('l_cust', JSON.stringify(customers));
+                if(syncText) { syncText.innerText = "Local Mode Only"; syncText.style.color = "#6c757d"; }
+            } else {
+                // Save locally using unique user ID
+                localStorage.setItem(`l_pass_${currentUid}`, appPass);
+                localStorage.setItem(`l_settings_${currentUid}`, JSON.stringify(settings));
+                localStorage.setItem(`l_inv_${currentUid}`, JSON.stringify(inventory));
+                localStorage.setItem(`l_sales_${currentUid}`, JSON.stringify(sales));
+                localStorage.setItem(`l_exp_${currentUid}`, JSON.stringify(expenses));
+                localStorage.setItem(`l_cust_${currentUid}`, JSON.stringify(customers));
+                
+                // Push safely to their unique cloud folder
+                try { 
+                    if (docRef && window.location.protocol !== 'file:') {
+                        await docRef.set({ appPass, settings, inventory, sales, expenses, customers }); 
+                        if(syncText) { syncText.innerText = "Synced"; syncText.style.color = "#28a745"; }
+                    }
+                } catch(e) {
+                    console.error("Cloud push failed.");
+                    if(syncText) { syncText.innerText = "Offline (Local Only)"; syncText.style.color = "#dc3545"; }
                 }
-            } catch(e) {
-                console.error("Cloud push failed.");
-                if(syncText) { syncText.innerText = "Offline (Local Only)"; syncText.style.color = "#dc3545"; }
             }
         }
 
