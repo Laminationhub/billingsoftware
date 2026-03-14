@@ -620,7 +620,29 @@
         function deleteItem(t, id) { if(confirm("Confirm?")) { if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(i=>i.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); refreshDisplays(); } }
         function filterCustomerDropdown() { const q = document.getElementById('custSearchInput').value.toLowerCase(); document.getElementById('posCustomerSelect').innerHTML = customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).map(c => `<option value="${c.id}">${c.name}</option>`).join(''); }
         function exportData() { const b = new Blob([JSON.stringify({pass:appPass, settings, inventory, sales, expenses, customers})], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download=`Backup.json`; a.click(); }
-        function importData(e) { const r = new FileReader(); r.onload = function(ev) { const d = JSON.parse(ev.target.result); appPass=d.pass; settings=d.settings; inventory=d.inventory; sales=d.sales; expenses=d.expenses; customers=d.customers; saveToStorage(); location.reload(); }; r.readAsText(e.target.files[0]); }
+        async function importData(e) { 
+    const r = new FileReader(); 
+    r.onload = async function(ev) { 
+        try {
+            const d = JSON.parse(ev.target.result); 
+            appPass = d.pass || appPass; 
+            settings = d.settings || settings; 
+            inventory = d.inventory || []; 
+            sales = d.sales || []; 
+            expenses = d.expenses || []; 
+            customers = d.customers || [{id:1, name:'Walk-in', phone:'--', spent:0}]; 
+            
+            // WAIT for the cloud to finish saving before reloading
+            await saveToStorage(); 
+            
+            alert("Data Restored Successfully!");
+            location.reload(); 
+        } catch (error) {
+            alert("Error: Invalid Backup File");
+        }
+    }; 
+    r.readAsText(e.target.files[0]); 
+}
     </script>
 </body>
 </html>
