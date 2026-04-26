@@ -797,6 +797,28 @@
         </div>
     </div>
 
+    <div id="readyNotifyModal" class="modal-bg">
+        <div class="modal-box">
+            <h3>Notify Customer</h3>
+            <p style="font-size:0.85em; color:#666;">Edit the message before sending on WhatsApp.</p>
+            <textarea id="readyNotifyMsg" rows="6" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; outline:none; margin-bottom:10px;"></textarea>
+            <button class="btn btn-green" style="width:100%" onclick="sendReadyNotify()">Send WhatsApp</button><br><br>
+            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="deliveryPaymentPromptModal" class="modal-bg">
+        <div class="modal-box">
+            <h3>Pending Due Alert</h3>
+            <p style="margin-bottom:20px;">This order has a pending due of <strong style="color:red; font-size:1.2em;">₹<span id="dpPendingAmount">0</span></strong>.</p>
+            <p style="font-size:0.9em; color:#666; margin-bottom:20px;">Would you like to collect this payment before marking the order as Delivered?</p>
+            <input type="hidden" id="dpOrderId">
+            <button class="btn btn-green" style="width:100%; margin-bottom:10px;" onclick="proceedToDeliveryPayment()">Yes, Collect Payment & Deliver</button>
+            <button class="btn btn-warning" style="width:100%; margin-bottom:10px;" onclick="markDeliveredOnly()">No, Just Mark Delivered</button>
+            <button class="btn btn-gray" style="width:100%;" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
     <div id="calculator-widget" style="position:fixed; bottom:20px; right:20px; z-index:9999;">
         <button class="btn btn-dark" style="border-radius:50%; width:60px; height:60px; font-size:24px; box-shadow:0 4px 10px rgba(0,0,0,0.3); display:flex; justify-content:center; align-items:center;" onclick="toggleCalc()">🖩</button>
         <div id="calc-container" style="display:none; position:absolute; bottom:70px; right:0; background:white; padding:15px; border-radius:10px; box-shadow:0 5px 20px rgba(0,0,0,0.2); width:220px; border:1px solid #eee;">
@@ -1560,6 +1582,9 @@
                     if (nextStatus) {
                         btns += `<button class="btn btn-blue" style="padding: 5px 10px; font-size:0.8em;" onclick="updateOrderStatus('${s.id}', '${nextStatus}')">Mark ${nextStatus}</button>`;
                     }
+                    if (status === 'Ready') {
+                        btns += `<button class="btn btn-green" style="padding: 5px 10px; font-size:0.8em;" onclick="openReadyNotifyModal('${s.id}')">📱 Notify</button>`;
+                    }
                     btns += `</div>`;
                     
                     return `<tr><td>#${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}</td><td><span style="color:${statusColor}; font-weight:bold;">${status}</span></td><td>₹${s.total.toFixed(2)}</td><td>₹${adv.toFixed(2)}</td><td style="color:red">₹${s.due||0}</td><td>${btns}</td></tr>`;
@@ -2040,10 +2065,66 @@
         function updateOrderStatus(id, newStatus) {
             let s = sales.find(x => x.id === id);
             if (s) {
+                if (newStatus === 'Delivered' && s.due > 0) {
+                    document.getElementById('dpPendingAmount').innerText = s.due.toFixed(2);
+                    document.getElementById('dpOrderId').value = id;
+                    document.getElementById('deliveryPaymentPromptModal').style.display = 'flex';
+                    return;
+                }
                 s.orderStatus = newStatus;
                 saveToStorage();
                 refreshDisplays();
             }
+        }
+
+        function proceedToDeliveryPayment() {
+            let id = document.getElementById('dpOrderId').value;
+            let s = sales.find(x => x.id === id);
+            if (s) {
+                s.orderStatus = 'Delivered';
+                saveToStorage();
+                refreshDisplays();
+            }
+            closeModals();
+            openBillPaymentModal(id);
+        }
+
+        function markDeliveredOnly() {
+            let id = document.getElementById('dpOrderId').value;
+            let s = sales.find(x => x.id === id);
+            if (s) {
+                s.orderStatus = 'Delivered';
+                saveToStorage();
+                refreshDisplays();
+            }
+            closeModals();
+        }
+
+        let notifySaleId = null;
+        function openReadyNotifyModal(id) {
+            let s = sales.find(x => x.id === id);
+            if (!s) return;
+            notifySaleId = id;
+            
+            let defaultMsg = `Hello ${s.cust},\n\nGood news! Your order (#${s.id}) from ${settings.name} is now READY for pickup/delivery.\n\n`;
+            if (s.due > 0) {
+                defaultMsg += `Please note there is a pending balance of ₹${s.due.toFixed(2)}.\n\n`;
+            }
+            defaultMsg += `Thank you!`;
+            
+            document.getElementById('readyNotifyMsg').value = defaultMsg;
+            document.getElementById('readyNotifyModal').style.display = 'flex';
+        }
+
+        function sendReadyNotify() {
+            let s = sales.find(x => x.id === notifySaleId);
+            if (!s) return;
+            let msg = document.getElementById('readyNotifyMsg').value;
+            let phone = (s.phone || "").replace(/\D/g,''); 
+            if(phone.length === 10) phone = "91" + phone; 
+            if(phone.length < 10) { alert("Customer phone missing."); return; } 
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            closeModals();
         }
 
         // --- THERMAL PRINTER ---
