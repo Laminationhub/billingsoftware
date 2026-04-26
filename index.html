@@ -51,7 +51,7 @@
         .metric-card.warning::before { background: var(--warning); }
         .metric-card h3 { font-size: 0.8em; color: #718096; text-transform: uppercase; margin: 0; letter-spacing: 0.5px; }
         .metric-card .value { font-size: 2em; font-weight: 800; margin: 10px 0 0 0; color: var(--dark); }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-blue { background: var(--primary); color: white; }
         .btn-green { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
@@ -924,12 +924,16 @@
             if (user) {
                 currentUid = user.uid; docRef = db.collection("shops").doc(currentUid); 
                 document.getElementById('current-user-email').innerText = user.email;
-                document.getElementById('login-status').innerText = "Connecting to Cloud...";
+                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
                 loadLocalData(); 
                 
                 // INSTANT LISTENER: Automatically pulls data the exact millisecond another device saves it
                 docRef.onSnapshot((doc) => {
+                    let syncIndicator = document.getElementById('sync-text');
+                    
                     if (doc.exists) {
+                        if(syncIndicator) { syncIndicator.innerText = "Live Sync Active"; syncIndicator.style.color = "#28a745"; }
+                        
                         // Only pull if the change came from ANOTHER device, not this one
                         if (!doc.metadata.hasPendingWrites) {
                             const d = doc.data();
@@ -953,15 +957,22 @@
                             
                             refreshDisplays();
                             let syncTxt = document.getElementById('last-sync-time');
-                            if(syncTxt) syncTxt.innerText = "Live Update Received: " + new Date().toLocaleTimeString();
+                            if(syncTxt) syncTxt.innerText = "Data Updated: " + new Date().toLocaleTimeString();
                         }
+                    } else {
+                        // First time login -> document doesn't exist yet, build initial cloud DB
+                        if(syncIndicator) { syncIndicator.innerText = "Building Cloud DB..."; syncIndicator.style.color = "#ffc107"; }
+                        saveToStorage(); 
                     }
                 }, (error) => {
                     console.error("Real-Time Sync Error:", error);
+                    let syncIndicator = document.getElementById('sync-text');
+                    if(syncIndicator) { syncIndicator.innerText = "Access Denied"; syncIndicator.style.color = "#dc3545"; }
                     alert("CLOUD BLOCKED: Please go to your Firebase Console and update your 'Rules' to allow read/write access.");
                 });
-
-                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
+            } else {
+                let syncIndicator = document.getElementById('sync-text');
+                if(syncIndicator) { syncIndicator.innerText = "Local Mode (Offline)"; syncIndicator.style.color = "#6c757d"; }
             }
         });
 
@@ -983,7 +994,11 @@
             const btn = document.getElementById('loginBtn');
             btn.innerText = "Processing..."; btn.disabled = true; 
 
-            if (currentUid === "local") loadLocalData(); 
+            if (currentUid === "local") {
+                loadLocalData(); 
+                let syncIndicator = document.getElementById('sync-text');
+                if(syncIndicator) { syncIndicator.innerText = "Local Mode (Offline)"; syncIndicator.style.color = "#6c757d"; }
+            }
 
             if (passInput === appPass) {
                 userRole = 'admin';
