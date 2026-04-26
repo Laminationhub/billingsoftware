@@ -1827,10 +1827,12 @@
             let isOrder = String(item.id).startsWith('ORD');
             const L = settings.receiptLanguage === 'HI' ? { 
                 inv: isOrder ? "ऑर्डर" : (isQuote ? "कोटेशन" : "रसीद"), date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "अंक", due: "बकाया", 
-                total: isQuote ? "कुल अनुमानित राशि" : "कुल", thx: isQuote ? "कोटेशन मान्य 15 दिन" : (isOrder ? "ऑर्डर प्राप्त हुआ" : "धन्यवाद!"), pmode: "भुगतान मोड" 
+                total: isQuote ? "कुल अनुमानित राशि" : "कुल", thx: isQuote ? "कोटेशन मान्य 15 दिन" : (isOrder ? "ऑर्डर प्राप्त हुआ" : "धन्यवाद!"), pmode: "भुगतान मोड",
+                adv: "अग्रिम भुगतान", paid: "भुगतान किया" 
             } : { 
                 inv: isOrder ? "Order" : (isQuote ? "Quotation" : "Invoice"), date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Pending Due", 
-                total: isQuote ? "Estimated Total" : "Grand Total", thx: isQuote ? "Estimate Valid for 15 Days" : (isOrder ? "Order Received" : "Thank you for your business!"), pmode: "Pay Mode" 
+                total: isQuote ? "Estimated Total" : "Grand Total", thx: isQuote ? "Estimate Valid for 15 Days" : (isOrder ? "Order Received" : "Thank you for your business!"), pmode: "Pay Mode",
+                adv: "Advance Paid", paid: "Amount Paid"
             };
             
             let text = `🧾 *${settings.name}*\n${L.inv}: #${item.id}\n${L.date}: ${item.date}\n${L.cust}: ${item.cust}\n------------------------\n`;
@@ -1848,7 +1850,17 @@
                 text += `${L.cgst} ${taxModeStr}: ₹${halfTax}\n${L.sgst} ${taxModeStr}: ₹${halfTax}\n`;
             }
             if (!isQuote && !isOrder && item.loyaltyUsed > 0) text += `${L.pts}: -₹${item.loyaltyUsed}\n`;
-            if (!isQuote && item.due > 0) text += `${L.due}: ₹${item.due}\n`;
+            
+            if (!isQuote) {
+                let adv = item.total - (item.due || 0);
+                if (item.due > 0) {
+                    if (adv > 0) text += `*${L.adv}: ₹${adv.toFixed(2)}*\n`;
+                    text += `*${L.due}: ₹${item.due.toFixed(2)}*\n`;
+                } else {
+                    text += `*${L.paid}: ₹${item.total.toFixed(2)}*\n`;
+                }
+            }
+            
             if (!isQuote && !isOrder && item.payMode) text += `${L.pmode}: ${item.payMode}\n`;
             text += `*${L.total}: ₹${item.total.toFixed(2)}*\n\n`;
 
@@ -2113,10 +2125,12 @@
             let isOrder = String(s.id).startsWith('ORD');
             const L = settings.receiptLanguage === 'HI' ? {
                 inv: isOrder ? "ऑर्डर" : (isQuote ? "कोटेशन" : "रसीद"), date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "उपयोग किए गए अंक", due: "बकाया राशि",
-                total: "कुल राशि", thx: isQuote ? "*** कोटेशन मान्य 15 दिन ***" : (isOrder ? "*** ऑर्डर प्राप्त हुआ ***" : "*** धन्यवाद! ***"), earned: "⭐ आपने अंक अर्जित किए:", gst: "जीएसटी", pmode: "भुगतान मोड"
+                total: "कुल राशि", thx: isQuote ? "*** कोटेशन मान्य 15 दिन ***" : (isOrder ? "*** ऑर्डर प्राप्त हुआ ***" : "*** धन्यवाद! ***"), earned: "⭐ आपने अंक अर्जित किए:", gst: "जीएसटी", pmode: "भुगतान मोड",
+                adv: "अग्रिम भुगतान", paid: "भुगतान किया"
             } : {
                 inv: isOrder ? "ORDER" : (isQuote ? "QUOTATION" : "INV"), date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Amount Due",
-                total: "Total", thx: isQuote ? "*** Estimate Valid for 15 Days ***" : (isOrder ? "*** Order Received ***" : "*** Thank You! ***"), earned: "⭐ You earned Points:", gst: "GSTIN", pmode: "Pay Mode"
+                total: "Total", thx: isQuote ? "*** Estimate Valid for 15 Days ***" : (isOrder ? "*** Order Received ***" : "*** Thank You! ***"), earned: "⭐ You earned Points:", gst: "GSTIN", pmode: "Pay Mode",
+                adv: "Advance Paid", paid: "Amount Paid"
             };
 
             let pWidth = "100%"; let fSize = "15px"; let containerCss = "box-sizing:border-box; width:100%; padding:10px;";
@@ -2146,7 +2160,18 @@
                 extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; color:#555;">${L.sgst} ${taxModeStr}: ₹${halfTax}</div>`;
             }
             if (s.loyaltyUsed > 0) extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">${L.pts}: -₹${s.loyaltyUsed}</div>`;
-            if (s.due > 0 && !isQuote) extras += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize};">${L.due}: ₹${s.due}</div>`;
+            
+            // Advance & Due Logic for Receipt
+            if (!isQuote) {
+                let adv = s.total - (s.due || 0);
+                if (s.due > 0) {
+                    if (adv > 0) extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold;">${L.adv}: ₹${adv.toFixed(2)}</div>`;
+                    extras += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize}; font-weight:bold;">${L.due}: ₹${s.due.toFixed(2)}</div>`;
+                } else {
+                    extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:green;">${L.paid}: ₹${s.total.toFixed(2)}</div>`;
+                }
+            }
+            
             if (s.earnedPoints > 0 && !isQuote && !isOrder) extras += `<div style="text-align:center; margin:4px 0; font-size:0.9em;">${L.earned} ${s.earnedPoints}</div>`;
             if (!isQuote && !isOrder && s.payMode) extras += `<div style="text-align:right; margin:4px 0; font-weight:bold; font-size:${fSize};">${L.pmode}: ${s.payMode}</div>`;
 
@@ -2216,7 +2241,16 @@
                 extras += `<h4 align="right" style="margin:5px 0; color: #6c757d;">${taxModeStr} SGST: ₹${halfTax}</h4>`;
             }
             if (s.loyaltyUsed > 0) extras += `<h4 align="right" style="margin:5px 0; color: #28a745;">Pts Used: -₹${s.loyaltyUsed}</h4>`;
-            if (s.due > 0) extras += `<h4 align="right" style="margin:5px 0; color: red;">Due Balance: ₹${s.due}</h4>`;
+            
+            // Advance Paid and Due Logic for View Bill
+            let adv = s.total - (s.due || 0);
+            if (s.due > 0) {
+                if (adv > 0) extras += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Advance Paid: ₹${adv.toFixed(2)}</h4>`;
+                extras += `<h4 align="right" style="margin:5px 0; color: red;">Due Balance: ₹${s.due.toFixed(2)}</h4>`;
+            } else {
+                extras += `<h4 align="right" style="margin:5px 0; color: #28a745;">Amount Paid: ₹${s.total.toFixed(2)}</h4>`;
+            }
+            
             if (s.payMode) extras += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Pay Mode: ${s.payMode}</h4>`;
             
             let qrScreen = "";
