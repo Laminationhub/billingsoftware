@@ -283,11 +283,10 @@
                             <span style="font-size: 1.2em; font-weight: bold; color: #dc3545;" id="dueTotal">₹0</span>
                         </div>
 
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 25px;">
-                            <button class="btn btn-warning" style="padding: 15px; font-size: 0.9em;" onclick="saveQuotation()">📝 QUOTE</button>
-                            <button class="btn btn-dark" style="padding: 15px; font-size: 0.9em;" onclick="saveOrder()">📦 ORDER</button>
-                            <button class="btn btn-green" style="padding: 15px; font-size: 0.9em;" onclick="completeSale('text')">📱 SEND WA</button>
-                            <button class="btn btn-blue" style="padding: 15px; font-size: 0.9em;" onclick="completeSale('print')">✓ PRINT BILL</button>
+                        <div style="display:flex; gap:10px; margin-top: 25px;">
+                            <button class="btn btn-warning" style="flex: 1; padding: 15px; font-size: 0.9em;" onclick="saveQuotation()">📝 QUOTE</button>
+                            <button class="btn btn-green" style="flex: 1.5; padding: 15px; font-size: 0.9em;" onclick="completeSale('text')">📱 SEND WA</button>
+                            <button class="btn btn-blue" style="flex: 1.5; padding: 15px; font-size: 0.9em;" onclick="completeSale('print')">✓ PRINT BILL</button>
                         </div>
                     </div>
                 </div>
@@ -445,6 +444,20 @@
                 </div>
                 <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Points</th><th>Total Spent</th><th>Due Amt</th><th>Actions</th></tr></thead><tbody id="customerTableBody"></tbody></table></div></div>
             </div>
+        </div>
+    </div>
+
+    <div id="orderReadyModal" class="modal-bg">
+        <div class="modal-box">
+            <h3>📱 Send Order Ready Message</h3>
+            <p style="font-size:0.85em; color:#666;">Customize the WhatsApp message below to let the customer know their order is ready.</p>
+            <input type="hidden" id="waOrderId">
+            <div class="form-group">
+                <label>Message Content</label>
+                <textarea id="waOrderMsg" rows="6" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; outline: none;"></textarea>
+            </div>
+            <button class="btn btn-green" style="width:100%; font-size:1.1em; padding:12px;" onclick="sendOrderReadyWA()">Send via WhatsApp</button><br><br>
+            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Skip / Cancel</button>
         </div>
     </div>
 
@@ -1594,6 +1607,7 @@
                 </select>`;
                 
                 let btns = `<button class="btn btn-blue" style="padding: 5px 10px; font-size:0.8em; margin-right: 5px;" onclick="printOrder('${o.id}')">🖨️ Print</button>
+                            <button class="btn btn-green" style="padding: 5px 10px; font-size:0.8em; margin-right: 5px;" onclick="openOrderReadyModal('${o.id}')" title="Send Ready Message on WA">📱 WA</button>
                             <button class="btn btn-gray" style="color:red; padding: 5px 10px; font-size:0.8em;" onclick="deleteItem('order', '${o.id}')">Del</button>`;
                 return `<tr><td>${o.id}</td><td>${o.date.split(',')[0]}</td><td>${o.cust}</td><td><b>₹${o.total.toFixed(2)}</b></td><td>${statusSelect}</td><td>${btns}</td></tr>`;
             }).join('');
@@ -1894,8 +1908,15 @@
             let saleId = editingSaleId ? editingSaleId : Date.now().toString().slice(-6);
             let saleDate = editingSaleDate ? editingSaleDate : new Date().toLocaleString();
 
+            // 1. SAVE TO SALES HISTORY
             const newSale = { id: saleId, date: saleDate, cust: c.name, phone: c.phone, total: total, tax: taxAmount, taxPercent: taxPercent, taxMode: taxMode, due: due, discount: discountAmount, discountStr: discountStr, loyaltyUsed: loyaltyUsed, earnedPoints: earnedPoints, shipping: shippingInput, payMode: payMode, items: JSON.parse(JSON.stringify(cart)), returned: false };
             sales.push(newSale); 
+
+            // 2. SAVE TO ORDER MANAGEMENT (Auto-syncs from Bill)
+            const newOrder = JSON.parse(JSON.stringify(newSale));
+            newOrder.id = 'ORD-' + saleId; 
+            newOrder.status = 'In Process';
+            orders.push(newOrder);
             
             if(c) { c.spent += total; c.due = (c.due || 0) + due; c.points = (c.points || 0) - loyaltyUsed + earnedPoints; }
             cart.forEach(ci => { let invI = inventory.find(x => x.id == ci.id); if (invI) invI.stock -= ci.qty; });
@@ -1960,63 +1981,41 @@
             }, 100); 
         }
 
-        function saveOrder() {
-            if (cart.length === 0) return;
-            let total = parseFloat(document.getElementById('grandTotal').innerText.replace('₹', ''));
-            let subtotal = cart.reduce((a,b)=>a+(b.price*b.qty),0);
-            let discountInput = parseFloat(document.getElementById('posDiscount').value) || 0;
-            let discountType = document.getElementById('posDiscountType').value;
-            let discountAmount = discountType === 'percent' ? (subtotal * (discountInput / 100)) : discountInput;
-            let discountStr = discountType === 'percent' ? `${discountInput}%` : `₹${discountInput}`;
-            
-            let taxableAmount = subtotal - discountAmount;
-            let taxPercentInput = document.getElementById('posTax').value;
-            let taxPercent = taxPercentInput !== "" ? (parseFloat(taxPercentInput) || 0) : (settings.taxRate || 0);
-            let taxMode = settings.taxMode || 'EXCLUSIVE';
-            let shippingInput = parseFloat(document.getElementById('posShipping').value) || 0;
-
-            let taxAmount = 0;
-            if(taxMode === 'INCLUSIVE') {
-                let baseAmount = taxableAmount / (1 + (taxPercent / 100));
-                taxAmount = taxableAmount - baseAmount;
-            } else {
-                taxAmount = taxableAmount * (taxPercent / 100);
-            }
-
-            let cid = document.getElementById('posCustomerSelect').value; let c = customers.find(x => x.id == cid);
-
-            const newOrder = { 
-                id: 'ORD-' + Date.now().toString().slice(-5), 
-                date: new Date().toLocaleString(), 
-                cust: c.name, 
-                phone: c.phone, 
-                total: total, 
-                tax: taxAmount, 
-                taxMode: taxMode, 
-                discount: discountAmount, 
-                discountStr: discountStr, 
-                shipping: shippingInput, 
-                items: JSON.parse(JSON.stringify(cart)),
-                status: 'In Process' 
-            };
-            orders.push(newOrder);
-            generateReceiptHTML(newOrder, true);
-            
-            setTimeout(() => {
-                executePrint();
-                resetCart(); 
-                refreshDisplays(); 
-                alert("Order Saved!");
-            }, 100); 
-        }
-
         function updateOrderStatus(id, newStatus) {
             let o = orders.find(x => x.id === id);
             if(o) {
                 o.status = newStatus;
                 saveToStorage();
                 refreshDisplays();
+                if(newStatus === 'Ready') {
+                    openOrderReadyModal(id);
+                }
             }
+        }
+        
+        function openOrderReadyModal(id) {
+            let o = orders.find(x => x.id === id);
+            if (!o) return;
+            document.getElementById('waOrderId').value = id;
+            let shopName = settings.name || "Billing Hub";
+            let msg = `Hello ${o.cust},\n\nGood news! Your order #${o.id} from ${shopName} is now READY. 📦\n\nTotal Amount: ₹${o.total}\n\nYou can pick it up at your earliest convenience. Thank you for choosing us!`;
+            document.getElementById('waOrderMsg').value = msg;
+            document.getElementById('orderReadyModal').style.display = 'flex';
+        }
+
+        function sendOrderReadyWA() {
+            let id = document.getElementById('waOrderId').value;
+            let msg = document.getElementById('waOrderMsg').value;
+            let o = orders.find(x => x.id === id);
+            if (!o) return;
+            let phone = (o.phone || "").replace(/\D/g,''); 
+            if(phone.length < 10) { 
+                alert("Customer phone number is missing or invalid."); 
+                return; 
+            }
+            if(phone.length === 10) phone = "91" + phone; 
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            closeModals();
         }
 
         function printOrder(id) {
@@ -2074,6 +2073,9 @@
             // Remove old sale entirely
             sales.splice(sIndex, 1);
             
+            // Also remove from orders if it was pushed there
+            orders = orders.filter(o => o.id !== 'ORD-' + s.id);
+
             switchTab('pos');
             updateCart();
         }
@@ -2099,6 +2101,10 @@
             s.returned = true;
             s.due = 0;
             
+            // Also mark related order as Cancelled/Returned if it exists
+            let ord = orders.find(o => o.id === 'ORD-' + s.id);
+            if(ord) ord.status = 'Delivered'; // or remove it
+
             refreshDisplays();
         }
 
