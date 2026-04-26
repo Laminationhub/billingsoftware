@@ -51,7 +51,7 @@
         .metric-card.warning::before { background: var(--warning); }
         .metric-card h3 { font-size: 0.8em; color: #718096; text-transform: uppercase; margin: 0; letter-spacing: 0.5px; }
         .metric-card .value { font-size: 2em; font-weight: 800; margin: 10px 0 0 0; color: var(--dark); }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-blue { background: var(--primary); color: white; }
         .btn-green { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
@@ -153,8 +153,8 @@
             <ul class="nav-links">
                 <li id="nav-dashboard" class="active" onclick="switchTab('dashboard')">📊 Dashboard</li>
                 <li id="nav-pos" onclick="switchTab('pos')">🧾 New Bill</li>
+                <li id="nav-orders" onclick="switchTab('orders')">📋 Order Management</li>
                 <li id="nav-quotations" onclick="switchTab('quotations')">📝 Quotations</li>
-                <li id="nav-orders" onclick="switchTab('orders')">📦 Order Manage</li>
                 <li id="nav-history" onclick="switchTab('history')">📜 Sales History</li>
                 <li id="nav-inventory" onclick="switchTab('inventory')">📦 Inventory</li>
                 <li id="nav-suppliers" onclick="switchTab('suppliers')">🚚 Suppliers & Ledger</li>
@@ -286,7 +286,7 @@
                         <div style="display:flex; gap:10px; margin-top: 25px;">
                             <button class="btn btn-warning" style="flex: 1; padding: 15px; font-size: 0.9em;" onclick="saveQuotation()">📝 QUOTE</button>
                             <button class="btn btn-green" style="flex: 1.5; padding: 15px; font-size: 0.9em;" onclick="completeSale('text')">📱 SEND WA</button>
-                            <button class="btn btn-blue" style="flex: 1.5; padding: 15px; font-size: 0.9em;" onclick="completeSale('print')">✓ PRINT BILL</button>
+                            <button class="btn btn-blue" style="flex: 1.5; padding: 15px; font-size: 0.9em;" onclick="completeSale('print')">✓ PRINT</button>
                         </div>
                     </div>
                 </div>
@@ -408,6 +408,14 @@
                 <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expenseTableBody"></tbody></table></div></div>
             </div>
 
+            <div id="orders-view" class="view-section">
+                <div class="header">
+                    <h1>Order Management</h1>
+                    <input type="text" id="searchOrders" class="search-bar" placeholder="🔍 Search order ID or customer..." oninput="refreshDisplays()">
+                </div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Date</th><th>Customer</th><th>Status</th><th>Total</th><th>Advance Paid</th><th>Pending Amount</th><th>Actions</th></tr></thead><tbody id="orderTableBody"></tbody></table></div></div>
+            </div>
+
             <div id="history-view" class="view-section">
                 <div class="header">
                     <h1>Sales Records</h1>
@@ -419,18 +427,6 @@
             <div id="quotations-view" class="view-section">
                 <div class="header"><h1>Saved Quotations</h1></div>
                 <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>QUOTE #</th><th>Date</th><th>Customer</th><th>Tax</th><th>Total Amt</th><th>Actions</th></tr></thead><tbody id="quotationTableBody"></tbody></table></div></div>
-            </div>
-
-            <div id="orders-view" class="view-section">
-                <div class="header"><h1>Order Management</h1></div>
-                <div class="container" style="padding:0;">
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Total Amt</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody id="ordersTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
             
             <div id="customers-view" class="view-section">
@@ -444,20 +440,6 @@
                 </div>
                 <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Points</th><th>Total Spent</th><th>Due Amt</th><th>Actions</th></tr></thead><tbody id="customerTableBody"></tbody></table></div></div>
             </div>
-        </div>
-    </div>
-
-    <div id="orderReadyModal" class="modal-bg">
-        <div class="modal-box">
-            <h3>📱 Send Order Ready Message</h3>
-            <p style="font-size:0.85em; color:#666;">Customize the WhatsApp message below to let the customer know their order is ready.</p>
-            <input type="hidden" id="waOrderId">
-            <div class="form-group">
-                <label>Message Content</label>
-                <textarea id="waOrderMsg" rows="6" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; outline: none;"></textarea>
-            </div>
-            <button class="btn btn-green" style="width:100%; font-size:1.1em; padding:12px;" onclick="sendOrderReadyWA()">Send via WhatsApp</button><br><br>
-            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Skip / Cancel</button>
         </div>
     </div>
 
@@ -591,6 +573,230 @@
         </div>
     </div>
 
+    <div id="quickBillModal" class="modal-bg">
+        <div class="modal-box" style="width: 380px; max-width: 95vw; background: #f4f7f9; padding: 25px; border-radius: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                <h3 style="margin:0; color: #1e293b; font-size: 1.3em;">Fast Entry</h3>
+                <span style="color:#94a3b8; cursor:pointer; font-size:1.8em; line-height:1; font-weight:300;" onclick="closeModals()">✕</span>
+            </div>
+            
+            <div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; text-align: right; min-height: 90px; display:flex; flex-direction:column; justify-content:space-between; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
+                <div id="qb-expr" style="font-size: 1.2em; color: #64748b; word-wrap: break-word; min-height: 28px; letter-spacing: 1px; padding-bottom: 5px;"></div>
+                <div id="qb-total" style="font-size: 2.8em; font-weight: 700; color: #0f172a; margin-top:5px;">0</div>
+            </div>
+
+            <style>
+                .qb-btn { border: none; border-radius: 10px; font-size: 1.6em; font-weight: 600; cursor: pointer; padding: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: 0.1s; display: flex; align-items: center; justify-content: center; }
+                .qb-btn:active { transform: scale(0.95); }
+                .qb-btn.num { background: white; color: #1e293b; }
+                .qb-btn.op-blue { background: #e0e7ff; color: #4338ca; font-size: 2em; }
+                .qb-btn.op-org { background: #f97316; color: white; font-size: 2em; }
+                .qb-btn.op-grn { background: #22c55e; color: white; font-size: 2em; }
+                .qb-btn.op-red { background: #ef4444; color: white; }
+            </style>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                <button class="qb-btn op-red" onclick="qbClear()" style="font-size:1.2em;">AC</button>
+                <button class="qb-btn op-blue" onclick="qbInput('(')">(</button>
+                <button class="qb-btn op-blue" onclick="qbInput(')')">)</button>
+                <button class="qb-btn op-blue" onclick="qbInput('%')">%</button>
+
+                <button class="qb-btn num" onclick="qbInput('7')">7</button>
+                <button class="qb-btn num" onclick="qbInput('8')">8</button>
+                <button class="qb-btn num" onclick="qbInput('9')">9</button>
+                <button class="qb-btn op-blue" onclick="qbInput('/')">÷</button>
+
+                <button class="qb-btn num" onclick="qbInput('4')">4</button>
+                <button class="qb-btn num" onclick="qbInput('5')">5</button>
+                <button class="qb-btn num" onclick="qbInput('6')">6</button>
+                <button class="qb-btn op-org" onclick="qbInput('*')">×</button>
+
+                <button class="qb-btn num" onclick="qbInput('1')">1</button>
+                <button class="qb-btn num" onclick="qbInput('2')">2</button>
+                <button class="qb-btn num" onclick="qbInput('3')">3</button>
+                <button class="qb-btn op-blue" onclick="qbInput('-')">-</button>
+
+                <button class="qb-btn op-red" onclick="qbBackspace()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+                </button>
+                <button class="qb-btn num" onclick="qbInput('0')">0</button>
+                <button class="qb-btn num" onclick="qbInput('.')">.</button>
+                <button class="qb-btn op-grn" onclick="qbInput('+')">+</button>
+            </div>
+            
+            <button id="qb-add-btn" class="btn" style="width: 100%; margin-top: 20px; padding: 18px; font-size: 1.1em; font-weight:700; background: #007bff; color: white; border-radius: 10px; letter-spacing: 0.5px;" onclick="addQuickBillToCart()">ADD TO CART ➔</button>
+        </div>
+    </div>
+
+    <div id="customerModal" class="modal-bg"><div class="modal-box"><h3>New Customer</h3><div class="form-group"><label>Full Name</label><input type="text" id="cName"></div><div class="form-group"><label>Phone</label><input type="text" id="cPhone"></div><button class="btn btn-green" style="width:100%" onclick="saveCustomer()">Register</button><br><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button></div></div>
+    
+    <div id="supplierModal" class="modal-bg">
+        <div class="modal-box modal-box-large">
+            <h3>Add New Supplier</h3>
+            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <label><input type="radio" name="supType" value="Business" checked> Business</label>
+                <label><input type="radio" name="supType" value="Individual"> Individual</label>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Contact ID (Auto if empty)</label><input type="text" id="supContactId" placeholder="Leave empty to autogenerate"></div>
+                <div class="form-group"><label>Name / Company *</label><input type="text" id="supName" placeholder="Required"></div>
+                <div class="form-group"><label>Mobile *</label><input type="text" id="supMobile" placeholder="Required"></div>
+                <div class="form-group"><label>Alternate Contact Number</label><input type="text" id="supAltMobile"></div>
+                <div class="form-group"><label>Landline</label><input type="text" id="supLandline"></div>
+                <div class="form-group"><label>Email</label><input type="text" id="supEmail"></div>
+                <div class="form-group"><label>Tax Number</label><input type="text" id="supTax"></div>
+                <div class="form-group"><label>Opening Balance</label><input type="number" id="supOpeningBalance" value="0"></div>
+                <div class="form-group">
+                    <label>Pay Term</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="number" id="supPayTermVal" style="width:50%;">
+                        <select id="supPayTermType" style="width:50%;">
+                            <option value="Days">Days</option>
+                            <option value="Months">Months</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <h4 style="margin-bottom: 10px; color:#666; border-bottom: 1px solid #eee; padding-bottom:5px;">Address Information</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="grid-column: span 2;"><label>Address Line 1</label><input type="text" id="supAddress1"></div>
+                <div class="form-group" style="grid-column: span 2;"><label>Address Line 2</label><input type="text" id="supAddress2"></div>
+                <div class="form-group"><label>City</label><input type="text" id="supCity"></div>
+                <div class="form-group"><label>State</label><input type="text" id="supState"></div>
+                <div class="form-group"><label>Country</label><input type="text" id="supCountry"></div>
+                <div class="form-group"><label>Zip Code</label><input type="text" id="supZip"></div>
+            </div>
+            
+            <h4 style="margin-bottom: 10px; color:#666; border-bottom: 1px solid #eee; padding-bottom:5px;">Custom Fields</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Custom Field 1</label><input type="text" id="supCustom1"></div>
+                <div class="form-group"><label>Custom Field 2</label><input type="text" id="supCustom2"></div>
+                <div class="form-group"><label>Custom Field 3</label><input type="text" id="supCustom3"></div>
+                <div class="form-group"><label>Custom Field 4</label><input type="text" id="supCustom4"></div>
+            </div>
+            
+            <button class="btn btn-dark" style="width:100%; margin-top: 15px;" onclick="saveSupplier()">Save Supplier</button><br><br>
+            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="supplierPurchaseModal" class="modal-bg"><div class="modal-box"><h3>Log Purchase from Supplier</h3><input type="hidden" id="spId_purchase"><div class="form-group"><label>Bill Amount (₹)</label><input type="number" id="spAmountBought" placeholder="Amount purchased"></div><button class="btn btn-blue" style="width:100%" onclick="saveSupplierPurchase()">Add Purchase</button><br><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button></div></div>
+    
+    <div id="supplierPaymentModal" class="modal-bg"><div class="modal-box"><h3>Log Payment to Supplier</h3><input type="hidden" id="spId_payment"><div class="form-group"><label>Amount Paid (₹)</label><input type="number" id="spAmountPaid" placeholder="Amount paid"></div><button class="btn btn-green" style="width:100%" onclick="saveSupplierPayment()">Record Payment</button><br><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button></div></div>
+    
+    <div id="categoryModal" class="modal-bg"><div class="modal-box"><h3>Manage Categories</h3><div class="form-group"><label>New Category Name</label><input type="text" id="newCatName"></div><button class="btn btn-warning" style="width:100%; margin-bottom: 15px;" onclick="addCategory()">Add Category</button><div id="catListArea" style="max-height: 150px; overflow-y:auto; border: 1px solid #eee; padding: 10px; border-radius: 5px;"></div><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Close</button></div></div>
+
+    <div id="productModal" class="modal-bg">
+        <div class="modal-box">
+            <h3>Product Info</h3>
+            <div class="form-group"><label>Name</label><input type="text" id="pName"></div>
+            <div class="form-group"><label>Barcode / SKU (Optional)</label><input type="text" id="pBarcode" placeholder="Scan or type barcode..."></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Category</label><select id="pCat"><option value="General">General</option></select></div>
+                <div class="form-group"><label>Supplier</label><select id="pSupplier"><option value="None">None</option></select></div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Brand</label><input type="text" id="pBrand" placeholder="e.g. 3M"></div>
+                <div class="form-group">
+                    <label>Unit</label>
+                    <select id="pUnit">
+                        <option value="pcs">Pieces (pcs)</option>
+                        <option value="kg">Kilogram (kg)</option>
+                        <option value="mtr">Meter (mtr)</option>
+                        <option value="sqft">Sq. Ft.</option>
+                        <option value="pkt">Packet</option>
+                        <option value="box">Box</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group"><label>Warranty</label><input type="text" id="pWarranty" placeholder="e.g. 6 Months, 1 Year, None"></div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Price (₹)</label><input type="number" id="pPrice"></div>
+                <div class="form-group"><label>Stock Qty</label><input type="number" id="pStock" step="0.01"></div>
+            </div>
+            <button class="btn btn-blue" style="width:100%" onclick="saveProduct()">Save Product</button><br><br>
+            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+    
+    <div id="expenseModal" class="modal-bg">
+        <div class="modal-box">
+            <h3>Log Expense</h3>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="eCat">
+                    <option value="Raw Materials">Raw Materials</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Description</label><input type="text" id="eDesc"></div>
+            <div class="form-group"><label>Amount (₹)</label><input type="number" id="eAmt"></div>
+            <button class="btn btn-danger" style="width:100%" onclick="saveExpense()">Save Expense</button><br><br>
+            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+    
+    <div id="viewBillModal" class="modal-bg"><div class="modal-box" id="billDetailContent"></div></div>
+
+    <div id="billPaymentModal" class="modal-bg">
+        <div class="modal-box">
+            <h3>Pay Pending Bill Due</h3>
+            <p style="font-size: 0.9em; color:#666;">Current Due: <strong style="color:red;">₹<span id="bpCurrentDue">0</span></strong></p>
+            <input type="hidden" id="bpBillId">
+            <div class="form-group">
+                <label>Amount to Pay (₹)</label>
+                <input type="number" id="bpAmount" placeholder="Enter amount">
+            </div>
+            <button class="btn btn-green" style="width:100%" onclick="saveBillPayment()">Submit Payment</button><br><br>
+            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="customerPaymentModal" class="modal-bg">
+        <div class="modal-box">
+            <h3>Pay Customer Due Balance</h3>
+            <p style="font-size: 0.9em; color:#666;">Total Ledger Due: <strong style="color:red;">₹<span id="cpCurrentDue">0</span></strong></p>
+            <input type="hidden" id="cpCustId">
+            <div class="form-group">
+                <label>Amount Customer is Paying (₹)</label>
+                <input type="number" id="cpAmount" placeholder="Enter amount">
+            </div>
+            <button class="btn btn-green" style="width:100%" onclick="saveCustomerPayment()">Apply Payment</button><br><br>
+            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+    
+    <div id="bulkModal" class="modal-bg">
+        <div class="modal-box" style="width: 500px;">
+            <h3>Bulk Stock Update</h3>
+            <p style="font-size: 0.8em; color: #666;">Enter the quantity to ADD to current stock (e.g., +10).</p>
+            <div id="bulkItemsContainer" style="max-height: 300px; overflow-y: auto; margin: 15px 0; border: 1px solid #eee; border-radius: 8px;"></div>
+            <button class="btn btn-blue" style="width:100%" onclick="saveBulkStock()">Update All & Sync</button><br><br>
+            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="scannerModal" class="modal-bg"><div class="modal-box"><h3>📷 Scan Barcode</h3><div id="reader"></div><button class="btn btn-gray" style="width:100%; margin-top:15px;" onclick="closeScanner()">Cancel</button></div></div>
+
+    <div id="broadcastModal" class="modal-bg">
+        <div class="modal-box" style="width: 500px;">
+            <h3>📢 WhatsApp Promo Broadcast</h3>
+            <p style="font-size: 0.8em; color: #666;">Type your offer below and click generate to send to your customer list.</p>
+            <textarea id="broadcastMsg" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; outline: none; margin-bottom: 10px;" placeholder="Ex: Flat 20% off on all Laptop Skins this weekend at Billing Hub!"></textarea>
+            <button class="btn btn-blue" style="width:100%" onclick="generateBroadcastLinks()">Generate Send Links</button>
+            <div id="broadcastLinksContainer" style="max-height: 250px; overflow-y: auto; margin-top: 15px;"></div>
+            <button class="btn btn-gray" style="width:100%; margin-top:15px;" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+
     <div id="calculator-widget" style="position:fixed; bottom:20px; right:20px; z-index:9999;">
         <button class="btn btn-dark" style="border-radius:50%; width:60px; height:60px; font-size:24px; box-shadow:0 4px 10px rgba(0,0,0,0.3); display:flex; justify-content:center; align-items:center;" onclick="toggleCalc()">🖩</button>
         <div id="calc-container" style="display:none; position:absolute; bottom:70px; right:0; background:white; padding:15px; border-radius:10px; box-shadow:0 5px 20px rgba(0,0,0,0.2); width:220px; border:1px solid #eee;">
@@ -647,7 +853,7 @@
         let appPass = '1234';
         let settings = { name: 'Billing Hub', city: 'Kurebhar', address: '', gst: '', phone: '', email: '', profilePic: '', staffPin: '', printerSize: 'A4', receiptLanguage: 'EN', taxRate: 0, taxMode: 'EXCLUSIVE', customTaxRates: [], upiId: '', printMethod: 'browser' };
         let inventory = []; let sales = []; let expenses = []; let customers = [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}];
-        let suppliers = []; let quotations = []; let orders = []; let categories = ["General"]; 
+        let suppliers = []; let quotations = []; let categories = ["General"]; 
         let cart = []; let custTrigger = "list"; let tempBase64Img = ""; let editingProductId = null;
         let editingSaleId = null; let editingSaleDate = null;
         let html5QrcodeScanner = null; let salesChartInstance = null; let pieChartInstance = null;
@@ -905,7 +1111,7 @@
         function loadLocalData() {
             appPass = '1234'; settings = { name: 'Billing Hub', city: 'Kurebhar', address: '', gst: '', phone: '', email: '', profilePic: '', staffPin: '', printerSize: 'A4', receiptLanguage: 'EN', taxRate: 0, taxMode: 'EXCLUSIVE', customTaxRates: [], upiId: '', printMethod: 'browser' };
             inventory = []; sales = []; expenses = []; customers = [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}];
-            suppliers = []; quotations = []; orders = []; categories = ["General"];
+            suppliers = []; quotations = []; categories = ["General"];
             
             try { if(localStorage.getItem('l_pass')) appPass = localStorage.getItem('l_pass'); } catch(e){}
             try { if(localStorage.getItem('l_settings')) settings = JSON.parse(localStorage.getItem('l_settings')); } catch(e){}
@@ -915,64 +1121,71 @@
             try { if(localStorage.getItem('l_cust')) customers = JSON.parse(localStorage.getItem('l_cust')); } catch(e){}
             try { if(localStorage.getItem('l_sup')) suppliers = JSON.parse(localStorage.getItem('l_sup')); } catch(e){}
             try { if(localStorage.getItem('l_quote')) quotations = JSON.parse(localStorage.getItem('l_quote')); } catch(e){}
-            try { if(localStorage.getItem('l_ord')) orders = JSON.parse(localStorage.getItem('l_ord')); } catch(e){}
             try { if(localStorage.getItem('l_cat')) categories = JSON.parse(localStorage.getItem('l_cat')); } catch(e){}
         }
 
-        // REAL-TIME INSTANT MULTI-DEVICE SYNC
+        // FULLY AUTOMATIC CLOUD SYNC & MERGE
+        async function autoSyncMerge() {
+            if (!docRef || window.location.protocol === 'file:') return;
+            
+            try {
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const c = doc.data();
+                    
+                    const mergeArrays = (localArr, cloudArr) => {
+                        let combined = [...localArr];
+                        if(cloudArr && Array.isArray(cloudArr)) {
+                            cloudArr.forEach(cItem => {
+                                let matchIndex = combined.findIndex(lItem => lItem.id === cItem.id);
+                                if(matchIndex === -1) {
+                                    combined.push(cItem);
+                                } else {
+                                    combined[matchIndex] = cItem;
+                                }
+                            });
+                        }
+                        return combined;
+                    };
+
+                    inventory = mergeArrays(inventory, c.inventory || []);
+                    sales = mergeArrays(sales, c.sales || []);
+                    expenses = mergeArrays(expenses, c.expenses || []);
+                    customers = mergeArrays(customers, c.customers || []);
+                    suppliers = mergeArrays(suppliers, c.suppliers || []);
+                    quotations = mergeArrays(quotations, c.quotations || []);
+                    
+                    let c_cat = c.categories || ["General"];
+                    c_cat.forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
+
+                    if(c.settings && (!settings.name || settings.name === 'Lamination Hub' || settings.name === 'Billing Hub')) {
+                        settings = c.settings;
+                    }
+                }
+                
+                await saveToStorage(); 
+                refreshDisplays();
+                document.getElementById('last-sync-time').innerText = "Last Sync: " + new Date().toLocaleTimeString();
+                
+            } catch(e) {
+                console.error("Auto Sync Error:", e);
+            }
+        }
+
+        setInterval(async () => {
+            if (currentUid !== "local" && userRole === 'admin') {
+                await autoSyncMerge();
+            }
+        }, 60000);
+
         auth.onAuthStateChanged(async user => {
             if (user) {
                 currentUid = user.uid; docRef = db.collection("shops").doc(currentUid); 
                 document.getElementById('current-user-email').innerText = user.email;
-                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
+                document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
                 loadLocalData(); 
-                
-                // INSTANT LISTENER: Automatically pulls data the exact millisecond another device saves it
-                docRef.onSnapshot((doc) => {
-                    let syncIndicator = document.getElementById('sync-text');
-                    
-                    if (doc.exists) {
-                        if(syncIndicator) { syncIndicator.innerText = "Live Sync Active"; syncIndicator.style.color = "#28a745"; }
-                        
-                        // Only pull if the change came from ANOTHER device, not this one
-                        if (!doc.metadata.hasPendingWrites) {
-                            const d = doc.data();
-                            appPass = d.appPass || appPass; settings = d.settings || settings;
-                            inventory = d.inventory || inventory; sales = d.sales || sales;
-                            expenses = d.expenses || expenses; customers = d.customers || customers;
-                            suppliers = d.suppliers || suppliers; quotations = d.quotations || quotations;
-                            orders = d.orders || orders; categories = d.categories || categories;
-                            
-                            // Save incoming cloud data directly to device storage instantly
-                            localStorage.setItem('l_pass', appPass); 
-                            localStorage.setItem('l_settings', JSON.stringify(settings));
-                            localStorage.setItem('l_inv', JSON.stringify(inventory)); 
-                            localStorage.setItem('l_sales', JSON.stringify(sales));
-                            localStorage.setItem('l_exp', JSON.stringify(expenses)); 
-                            localStorage.setItem('l_cust', JSON.stringify(customers));
-                            localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
-                            localStorage.setItem('l_quote', JSON.stringify(quotations));
-                            localStorage.setItem('l_ord', JSON.stringify(orders));
-                            localStorage.setItem('l_cat', JSON.stringify(categories));
-                            
-                            refreshDisplays();
-                            let syncTxt = document.getElementById('last-sync-time');
-                            if(syncTxt) syncTxt.innerText = "Data Updated: " + new Date().toLocaleTimeString();
-                        }
-                    } else {
-                        // First time login -> document doesn't exist yet, build initial cloud DB
-                        if(syncIndicator) { syncIndicator.innerText = "Building Cloud DB..."; syncIndicator.style.color = "#ffc107"; }
-                        saveToStorage(); 
-                    }
-                }, (error) => {
-                    console.error("Real-Time Sync Error:", error);
-                    let syncIndicator = document.getElementById('sync-text');
-                    if(syncIndicator) { syncIndicator.innerText = "Access Denied"; syncIndicator.style.color = "#dc3545"; }
-                    alert("CLOUD BLOCKED: Please go to your Firebase Console and update your 'Rules' to allow read/write access.");
-                });
-            } else {
-                let syncIndicator = document.getElementById('sync-text');
-                if(syncIndicator) { syncIndicator.innerText = "Local Mode (Offline)"; syncIndicator.style.color = "#6c757d"; }
+                await autoSyncMerge();
+                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
             }
         });
 
@@ -981,11 +1194,14 @@
             document.getElementById('googleLoginBtn').innerText = "Connecting...";
             try { 
                 const result = await auth.signInWithPopup(provider); 
+                currentUid = result.user.uid; docRef = db.collection("shops").doc(currentUid); 
+                document.getElementById('current-user-email').innerText = result.user.email;
+                document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
+                loadLocalData(); 
+                await autoSyncMerge();
+                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
                 document.getElementById('googleLoginBtn').innerText = "Cloud Connected";
-            } catch (error) { 
-                alert("Login Failed: " + error.message); 
-                document.getElementById('googleLoginBtn').innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Sign in with Google`; 
-            }
+            } catch (error) { alert("Login Failed: " + error.message); document.getElementById('googleLoginBtn').innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Sign in with Google`; }
         }
 
         // ACCESS CONTROL LOGIN
@@ -994,11 +1210,7 @@
             const btn = document.getElementById('loginBtn');
             btn.innerText = "Processing..."; btn.disabled = true; 
 
-            if (currentUid === "local") {
-                loadLocalData(); 
-                let syncIndicator = document.getElementById('sync-text');
-                if(syncIndicator) { syncIndicator.innerText = "Local Mode (Offline)"; syncIndicator.style.color = "#6c757d"; }
-            }
+            if (currentUid === "local") loadLocalData(); 
 
             if (passInput === appPass) {
                 userRole = 'admin';
@@ -1038,24 +1250,15 @@
             localStorage.setItem('l_cust', JSON.stringify(customers));
             localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
             localStorage.setItem('l_quote', JSON.stringify(quotations));
-            localStorage.setItem('l_ord', JSON.stringify(orders));
             localStorage.setItem('l_cat', JSON.stringify(categories));
             
             if (currentUid !== "local" && docRef) {
                 try { 
                     if (window.location.protocol !== 'file:') { 
-                        await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, orders, categories }); 
+                        await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories }); 
                         if(syncText) { syncText.innerText = "Synced"; syncText.style.color = "#28a745"; document.getElementById('last-sync-time').innerText = "Last push: " + new Date().toLocaleTimeString(); } 
                     } 
-                } catch(e) { 
-                    if(syncText) { syncText.innerText = "Offline / Error"; syncText.style.color = "#dc3545"; } 
-                    console.error("Firebase Error:", e);
-                    if (e.message && e.message.includes("Missing or insufficient permissions")) {
-                        alert("FIREBASE SYNC FAILED: Your database rules have expired and blocked access. Go to Firebase Console -> Firestore -> Rules and allow read/write.");
-                    } else if (e.message && e.message.includes("too large")) {
-                        alert("FIREBASE SYNC FAILED: Document is too large. Clear some old sales history.");
-                    }
-                }
+                } catch(e) { if(syncText) { syncText.innerText = "Offline (Local Saved)"; syncText.style.color = "#dc3545"; } }
             } else {
                 if(syncText) { syncText.innerText = "Local Mode Saved"; syncText.style.color = "#6c757d"; }
             }
@@ -1064,7 +1267,7 @@
         async function forceCloudRefresh() {
             if(!docRef || window.location.protocol === 'file:') { alert("You are in Local Mode."); return; }
             if(!confirm("Pull latest data from cloud? This will overwrite unsaved local changes.")) return;
-            try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); if(d && Object.keys(d).length > 0) { appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || inventory; sales = d.sales || sales; expenses = d.expenses || expenses; customers = d.customers || customers; suppliers = d.suppliers || suppliers; quotations = d.quotations || quotations; orders = d.orders || orders; categories = d.categories || categories; } alert("Data refreshed from cloud!"); initApp(); } else { alert("No cloud data found."); saveToStorage(); } } catch (e) { alert("Refresh failed."); }
+            try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); if(d && Object.keys(d).length > 0) { appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || inventory; sales = d.sales || sales; expenses = d.expenses || expenses; customers = d.customers || customers; suppliers = d.suppliers || suppliers; quotations = d.quotations || quotations; categories = d.categories || categories; } alert("Data refreshed from cloud!"); initApp(); } else { alert("No cloud data found."); saveToStorage(); } } catch (e) { alert("Refresh failed."); }
         }
 
         document.getElementById('set-profile-pic').addEventListener('change', function(e) { const file = e.target.files[0]; const reader = new FileReader(); reader.onloadend = () => { tempBase64Img = reader.result; }; if (file) reader.readAsDataURL(file); });
@@ -1102,10 +1305,10 @@
 
             document.getElementById('posTax').placeholder = settings.taxRate ? `Auto (${settings.taxRate}%)` : "0";
 
-            const adminOnlyTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-orders'];
+            const adminOnlyTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations'];
             adminOnlyTabs.forEach(id => { document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
             
-            if (userRole === 'staff' && !['pos-view', 'inventory-view', 'history-view', 'customers-view'].includes(document.querySelector('.view-section.active').id)) {
+            if (userRole === 'staff' && !['pos-view', 'inventory-view', 'history-view', 'customers-view', 'orders-view'].includes(document.querySelector('.view-section.active').id)) {
                 switchTab('pos');
             } else { refreshDisplays(); }
         }
@@ -1343,6 +1546,26 @@
                 return `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td><b style="color:var(--primary)">${c.points||0}</b></td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${btns}</td></tr>`;
             }).join('');
             
+            let oSearch = (document.getElementById('searchOrders')?.value || '').toLowerCase();
+            let filteredOrders = sales.filter(s => s.id.toLowerCase().includes(oSearch) || s.cust.toLowerCase().includes(oSearch) || s.date.toLowerCase().includes(oSearch));
+
+            if (document.getElementById('orderTableBody')) {
+                document.getElementById('orderTableBody').innerHTML = filteredOrders.slice().reverse().map(s => {
+                    let adv = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
+                    let status = s.orderStatus || 'Pending';
+                    let statusColor = status === 'Delivered' ? 'var(--success)' : (status === 'Ready' ? '#e67e22' : 'var(--danger)');
+                    let nextStatus = status === 'Pending' ? 'Ready' : (status === 'Ready' ? 'Delivered' : '');
+                    
+                    let btns = `<div style="display:flex; gap:5px; align-items:center;">`;
+                    if (nextStatus) {
+                        btns += `<button class="btn btn-blue" style="padding: 5px 10px; font-size:0.8em;" onclick="updateOrderStatus('${s.id}', '${nextStatus}')">Mark ${nextStatus}</button>`;
+                    }
+                    btns += `</div>`;
+                    
+                    return `<tr><td>#${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}</td><td><span style="color:${statusColor}; font-weight:bold;">${status}</span></td><td>₹${s.total.toFixed(2)}</td><td>₹${adv.toFixed(2)}</td><td style="color:red">₹${s.due||0}</td><td>${btns}</td></tr>`;
+                }).join('');
+            }
+
             let hSearch = (document.getElementById('searchHistory')?.value || '').toLowerCase();
             let filteredSales = sales.filter(s => s.id.toLowerCase().includes(hSearch) || s.cust.toLowerCase().includes(hSearch) || s.date.toLowerCase().includes(hSearch));
 
@@ -1372,20 +1595,6 @@
                             <button class="btn btn-blue" style="padding: 5px 10px; font-size:0.8em; margin-right: 5px;" onclick="printQuotation('${q.id}')">🖨️ Print</button>
                             <button class="btn btn-gray" style="color:red; padding: 5px 10px; font-size:0.8em;" onclick="deleteItem('quote', '${q.id}')">Del</button>`;
                 return `<tr><td>${q.id}</td><td>${q.date.split(',')[0]}</td><td>${q.cust}</td><td>₹${q.tax||0}</td><td><b>₹${q.total.toFixed(2)}</b></td><td>${btns}</td></tr>`;
-            }).join('');
-
-            document.getElementById('ordersTableBody').innerHTML = orders.slice().reverse().map(o => {
-                let statusColor = o.status === 'In Process' ? '#ffc107' : (o.status === 'Ready' ? '#17a2b8' : '#28a745');
-                let statusSelect = `<select onchange="updateOrderStatus('${o.id}', this.value)" style="padding:6px; border-radius:5px; background:${statusColor}; color:${o.status==='In Process'?'#000':'#fff'}; border:none; font-weight:bold; outline:none; cursor:pointer;">
-                    <option value="In Process" ${o.status==='In Process'?'selected':''}>⏳ In Process</option>
-                    <option value="Ready" ${o.status==='Ready'?'selected':''}>📦 Ready</option>
-                    <option value="Delivered" ${o.status==='Delivered'?'selected':''}>✅ Delivered</option>
-                </select>`;
-                
-                let btns = `<button class="btn btn-blue" style="padding: 5px 10px; font-size:0.8em; margin-right: 5px;" onclick="printOrder('${o.id}')">🖨️ Print</button>
-                            <button class="btn btn-green" style="padding: 5px 10px; font-size:0.8em; margin-right: 5px;" onclick="openOrderReadyModal('${o.id}')" title="Send Ready Message on WA">📱 WA</button>
-                            <button class="btn btn-gray" style="color:red; padding: 5px 10px; font-size:0.8em;" onclick="deleteItem('order', '${o.id}')">Del</button>`;
-                return `<tr><td>${o.id}</td><td>${o.date.split(',')[0]}</td><td>${o.cust}</td><td><b>₹${o.total.toFixed(2)}</b></td><td>${statusSelect}</td><td>${btns}</td></tr>`;
             }).join('');
 
             filterCustomerDropdown(); saveToStorage();
@@ -1600,16 +1809,7 @@
         }
 
         function generateWhatsAppText(item, isQuote) {
-            let isOrder = String(item.id).startsWith('ORD');
-            const L = settings.receiptLanguage === 'HI' ? { 
-                inv: isOrder ? "ऑर्डर" : (isQuote ? "कोटेशन" : "रसीद"), date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "अंक", due: "बकाया", 
-                total: isQuote ? "कुल अनुमानित राशि" : "कुल", thx: isQuote ? "कोटेशन मान्य 15 दिन" : (isOrder ? "ऑर्डर प्राप्त हुआ" : "धन्यवाद!"), pmode: "भुगतान मोड",
-                adv: "अग्रिम भुगतान", paid: "भुगतान किया" 
-            } : { 
-                inv: isOrder ? "Order" : (isQuote ? "Quotation" : "Invoice"), date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Pending Due", 
-                total: isQuote ? "Estimated Total" : "Grand Total", thx: isQuote ? "Estimate Valid for 15 Days" : (isOrder ? "Order Received" : "Thank you for your business!"), pmode: "Pay Mode",
-                adv: "Advance Paid", paid: "Amount Paid"
-            };
+            const L = settings.receiptLanguage === 'HI' ? { inv: isQuote ? "कोटेशन" : "रसीद", date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "अंक", due: "बकाया", total: isQuote ? "कुल अनुमानित राशि" : "कुल", thx: isQuote ? "कोटेशन मान्य 15 दिन" : "धन्यवाद!", pmode: "भुगतान मोड" } : { inv: isQuote ? "Quotation" : "Invoice", date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Pending Due", total: isQuote ? "Estimated Total" : "Grand Total", thx: isQuote ? "Estimate Valid for 15 Days" : "Thank you for your business!", pmode: "Pay Mode" };
             
             let text = `🧾 *${settings.name}*\n${L.inv}: #${item.id}\n${L.date}: ${item.date}\n${L.cust}: ${item.cust}\n------------------------\n`;
             item.items.forEach(i => { text += `${i.name} (x${i.qty} ${i.unit||'pcs'}) - ₹${i.price * i.qty}\n`; }); text += `------------------------\n`;
@@ -1625,23 +1825,16 @@
                 let taxModeStr = item.taxMode === 'INCLUSIVE' ? '(Incl.)' : '(Added)';
                 text += `${L.cgst} ${taxModeStr}: ₹${halfTax}\n${L.sgst} ${taxModeStr}: ₹${halfTax}\n`;
             }
-            if (!isQuote && !isOrder && item.loyaltyUsed > 0) text += `${L.pts}: -₹${item.loyaltyUsed}\n`;
-            
-            // Layout Order: Total -> Advance -> Due -> Pay Mode
-            text += `*${L.total}: ₹${item.total.toFixed(2)}*\n`;
-            
+            if (!isQuote && item.loyaltyUsed > 0) text += `${L.pts}: -₹${item.loyaltyUsed}\n`;
             if (!isQuote) {
-                let adv = item.total - (item.due || 0);
-                if (item.due > 0) {
-                    if (adv > 0) text += `*${L.adv}: ₹${adv.toFixed(2)}*\n`;
-                    text += `*${L.due}: ₹${item.due.toFixed(2)}*\n`;
-                } else {
-                    text += `*${L.paid}: ₹${item.total.toFixed(2)}*\n`;
-                }
+                let advance = item.advancePaid !== undefined ? item.advancePaid : (item.total - (item.due || 0));
+                let advLabel = settings.receiptLanguage === 'HI' ? "अग्रिम भुगतान" : "Advance Paid";
+                let pendLabel = settings.receiptLanguage === 'HI' ? "बकाया राशि" : "Pending Amount";
+                text += `${advLabel}: ₹${advance.toFixed(2)}\n`;
+                if (item.due > 0) text += `${pendLabel}: ₹${item.due.toFixed(2)}\n`;
             }
-            
-            if (!isQuote && !isOrder && item.payMode) text += `*${L.pmode}: ${item.payMode}*\n\n`;
-            else text += `\n`;
+            if (!isQuote && item.payMode) text += `${L.pmode}: ${item.payMode}\n`;
+            text += `*${L.total}: ₹${item.total.toFixed(2)}*\n\n`;
 
             if (settings.upiId && !isQuote && item.due > 0) {
                 let upiString = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.name)}&am=${item.due.toFixed(2)}&cu=INR`;
@@ -1655,7 +1848,7 @@
         }
 
         function sendWhatsApp(id) {
-            let item = sales.find(x => x.id === id); if (!item) item = quotations.find(x => x.id === id); if (!item) item = orders.find(x => x.id === id); if (!item) return;
+            let item = sales.find(x => x.id === id); if (!item) item = quotations.find(x => x.id === id); if (!item) return;
             let isQuote = String(id).startsWith('Q');
             let phone = (item.phone || "").replace(/\D/g,''); if(phone.length === 10) phone = "91" + phone; 
             if(phone.length < 10) { alert("Customer phone missing."); return; } 
@@ -1699,15 +1892,9 @@
             let saleId = editingSaleId ? editingSaleId : Date.now().toString().slice(-6);
             let saleDate = editingSaleDate ? editingSaleDate : new Date().toLocaleString();
 
-            // 1. SAVE TO SALES HISTORY
-            const newSale = { id: saleId, date: saleDate, cust: c.name, phone: c.phone, total: total, tax: taxAmount, taxPercent: taxPercent, taxMode: taxMode, due: due, discount: discountAmount, discountStr: discountStr, loyaltyUsed: loyaltyUsed, earnedPoints: earnedPoints, shipping: shippingInput, payMode: payMode, items: JSON.parse(JSON.stringify(cart)), returned: false };
+            let advancePaid = total - due;
+            const newSale = { id: saleId, date: saleDate, cust: c.name, phone: c.phone, total: total, tax: taxAmount, taxPercent: taxPercent, taxMode: taxMode, due: due, advancePaid: advancePaid, discount: discountAmount, discountStr: discountStr, loyaltyUsed: loyaltyUsed, earnedPoints: earnedPoints, shipping: shippingInput, payMode: payMode, items: JSON.parse(JSON.stringify(cart)), returned: false, orderStatus: 'Pending' };
             sales.push(newSale); 
-
-            // 2. SAVE TO ORDER MANAGEMENT (Auto-syncs from Bill)
-            const newOrder = JSON.parse(JSON.stringify(newSale));
-            newOrder.id = 'ORD-' + saleId; 
-            newOrder.status = 'In Process';
-            orders.push(newOrder);
             
             if(c) { c.spent += total; c.due = (c.due || 0) + due; c.points = (c.points || 0) - loyaltyUsed + earnedPoints; }
             cart.forEach(ci => { let invI = inventory.find(x => x.id == ci.id); if (invI) invI.stock -= ci.qty; });
@@ -1772,48 +1959,6 @@
             }, 100); 
         }
 
-        function updateOrderStatus(id, newStatus) {
-            let o = orders.find(x => x.id === id);
-            if(o) {
-                o.status = newStatus;
-                saveToStorage();
-                refreshDisplays();
-                if(newStatus === 'Ready') {
-                    openOrderReadyModal(id);
-                }
-            }
-        }
-        
-        function openOrderReadyModal(id) {
-            let o = orders.find(x => x.id === id);
-            if (!o) return;
-            document.getElementById('waOrderId').value = id;
-            let shopName = settings.name || "Billing Hub";
-            let msg = `Hello ${o.cust},\n\nGood news! Your order #${o.id} from ${shopName} is now READY. 📦\n\nTotal Amount: ₹${o.total}\n\nYou can pick it up at your earliest convenience. Thank you for choosing us!`;
-            document.getElementById('waOrderMsg').value = msg;
-            document.getElementById('orderReadyModal').style.display = 'flex';
-        }
-
-        function sendOrderReadyWA() {
-            let id = document.getElementById('waOrderId').value;
-            let msg = document.getElementById('waOrderMsg').value;
-            let o = orders.find(x => x.id === id);
-            if (!o) return;
-            let phone = (o.phone || "").replace(/\D/g,''); 
-            if(phone.length < 10) { 
-                alert("Customer phone number is missing or invalid."); 
-                return; 
-            }
-            if(phone.length === 10) phone = "91" + phone; 
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-            closeModals();
-        }
-
-        function printOrder(id) {
-            generateReceiptHTML(orders.find(o=>o.id===id), true); 
-            setTimeout(() => executePrint(), 100); 
-        }
-
         function resetCart() { cart = []; document.getElementById('posDiscount').value = ''; document.getElementById('posDiscountType').value = 'flat'; document.getElementById('posTax').value = ''; document.getElementById('posLoyalty').value = ''; document.getElementById('posAdvance').value = ''; document.getElementById('posShipping').value = ''; document.getElementById('posPayMode').value = 'Cash'; updateCart(); }
 
         // --- SALES EDIT & RETURN LOGIC ---
@@ -1864,9 +2009,6 @@
             // Remove old sale entirely
             sales.splice(sIndex, 1);
             
-            // Also remove from orders if it was pushed there
-            orders = orders.filter(o => o.id !== 'ORD-' + s.id);
-
             switchTab('pos');
             updateCart();
         }
@@ -1892,24 +2034,26 @@
             s.returned = true;
             s.due = 0;
             
-            // Also mark related order as Cancelled/Returned if it exists
-            let ord = orders.find(o => o.id === 'ORD-' + s.id);
-            if(ord) ord.status = 'Delivered'; // or remove it
-
             refreshDisplays();
+        }
+
+        function updateOrderStatus(id, newStatus) {
+            let s = sales.find(x => x.id === id);
+            if (s) {
+                s.orderStatus = newStatus;
+                saveToStorage();
+                refreshDisplays();
+            }
         }
 
         // --- THERMAL PRINTER ---
         function generateReceiptHTML(s, isQuote = false) { 
-            let isOrder = String(s.id).startsWith('ORD');
             const L = settings.receiptLanguage === 'HI' ? {
-                inv: isOrder ? "ऑर्डर" : (isQuote ? "कोटेशन" : "रसीद"), date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "उपयोग किए गए अंक", due: "बकाया राशि",
-                total: "कुल राशि", thx: isQuote ? "*** कोटेशन मान्य 15 दिन ***" : (isOrder ? "*** ऑर्डर प्राप्त हुआ ***" : "*** धन्यवाद! ***"), earned: "⭐ आपने अंक अर्जित किए:", gst: "जीएसटी", pmode: "भुगतान मोड",
-                adv: "अग्रिम भुगतान", paid: "भुगतान किया"
+                inv: isQuote ? "कोटेशन" : "रसीद", date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "उपयोग किए गए अंक", due: "बकाया राशि",
+                total: "कुल राशि", thx: isQuote ? "*** कोटेशन मान्य 15 दिन ***" : "*** धन्यवाद! ***", earned: "⭐ आपने अंक अर्जित किए:", gst: "जीएसटी", pmode: "भुगतान मोड"
             } : {
-                inv: isOrder ? "ORDER" : (isQuote ? "QUOTATION" : "INV"), date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Amount Due",
-                total: "Total", thx: isQuote ? "*** Estimate Valid for 15 Days ***" : (isOrder ? "*** Order Received ***" : "*** Thank You! ***"), earned: "⭐ You earned Points:", gst: "GSTIN", pmode: "Pay Mode",
-                adv: "Advance Paid", paid: "Amount Paid"
+                inv: isQuote ? "QUOTATION" : "INV", date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Amount Due",
+                total: "Total", thx: isQuote ? "*** Estimate Valid for 15 Days ***" : "*** Thank You! ***", earned: "⭐ You earned Points:", gst: "GSTIN", pmode: "Pay Mode"
             };
 
             let pWidth = "100%"; let fSize = "15px"; let containerCss = "box-sizing:border-box; width:100%; padding:10px;";
@@ -1939,23 +2083,15 @@
                 extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; color:#555;">${L.sgst} ${taxModeStr}: ₹${halfTax}</div>`;
             }
             if (s.loyaltyUsed > 0) extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">${L.pts}: -₹${s.loyaltyUsed}</div>`;
-            if (s.earnedPoints > 0 && !isQuote && !isOrder) extras += `<div style="text-align:center; margin:4px 0; font-size:0.9em;">${L.earned} ${s.earnedPoints}</div>`;
-
-            // Layout Order: Total -> Advance -> Due -> Pay Mode
-            let paymentDetails = "";
-            paymentDetails += `<div style="text-align:right; border-top:1px solid #000; margin:5px 0; padding-top:5px; font-size:calc(${fSize} + 4px); font-weight:bold;">${L.total}: ₹${s.total.toFixed(2)}</div>`;
-
             if (!isQuote) {
-                let adv = s.total - (s.due || 0);
-                if (s.due > 0) {
-                    if (adv > 0) paymentDetails += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:#555;">${L.adv}: ₹${adv.toFixed(2)}</div>`;
-                    paymentDetails += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize}; font-weight:bold;">${L.due}: ₹${s.due.toFixed(2)}</div>`;
-                } else {
-                    paymentDetails += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:green;">${L.paid}: ₹${s.total.toFixed(2)}</div>`;
-                }
+                let advance = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
+                let advLabel = settings.receiptLanguage === 'HI' ? "अग्रिम भुगतान" : "Advance Paid";
+                let pendLabel = settings.receiptLanguage === 'HI' ? "बकाया राशि" : "Pending Amount";
+                extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">${advLabel}: ₹${advance.toFixed(2)}</div>`;
+                if (s.due > 0) extras += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize};">${pendLabel}: ₹${s.due.toFixed(2)}</div>`;
             }
-            
-            if (!isQuote && !isOrder && s.payMode) paymentDetails += `<div style="text-align:right; margin:4px 0; font-weight:bold; font-size:${fSize}; color:#555;">${L.pmode}: ${s.payMode}</div>`;
+            if (s.earnedPoints > 0 && !isQuote) extras += `<div style="text-align:center; margin:4px 0; font-size:0.9em;">${L.earned} ${s.earnedPoints}</div>`;
+            if (!isQuote && s.payMode) extras += `<div style="text-align:right; margin:4px 0; font-weight:bold; font-size:${fSize};">${L.pmode}: ${s.payMode}</div>`;
 
             let addressLine = settings.address ? `${settings.address}<br>` : "";
             let cityLine = settings.city ? `${settings.city}<br>` : "";
@@ -1990,7 +2126,7 @@
                 ${tableHTML}
                 <hr style="border-top:1px dashed #000; margin:8px 0;">
                 ${extras}
-                ${paymentDetails}
+                <h3 style="text-align:right; border-top:1px solid #000; margin:5px 0; padding-top:5px; font-size:calc(${fSize} + 4px);">${L.total}: ₹${s.total.toFixed(2)}</h3>
                 ${qrSection}
                 <center><p style="font-size:${fSize}; margin-top:15px;">${L.thx}</p></center>
             </div>`;
@@ -2023,20 +2159,10 @@
                 extras += `<h4 align="right" style="margin:5px 0; color: #6c757d;">${taxModeStr} SGST: ₹${halfTax}</h4>`;
             }
             if (s.loyaltyUsed > 0) extras += `<h4 align="right" style="margin:5px 0; color: #28a745;">Pts Used: -₹${s.loyaltyUsed}</h4>`;
-            
-            // Layout Order: Total -> Advance -> Due -> Pay Mode
-            let paymentDetails = "";
-            paymentDetails += `<h2 align="right" style="margin-bottom: 5px; border-top: 1px solid #eee; padding-top: 10px;">Total: ₹${s.total.toFixed(2)}</h2>`;
-
-            let adv = s.total - (s.due || 0);
-            if (s.due > 0) {
-                if (adv > 0) paymentDetails += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Advance Paid: ₹${adv.toFixed(2)}</h4>`;
-                paymentDetails += `<h4 align="right" style="margin:5px 0; color: red;">Due Balance: ₹${s.due.toFixed(2)}</h4>`;
-            } else {
-                paymentDetails += `<h4 align="right" style="margin:5px 0; color: #28a745;">Amount Paid: ₹${s.total.toFixed(2)}</h4>`;
-            }
-            
-            if (s.payMode) paymentDetails += `<h4 align="right" style="margin:5px 0; color: #64748b;">Pay Mode: ${s.payMode}</h4>`;
+            let advance = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
+            extras += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Advance Paid: ₹${advance.toFixed(2)}</h4>`;
+            if (s.due > 0) extras += `<h4 align="right" style="margin:5px 0; color: red;">Pending Amount: ₹${s.due.toFixed(2)}</h4>`;
+            if (s.payMode) extras += `<h4 align="right" style="margin:5px 0; color: #6c757d;">Pay Mode: ${s.payMode}</h4>`;
             
             let qrScreen = "";
             if(settings.upiId && s.due > 0) {
@@ -2047,7 +2173,7 @@
                 </div>`;
             }
 
-            document.getElementById('billDetailContent').innerHTML = `<h3>Bill #${s.id}</h3><hr><table style="width:100%">${s.items.map(i => `<tr><td>${i.name} <br><small>${i.brand||''}</small> x${i.qty} ${i.unit||'pcs'}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}</table><hr>${extras}${paymentDetails}${qrScreen}<br><br>
+            document.getElementById('billDetailContent').innerHTML = `<h3>Bill #${s.id}</h3><hr><table style="width:100%">${s.items.map(i => `<tr><td>${i.name} <br><small>${i.brand||''}</small> x${i.qty} ${i.unit||'pcs'}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}</table><hr>${extras}<h2 align="right">Total: ₹${s.total.toFixed(2)}</h2>${qrScreen}<br><br>
                 <button class="btn btn-green" style="width:100%; margin-bottom:10px;" onclick="sendWhatsApp('${s.id}')">📱 Send WhatsApp Text</button>
                 <button class="btn btn-blue" style="width:100%; margin-bottom:10px;" onclick="printExistingBill('${s.id}')">🖨️ Re-Print</button>
                 <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Close</button>`;
@@ -2065,6 +2191,11 @@
             setTimeout(() => executePrint(), 100); 
         }
         
+        function printQuotation(id) { 
+            generateReceiptHTML(quotations.find(q=>q.id===id), true); 
+            setTimeout(() => executePrint(), 100); 
+        }
+
         function openBillPaymentModal(id) { 
             const s = sales.find(x => x.id === id); 
             if (!s) return; 
@@ -2082,6 +2213,7 @@
             if (amt <= 0 || amt > s.due) return alert("Invalid amount. Must be greater than 0 and not more than current due.");
             
             s.due -= amt;
+            if (s.advancePaid !== undefined) s.advancePaid += amt;
             
             let c = customers.find(x => x.name === s.cust);
             if (c) { 
@@ -2125,6 +2257,7 @@
                 if(s.cust === c.name && s.due > 0 && !s.returned) {
                     let toPay = Math.min(s.due, paymentRemaining);
                     s.due -= toPay;
+                    if (s.advancePaid !== undefined) s.advancePaid += toPay;
                     paymentRemaining -= toPay;
                 }
             }
@@ -2196,10 +2329,10 @@
         function openExpenseModal() { document.getElementById('expenseModal').style.display='flex'; }
         function saveExpense() { expenses.push({id:Date.now(), cat:document.getElementById('eCat').value, date:new Date().toLocaleDateString(), desc:document.getElementById('eDesc').value, amt:parseFloat(document.getElementById('eAmt').value)}); closeModals(); refreshDisplays(); }
         
-        function deleteItem(t, id) { if(confirm("Confirm deletion?")) { if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(i=>i.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); if(t==='sup') suppliers = suppliers.filter(s=>s.id!==id); if(t==='quote') quotations = quotations.filter(q=>q.id!==id); if(t==='order') orders = orders.filter(o=>o.id!==id); refreshDisplays(); } }
+        function deleteItem(t, id) { if(confirm("Confirm deletion?")) { if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(i=>i.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); if(t==='sup') suppliers = suppliers.filter(s=>s.id!==id); if(t==='quote') quotations = quotations.filter(q=>q.id!==id); refreshDisplays(); } }
         function filterCustomerDropdown() { const q = document.getElementById('custSearchInput').value.toLowerCase(); document.getElementById('posCustomerSelect').innerHTML = customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).map(c => `<option value="${c.id}">${c.name}</option>`).join(''); }
-        function exportData() { const b = new Blob([JSON.stringify({pass:appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, orders, categories})], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download=`Backup.json`; a.click(); }
-        async function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}]; suppliers = d.suppliers || []; quotations = d.quotations || []; orders = d.orders || []; categories = d.categories || ["General"]; await saveToStorage(); alert("Restored Successfully!"); location.reload(); } catch (error) { alert("Error: Invalid File"); } }; r.readAsText(e.target.files[0]); }
+        function exportData() { const b = new Blob([JSON.stringify({pass:appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories})], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download=`Backup.json`; a.click(); }
+        async function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}]; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || ["General"]; await saveToStorage(); alert("Restored Successfully!"); location.reload(); } catch (error) { alert("Error: Invalid File"); } }; r.readAsText(e.target.files[0]); }
         
         function printBarcodeLabel(id) { 
             const p = inventory.find(x => x.id === id); 
