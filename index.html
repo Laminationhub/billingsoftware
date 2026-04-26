@@ -591,230 +591,6 @@
         </div>
     </div>
 
-    <div id="quickBillModal" class="modal-bg">
-        <div class="modal-box" style="width: 380px; max-width: 95vw; background: #f4f7f9; padding: 25px; border-radius: 16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                <h3 style="margin:0; color: #1e293b; font-size: 1.3em;">Fast Entry</h3>
-                <span style="color:#94a3b8; cursor:pointer; font-size:1.8em; line-height:1; font-weight:300;" onclick="closeModals()">✕</span>
-            </div>
-            
-            <div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; text-align: right; min-height: 90px; display:flex; flex-direction:column; justify-content:space-between; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
-                <div id="qb-expr" style="font-size: 1.2em; color: #64748b; word-wrap: break-word; min-height: 28px; letter-spacing: 1px; padding-bottom: 5px;"></div>
-                <div id="qb-total" style="font-size: 2.8em; font-weight: 700; color: #0f172a; margin-top:5px;">0</div>
-            </div>
-
-            <style>
-                .qb-btn { border: none; border-radius: 10px; font-size: 1.6em; font-weight: 600; cursor: pointer; padding: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: 0.1s; display: flex; align-items: center; justify-content: center; }
-                .qb-btn:active { transform: scale(0.95); }
-                .qb-btn.num { background: white; color: #1e293b; }
-                .qb-btn.op-blue { background: #e0e7ff; color: #4338ca; font-size: 2em; }
-                .qb-btn.op-org { background: #f97316; color: white; font-size: 2em; }
-                .qb-btn.op-grn { background: #22c55e; color: white; font-size: 2em; }
-                .qb-btn.op-red { background: #ef4444; color: white; }
-            </style>
-
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-                <button class="qb-btn op-red" onclick="qbClear()" style="font-size:1.2em;">AC</button>
-                <button class="qb-btn op-blue" onclick="qbInput('(')">(</button>
-                <button class="qb-btn op-blue" onclick="qbInput(')')">)</button>
-                <button class="qb-btn op-blue" onclick="qbInput('%')">%</button>
-
-                <button class="qb-btn num" onclick="qbInput('7')">7</button>
-                <button class="qb-btn num" onclick="qbInput('8')">8</button>
-                <button class="qb-btn num" onclick="qbInput('9')">9</button>
-                <button class="qb-btn op-blue" onclick="qbInput('/')">÷</button>
-
-                <button class="qb-btn num" onclick="qbInput('4')">4</button>
-                <button class="qb-btn num" onclick="qbInput('5')">5</button>
-                <button class="qb-btn num" onclick="qbInput('6')">6</button>
-                <button class="qb-btn op-org" onclick="qbInput('*')">×</button>
-
-                <button class="qb-btn num" onclick="qbInput('1')">1</button>
-                <button class="qb-btn num" onclick="qbInput('2')">2</button>
-                <button class="qb-btn num" onclick="qbInput('3')">3</button>
-                <button class="qb-btn op-blue" onclick="qbInput('-')">-</button>
-
-                <button class="qb-btn op-red" onclick="qbBackspace()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
-                </button>
-                <button class="qb-btn num" onclick="qbInput('0')">0</button>
-                <button class="qb-btn num" onclick="qbInput('.')">.</button>
-                <button class="qb-btn op-grn" onclick="qbInput('+')">+</button>
-            </div>
-            
-            <button id="qb-add-btn" class="btn" style="width: 100%; margin-top: 20px; padding: 18px; font-size: 1.1em; font-weight:700; background: #007bff; color: white; border-radius: 10px; letter-spacing: 0.5px;" onclick="addQuickBillToCart()">ADD TO CART ➔</button>
-        </div>
-    </div>
-
-    <div id="customerModal" class="modal-bg"><div class="modal-box"><h3>New Customer</h3><div class="form-group"><label>Full Name</label><input type="text" id="cName"></div><div class="form-group"><label>Phone</label><input type="text" id="cPhone"></div><button class="btn btn-green" style="width:100%" onclick="saveCustomer()">Register</button><br><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button></div></div>
-    
-    <div id="supplierModal" class="modal-bg">
-        <div class="modal-box modal-box-large">
-            <h3>Add New Supplier</h3>
-            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                <label><input type="radio" name="supType" value="Business" checked> Business</label>
-                <label><input type="radio" name="supType" value="Individual"> Individual</label>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Contact ID (Auto if empty)</label><input type="text" id="supContactId" placeholder="Leave empty to autogenerate"></div>
-                <div class="form-group"><label>Name / Company *</label><input type="text" id="supName" placeholder="Required"></div>
-                <div class="form-group"><label>Mobile *</label><input type="text" id="supMobile" placeholder="Required"></div>
-                <div class="form-group"><label>Alternate Contact Number</label><input type="text" id="supAltMobile"></div>
-                <div class="form-group"><label>Landline</label><input type="text" id="supLandline"></div>
-                <div class="form-group"><label>Email</label><input type="text" id="supEmail"></div>
-                <div class="form-group"><label>Tax Number</label><input type="text" id="supTax"></div>
-                <div class="form-group"><label>Opening Balance</label><input type="number" id="supOpeningBalance" value="0"></div>
-                <div class="form-group">
-                    <label>Pay Term</label>
-                    <div style="display:flex; gap:5px;">
-                        <input type="number" id="supPayTermVal" style="width:50%;">
-                        <select id="supPayTermType" style="width:50%;">
-                            <option value="Days">Days</option>
-                            <option value="Months">Months</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            
-            <h4 style="margin-bottom: 10px; color:#666; border-bottom: 1px solid #eee; padding-bottom:5px;">Address Information</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group" style="grid-column: span 2;"><label>Address Line 1</label><input type="text" id="supAddress1"></div>
-                <div class="form-group" style="grid-column: span 2;"><label>Address Line 2</label><input type="text" id="supAddress2"></div>
-                <div class="form-group"><label>City</label><input type="text" id="supCity"></div>
-                <div class="form-group"><label>State</label><input type="text" id="supState"></div>
-                <div class="form-group"><label>Country</label><input type="text" id="supCountry"></div>
-                <div class="form-group"><label>Zip Code</label><input type="text" id="supZip"></div>
-            </div>
-            
-            <h4 style="margin-bottom: 10px; color:#666; border-bottom: 1px solid #eee; padding-bottom:5px;">Custom Fields</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Custom Field 1</label><input type="text" id="supCustom1"></div>
-                <div class="form-group"><label>Custom Field 2</label><input type="text" id="supCustom2"></div>
-                <div class="form-group"><label>Custom Field 3</label><input type="text" id="supCustom3"></div>
-                <div class="form-group"><label>Custom Field 4</label><input type="text" id="supCustom4"></div>
-            </div>
-            
-            <button class="btn btn-dark" style="width:100%; margin-top: 15px;" onclick="saveSupplier()">Save Supplier</button><br><br>
-            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
-        </div>
-    </div>
-
-    <div id="supplierPurchaseModal" class="modal-bg"><div class="modal-box"><h3>Log Purchase from Supplier</h3><input type="hidden" id="spId_purchase"><div class="form-group"><label>Bill Amount (₹)</label><input type="number" id="spAmountBought" placeholder="Amount purchased"></div><button class="btn btn-blue" style="width:100%" onclick="saveSupplierPurchase()">Add Purchase</button><br><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button></div></div>
-    
-    <div id="supplierPaymentModal" class="modal-bg"><div class="modal-box"><h3>Log Payment to Supplier</h3><input type="hidden" id="spId_payment"><div class="form-group"><label>Amount Paid (₹)</label><input type="number" id="spAmountPaid" placeholder="Amount paid"></div><button class="btn btn-green" style="width:100%" onclick="saveSupplierPayment()">Record Payment</button><br><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button></div></div>
-    
-    <div id="categoryModal" class="modal-bg"><div class="modal-box"><h3>Manage Categories</h3><div class="form-group"><label>New Category Name</label><input type="text" id="newCatName"></div><button class="btn btn-warning" style="width:100%; margin-bottom: 15px;" onclick="addCategory()">Add Category</button><div id="catListArea" style="max-height: 150px; overflow-y:auto; border: 1px solid #eee; padding: 10px; border-radius: 5px;"></div><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Close</button></div></div>
-
-    <div id="productModal" class="modal-bg">
-        <div class="modal-box">
-            <h3>Product Info</h3>
-            <div class="form-group"><label>Name</label><input type="text" id="pName"></div>
-            <div class="form-group"><label>Barcode / SKU (Optional)</label><input type="text" id="pBarcode" placeholder="Scan or type barcode..."></div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Category</label><select id="pCat"><option value="General">General</option></select></div>
-                <div class="form-group"><label>Supplier</label><select id="pSupplier"><option value="None">None</option></select></div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Brand</label><input type="text" id="pBrand" placeholder="e.g. 3M"></div>
-                <div class="form-group">
-                    <label>Unit</label>
-                    <select id="pUnit">
-                        <option value="pcs">Pieces (pcs)</option>
-                        <option value="kg">Kilogram (kg)</option>
-                        <option value="mtr">Meter (mtr)</option>
-                        <option value="sqft">Sq. Ft.</option>
-                        <option value="pkt">Packet</option>
-                        <option value="box">Box</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group"><label>Warranty</label><input type="text" id="pWarranty" placeholder="e.g. 6 Months, 1 Year, None"></div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Price (₹)</label><input type="number" id="pPrice"></div>
-                <div class="form-group"><label>Stock Qty</label><input type="number" id="pStock" step="0.01"></div>
-            </div>
-            <button class="btn btn-blue" style="width:100%" onclick="saveProduct()">Save Product</button><br><br>
-            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
-        </div>
-    </div>
-    
-    <div id="expenseModal" class="modal-bg">
-        <div class="modal-box">
-            <h3>Log Expense</h3>
-            <div class="form-group">
-                <label>Category</label>
-                <select id="eCat">
-                    <option value="Raw Materials">Raw Materials</option>
-                    <option value="Rent">Rent</option>
-                    <option value="Electricity">Electricity</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div class="form-group"><label>Description</label><input type="text" id="eDesc"></div>
-            <div class="form-group"><label>Amount (₹)</label><input type="number" id="eAmt"></div>
-            <button class="btn btn-danger" style="width:100%" onclick="saveExpense()">Save Expense</button><br><br>
-            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
-        </div>
-    </div>
-    
-    <div id="viewBillModal" class="modal-bg"><div class="modal-box" id="billDetailContent"></div></div>
-
-    <div id="billPaymentModal" class="modal-bg">
-        <div class="modal-box">
-            <h3>Pay Pending Bill Due</h3>
-            <p style="font-size: 0.9em; color:#666;">Current Due: <strong style="color:red;">₹<span id="bpCurrentDue">0</span></strong></p>
-            <input type="hidden" id="bpBillId">
-            <div class="form-group">
-                <label>Amount to Pay (₹)</label>
-                <input type="number" id="bpAmount" placeholder="Enter amount">
-            </div>
-            <button class="btn btn-green" style="width:100%" onclick="saveBillPayment()">Submit Payment</button><br><br>
-            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
-        </div>
-    </div>
-
-    <div id="customerPaymentModal" class="modal-bg">
-        <div class="modal-box">
-            <h3>Pay Customer Due Balance</h3>
-            <p style="font-size: 0.9em; color:#666;">Total Ledger Due: <strong style="color:red;">₹<span id="cpCurrentDue">0</span></strong></p>
-            <input type="hidden" id="cpCustId">
-            <div class="form-group">
-                <label>Amount Customer is Paying (₹)</label>
-                <input type="number" id="cpAmount" placeholder="Enter amount">
-            </div>
-            <button class="btn btn-green" style="width:100%" onclick="saveCustomerPayment()">Apply Payment</button><br><br>
-            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
-        </div>
-    </div>
-    
-    <div id="bulkModal" class="modal-bg">
-        <div class="modal-box" style="width: 500px;">
-            <h3>Bulk Stock Update</h3>
-            <p style="font-size: 0.8em; color: #666;">Enter the quantity to ADD to current stock (e.g., +10).</p>
-            <div id="bulkItemsContainer" style="max-height: 300px; overflow-y: auto; margin: 15px 0; border: 1px solid #eee; border-radius: 8px;"></div>
-            <button class="btn btn-blue" style="width:100%" onclick="saveBulkStock()">Update All & Sync</button><br><br>
-            <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
-        </div>
-    </div>
-
-    <div id="scannerModal" class="modal-bg"><div class="modal-box"><h3>📷 Scan Barcode</h3><div id="reader"></div><button class="btn btn-gray" style="width:100%; margin-top:15px;" onclick="closeScanner()">Cancel</button></div></div>
-
-    <div id="broadcastModal" class="modal-bg">
-        <div class="modal-box" style="width: 500px;">
-            <h3>📢 WhatsApp Promo Broadcast</h3>
-            <p style="font-size: 0.8em; color: #666;">Type your offer below and click generate to send to your customer list.</p>
-            <textarea id="broadcastMsg" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; outline: none; margin-bottom: 10px;" placeholder="Ex: Flat 20% off on all Laptop Skins this weekend at Billing Hub!"></textarea>
-            <button class="btn btn-blue" style="width:100%" onclick="generateBroadcastLinks()">Generate Send Links</button>
-            <div id="broadcastLinksContainer" style="max-height: 250px; overflow-y: auto; margin-top: 15px;"></div>
-            <button class="btn btn-gray" style="width:100%; margin-top:15px;" onclick="closeModals()">Close</button>
-        </div>
-    </div>
-
     <div id="calculator-widget" style="position:fixed; bottom:20px; right:20px; z-index:9999;">
         <button class="btn btn-dark" style="border-radius:50%; width:60px; height:60px; font-size:24px; box-shadow:0 4px 10px rgba(0,0,0,0.3); display:flex; justify-content:center; align-items:center;" onclick="toggleCalc()">🖩</button>
         <div id="calc-container" style="display:none; position:absolute; bottom:70px; right:0; background:white; padding:15px; border-radius:10px; box-shadow:0 5px 20px rgba(0,0,0,0.2); width:220px; border:1px solid #eee;">
@@ -1143,68 +919,48 @@
             try { if(localStorage.getItem('l_cat')) categories = JSON.parse(localStorage.getItem('l_cat')); } catch(e){}
         }
 
-        // FULLY AUTOMATIC CLOUD SYNC & MERGE
-        async function autoSyncMerge() {
-            if (!docRef || window.location.protocol === 'file:') return;
-            
-            try {
-                const doc = await docRef.get();
-                if (doc.exists) {
-                    const c = doc.data();
-                    
-                    const mergeArrays = (localArr, cloudArr) => {
-                        let combined = [...localArr];
-                        if(cloudArr && Array.isArray(cloudArr)) {
-                            cloudArr.forEach(cItem => {
-                                let matchIndex = combined.findIndex(lItem => lItem.id === cItem.id);
-                                if(matchIndex === -1) {
-                                    combined.push(cItem);
-                                } else {
-                                    combined[matchIndex] = cItem;
-                                }
-                            });
-                        }
-                        return combined;
-                    };
-
-                    inventory = mergeArrays(inventory, c.inventory || []);
-                    sales = mergeArrays(sales, c.sales || []);
-                    expenses = mergeArrays(expenses, c.expenses || []);
-                    customers = mergeArrays(customers, c.customers || []);
-                    suppliers = mergeArrays(suppliers, c.suppliers || []);
-                    quotations = mergeArrays(quotations, c.quotations || []);
-                    orders = mergeArrays(orders, c.orders || []);
-                    
-                    let c_cat = c.categories || ["General"];
-                    c_cat.forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
-
-                    if(c.settings && (!settings.name || settings.name === 'Lamination Hub' || settings.name === 'Billing Hub')) {
-                        settings = c.settings;
-                    }
-                }
-                
-                await saveToStorage(); 
-                refreshDisplays();
-                document.getElementById('last-sync-time').innerText = "Last Sync: " + new Date().toLocaleTimeString();
-                
-            } catch(e) {
-                console.error("Auto Sync Error:", e);
-            }
-        }
-
-        setInterval(async () => {
-            if (currentUid !== "local" && userRole === 'admin') {
-                await autoSyncMerge();
-            }
-        }, 60000);
-
+        // REAL-TIME INSTANT MULTI-DEVICE SYNC
         auth.onAuthStateChanged(async user => {
             if (user) {
                 currentUid = user.uid; docRef = db.collection("shops").doc(currentUid); 
                 document.getElementById('current-user-email').innerText = user.email;
-                document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
+                document.getElementById('login-status').innerText = "Connecting to Cloud...";
                 loadLocalData(); 
-                await autoSyncMerge();
+                
+                // INSTANT LISTENER: Automatically pulls data the exact millisecond another device saves it
+                docRef.onSnapshot((doc) => {
+                    if (doc.exists) {
+                        // Only pull if the change came from ANOTHER device, not this one
+                        if (!doc.metadata.hasPendingWrites) {
+                            const d = doc.data();
+                            appPass = d.appPass || appPass; settings = d.settings || settings;
+                            inventory = d.inventory || inventory; sales = d.sales || sales;
+                            expenses = d.expenses || expenses; customers = d.customers || customers;
+                            suppliers = d.suppliers || suppliers; quotations = d.quotations || quotations;
+                            orders = d.orders || orders; categories = d.categories || categories;
+                            
+                            // Save incoming cloud data directly to device storage instantly
+                            localStorage.setItem('l_pass', appPass); 
+                            localStorage.setItem('l_settings', JSON.stringify(settings));
+                            localStorage.setItem('l_inv', JSON.stringify(inventory)); 
+                            localStorage.setItem('l_sales', JSON.stringify(sales));
+                            localStorage.setItem('l_exp', JSON.stringify(expenses)); 
+                            localStorage.setItem('l_cust', JSON.stringify(customers));
+                            localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
+                            localStorage.setItem('l_quote', JSON.stringify(quotations));
+                            localStorage.setItem('l_ord', JSON.stringify(orders));
+                            localStorage.setItem('l_cat', JSON.stringify(categories));
+                            
+                            refreshDisplays();
+                            let syncTxt = document.getElementById('last-sync-time');
+                            if(syncTxt) syncTxt.innerText = "Live Update Received: " + new Date().toLocaleTimeString();
+                        }
+                    }
+                }, (error) => {
+                    console.error("Real-Time Sync Error:", error);
+                    alert("CLOUD BLOCKED: Please go to your Firebase Console and update your 'Rules' to allow read/write access.");
+                });
+
                 document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
             }
         });
@@ -1214,14 +970,11 @@
             document.getElementById('googleLoginBtn').innerText = "Connecting...";
             try { 
                 const result = await auth.signInWithPopup(provider); 
-                currentUid = result.user.uid; docRef = db.collection("shops").doc(currentUid); 
-                document.getElementById('current-user-email').innerText = result.user.email;
-                document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
-                loadLocalData(); 
-                await autoSyncMerge();
-                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
                 document.getElementById('googleLoginBtn').innerText = "Cloud Connected";
-            } catch (error) { alert("Login Failed: " + error.message); document.getElementById('googleLoginBtn').innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Sign in with Google`; }
+            } catch (error) { 
+                alert("Login Failed: " + error.message); 
+                document.getElementById('googleLoginBtn').innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Sign in with Google`; 
+            }
         }
 
         // ACCESS CONTROL LOGIN
@@ -1279,7 +1032,15 @@
                         await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, orders, categories }); 
                         if(syncText) { syncText.innerText = "Synced"; syncText.style.color = "#28a745"; document.getElementById('last-sync-time').innerText = "Last push: " + new Date().toLocaleTimeString(); } 
                     } 
-                } catch(e) { if(syncText) { syncText.innerText = "Offline (Local Saved)"; syncText.style.color = "#dc3545"; } }
+                } catch(e) { 
+                    if(syncText) { syncText.innerText = "Offline / Error"; syncText.style.color = "#dc3545"; } 
+                    console.error("Firebase Error:", e);
+                    if (e.message && e.message.includes("Missing or insufficient permissions")) {
+                        alert("FIREBASE SYNC FAILED: Your database rules have expired and blocked access. Go to Firebase Console -> Firestore -> Rules and allow read/write.");
+                    } else if (e.message && e.message.includes("too large")) {
+                        alert("FIREBASE SYNC FAILED: Document is too large. Clear some old sales history.");
+                    }
+                }
             } else {
                 if(syncText) { syncText.innerText = "Local Mode Saved"; syncText.style.color = "#6c757d"; }
             }
@@ -1851,6 +1612,9 @@
             }
             if (!isQuote && !isOrder && item.loyaltyUsed > 0) text += `${L.pts}: -₹${item.loyaltyUsed}\n`;
             
+            // Layout Order: Total -> Advance -> Due -> Pay Mode
+            text += `*${L.total}: ₹${item.total.toFixed(2)}*\n`;
+            
             if (!isQuote) {
                 let adv = item.total - (item.due || 0);
                 if (item.due > 0) {
@@ -1861,8 +1625,8 @@
                 }
             }
             
-            if (!isQuote && !isOrder && item.payMode) text += `${L.pmode}: ${item.payMode}\n`;
-            text += `*${L.total}: ₹${item.total.toFixed(2)}*\n\n`;
+            if (!isQuote && !isOrder && item.payMode) text += `*${L.pmode}: ${item.payMode}*\n\n`;
+            else text += `\n`;
 
             if (settings.upiId && !isQuote && item.due > 0) {
                 let upiString = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.name)}&am=${item.due.toFixed(2)}&cu=INR`;
@@ -2160,20 +1924,23 @@
                 extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; color:#555;">${L.sgst} ${taxModeStr}: ₹${halfTax}</div>`;
             }
             if (s.loyaltyUsed > 0) extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">${L.pts}: -₹${s.loyaltyUsed}</div>`;
-            
-            // Advance & Due Logic for Receipt
+            if (s.earnedPoints > 0 && !isQuote && !isOrder) extras += `<div style="text-align:center; margin:4px 0; font-size:0.9em;">${L.earned} ${s.earnedPoints}</div>`;
+
+            // Layout Order: Total -> Advance -> Due -> Pay Mode
+            let paymentDetails = "";
+            paymentDetails += `<div style="text-align:right; border-top:1px solid #000; margin:5px 0; padding-top:5px; font-size:calc(${fSize} + 4px); font-weight:bold;">${L.total}: ₹${s.total.toFixed(2)}</div>`;
+
             if (!isQuote) {
                 let adv = s.total - (s.due || 0);
                 if (s.due > 0) {
-                    if (adv > 0) extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold;">${L.adv}: ₹${adv.toFixed(2)}</div>`;
-                    extras += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize}; font-weight:bold;">${L.due}: ₹${s.due.toFixed(2)}</div>`;
+                    if (adv > 0) paymentDetails += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:#555;">${L.adv}: ₹${adv.toFixed(2)}</div>`;
+                    paymentDetails += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize}; font-weight:bold;">${L.due}: ₹${s.due.toFixed(2)}</div>`;
                 } else {
-                    extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:green;">${L.paid}: ₹${s.total.toFixed(2)}</div>`;
+                    paymentDetails += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:green;">${L.paid}: ₹${s.total.toFixed(2)}</div>`;
                 }
             }
             
-            if (s.earnedPoints > 0 && !isQuote && !isOrder) extras += `<div style="text-align:center; margin:4px 0; font-size:0.9em;">${L.earned} ${s.earnedPoints}</div>`;
-            if (!isQuote && !isOrder && s.payMode) extras += `<div style="text-align:right; margin:4px 0; font-weight:bold; font-size:${fSize};">${L.pmode}: ${s.payMode}</div>`;
+            if (!isQuote && !isOrder && s.payMode) paymentDetails += `<div style="text-align:right; margin:4px 0; font-weight:bold; font-size:${fSize}; color:#555;">${L.pmode}: ${s.payMode}</div>`;
 
             let addressLine = settings.address ? `${settings.address}<br>` : "";
             let cityLine = settings.city ? `${settings.city}<br>` : "";
@@ -2208,7 +1975,7 @@
                 ${tableHTML}
                 <hr style="border-top:1px dashed #000; margin:8px 0;">
                 ${extras}
-                <h3 style="text-align:right; border-top:1px solid #000; margin:5px 0; padding-top:5px; font-size:calc(${fSize} + 4px);">${L.total}: ₹${s.total.toFixed(2)}</h3>
+                ${paymentDetails}
                 ${qrSection}
                 <center><p style="font-size:${fSize}; margin-top:15px;">${L.thx}</p></center>
             </div>`;
@@ -2242,16 +2009,19 @@
             }
             if (s.loyaltyUsed > 0) extras += `<h4 align="right" style="margin:5px 0; color: #28a745;">Pts Used: -₹${s.loyaltyUsed}</h4>`;
             
-            // Advance Paid and Due Logic for View Bill
+            // Layout Order: Total -> Advance -> Due -> Pay Mode
+            let paymentDetails = "";
+            paymentDetails += `<h2 align="right" style="margin-bottom: 5px; border-top: 1px solid #eee; padding-top: 10px;">Total: ₹${s.total.toFixed(2)}</h2>`;
+
             let adv = s.total - (s.due || 0);
             if (s.due > 0) {
-                if (adv > 0) extras += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Advance Paid: ₹${adv.toFixed(2)}</h4>`;
-                extras += `<h4 align="right" style="margin:5px 0; color: red;">Due Balance: ₹${s.due.toFixed(2)}</h4>`;
+                if (adv > 0) paymentDetails += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Advance Paid: ₹${adv.toFixed(2)}</h4>`;
+                paymentDetails += `<h4 align="right" style="margin:5px 0; color: red;">Due Balance: ₹${s.due.toFixed(2)}</h4>`;
             } else {
-                extras += `<h4 align="right" style="margin:5px 0; color: #28a745;">Amount Paid: ₹${s.total.toFixed(2)}</h4>`;
+                paymentDetails += `<h4 align="right" style="margin:5px 0; color: #28a745;">Amount Paid: ₹${s.total.toFixed(2)}</h4>`;
             }
             
-            if (s.payMode) extras += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Pay Mode: ${s.payMode}</h4>`;
+            if (s.payMode) paymentDetails += `<h4 align="right" style="margin:5px 0; color: #64748b;">Pay Mode: ${s.payMode}</h4>`;
             
             let qrScreen = "";
             if(settings.upiId && s.due > 0) {
@@ -2262,7 +2032,7 @@
                 </div>`;
             }
 
-            document.getElementById('billDetailContent').innerHTML = `<h3>Bill #${s.id}</h3><hr><table style="width:100%">${s.items.map(i => `<tr><td>${i.name} <br><small>${i.brand||''}</small> x${i.qty} ${i.unit||'pcs'}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}</table><hr>${extras}<h2 align="right">Total: ₹${s.total.toFixed(2)}</h2>${qrScreen}<br><br>
+            document.getElementById('billDetailContent').innerHTML = `<h3>Bill #${s.id}</h3><hr><table style="width:100%">${s.items.map(i => `<tr><td>${i.name} <br><small>${i.brand||''}</small> x${i.qty} ${i.unit||'pcs'}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}</table><hr>${extras}${paymentDetails}${qrScreen}<br><br>
                 <button class="btn btn-green" style="width:100%; margin-bottom:10px;" onclick="sendWhatsApp('${s.id}')">📱 Send WhatsApp Text</button>
                 <button class="btn btn-blue" style="width:100%; margin-bottom:10px;" onclick="printExistingBill('${s.id}')">🖨️ Re-Print</button>
                 <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Close</button>`;
