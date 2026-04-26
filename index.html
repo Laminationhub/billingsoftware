@@ -1851,6 +1851,9 @@
             }
             if (!isQuote && !isOrder && item.loyaltyUsed > 0) text += `${L.pts}: -₹${item.loyaltyUsed}\n`;
             
+            // Layout Order: Total -> Advance -> Due -> Pay Mode
+            text += `*${L.total}: ₹${item.total.toFixed(2)}*\n`;
+            
             if (!isQuote) {
                 let adv = item.total - (item.due || 0);
                 if (item.due > 0) {
@@ -1861,8 +1864,8 @@
                 }
             }
             
-            if (!isQuote && !isOrder && item.payMode) text += `${L.pmode}: ${item.payMode}\n`;
-            text += `*${L.total}: ₹${item.total.toFixed(2)}*\n\n`;
+            if (!isQuote && !isOrder && item.payMode) text += `*${L.pmode}: ${item.payMode}*\n\n`;
+            else text += `\n`;
 
             if (settings.upiId && !isQuote && item.due > 0) {
                 let upiString = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.name)}&am=${item.due.toFixed(2)}&cu=INR`;
@@ -2160,20 +2163,23 @@
                 extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; color:#555;">${L.sgst} ${taxModeStr}: ₹${halfTax}</div>`;
             }
             if (s.loyaltyUsed > 0) extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">${L.pts}: -₹${s.loyaltyUsed}</div>`;
-            
-            // Advance & Due Logic for Receipt
+            if (s.earnedPoints > 0 && !isQuote && !isOrder) extras += `<div style="text-align:center; margin:4px 0; font-size:0.9em;">${L.earned} ${s.earnedPoints}</div>`;
+
+            // Layout Order: Total -> Advance -> Due -> Pay Mode
+            let paymentDetails = "";
+            paymentDetails += `<div style="text-align:right; border-top:1px solid #000; margin:5px 0; padding-top:5px; font-size:calc(${fSize} + 4px); font-weight:bold;">${L.total}: ₹${s.total.toFixed(2)}</div>`;
+
             if (!isQuote) {
                 let adv = s.total - (s.due || 0);
                 if (s.due > 0) {
-                    if (adv > 0) extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold;">${L.adv}: ₹${adv.toFixed(2)}</div>`;
-                    extras += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize}; font-weight:bold;">${L.due}: ₹${s.due.toFixed(2)}</div>`;
+                    if (adv > 0) paymentDetails += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:#555;">${L.adv}: ₹${adv.toFixed(2)}</div>`;
+                    paymentDetails += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize}; font-weight:bold;">${L.due}: ₹${s.due.toFixed(2)}</div>`;
                 } else {
-                    extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:green;">${L.paid}: ₹${s.total.toFixed(2)}</div>`;
+                    paymentDetails += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; font-weight:bold; color:green;">${L.paid}: ₹${s.total.toFixed(2)}</div>`;
                 }
             }
             
-            if (s.earnedPoints > 0 && !isQuote && !isOrder) extras += `<div style="text-align:center; margin:4px 0; font-size:0.9em;">${L.earned} ${s.earnedPoints}</div>`;
-            if (!isQuote && !isOrder && s.payMode) extras += `<div style="text-align:right; margin:4px 0; font-weight:bold; font-size:${fSize};">${L.pmode}: ${s.payMode}</div>`;
+            if (!isQuote && !isOrder && s.payMode) paymentDetails += `<div style="text-align:right; margin:4px 0; font-weight:bold; font-size:${fSize}; color:#555;">${L.pmode}: ${s.payMode}</div>`;
 
             let addressLine = settings.address ? `${settings.address}<br>` : "";
             let cityLine = settings.city ? `${settings.city}<br>` : "";
@@ -2208,7 +2214,7 @@
                 ${tableHTML}
                 <hr style="border-top:1px dashed #000; margin:8px 0;">
                 ${extras}
-                <h3 style="text-align:right; border-top:1px solid #000; margin:5px 0; padding-top:5px; font-size:calc(${fSize} + 4px);">${L.total}: ₹${s.total.toFixed(2)}</h3>
+                ${paymentDetails}
                 ${qrSection}
                 <center><p style="font-size:${fSize}; margin-top:15px;">${L.thx}</p></center>
             </div>`;
@@ -2242,16 +2248,19 @@
             }
             if (s.loyaltyUsed > 0) extras += `<h4 align="right" style="margin:5px 0; color: #28a745;">Pts Used: -₹${s.loyaltyUsed}</h4>`;
             
-            // Advance Paid and Due Logic for View Bill
+            // Layout Order: Total -> Advance -> Due -> Pay Mode
+            let paymentDetails = "";
+            paymentDetails += `<h2 align="right" style="margin-bottom: 5px; border-top: 1px solid #eee; padding-top: 10px;">Total: ₹${s.total.toFixed(2)}</h2>`;
+
             let adv = s.total - (s.due || 0);
             if (s.due > 0) {
-                if (adv > 0) extras += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Advance Paid: ₹${adv.toFixed(2)}</h4>`;
-                extras += `<h4 align="right" style="margin:5px 0; color: red;">Due Balance: ₹${s.due.toFixed(2)}</h4>`;
+                if (adv > 0) paymentDetails += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Advance Paid: ₹${adv.toFixed(2)}</h4>`;
+                paymentDetails += `<h4 align="right" style="margin:5px 0; color: red;">Due Balance: ₹${s.due.toFixed(2)}</h4>`;
             } else {
-                extras += `<h4 align="right" style="margin:5px 0; color: #28a745;">Amount Paid: ₹${s.total.toFixed(2)}</h4>`;
+                paymentDetails += `<h4 align="right" style="margin:5px 0; color: #28a745;">Amount Paid: ₹${s.total.toFixed(2)}</h4>`;
             }
             
-            if (s.payMode) extras += `<h4 align="right" style="margin:5px 0; color: #17a2b8;">Pay Mode: ${s.payMode}</h4>`;
+            if (s.payMode) paymentDetails += `<h4 align="right" style="margin:5px 0; color: #64748b;">Pay Mode: ${s.payMode}</h4>`;
             
             let qrScreen = "";
             if(settings.upiId && s.due > 0) {
@@ -2262,7 +2271,7 @@
                 </div>`;
             }
 
-            document.getElementById('billDetailContent').innerHTML = `<h3>Bill #${s.id}</h3><hr><table style="width:100%">${s.items.map(i => `<tr><td>${i.name} <br><small>${i.brand||''}</small> x${i.qty} ${i.unit||'pcs'}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}</table><hr>${extras}<h2 align="right">Total: ₹${s.total.toFixed(2)}</h2>${qrScreen}<br><br>
+            document.getElementById('billDetailContent').innerHTML = `<h3>Bill #${s.id}</h3><hr><table style="width:100%">${s.items.map(i => `<tr><td>${i.name} <br><small>${i.brand||''}</small> x${i.qty} ${i.unit||'pcs'}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}</table><hr>${extras}${paymentDetails}${qrScreen}<br><br>
                 <button class="btn btn-green" style="width:100%; margin-bottom:10px;" onclick="sendWhatsApp('${s.id}')">📱 Send WhatsApp Text</button>
                 <button class="btn btn-blue" style="width:100%; margin-bottom:10px;" onclick="printExistingBill('${s.id}')">🖨️ Re-Print</button>
                 <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Close</button>`;
