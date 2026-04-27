@@ -875,7 +875,7 @@
         let appPass = '1234';
         let settings = { name: 'Billing Hub', city: 'Kurebhar', address: '', gst: '', phone: '', email: '', profilePic: '', staffPin: '', printerSize: 'A4', receiptLanguage: 'EN', taxRate: 0, taxMode: 'EXCLUSIVE', customTaxRates: [], upiId: '', printMethod: 'browser' };
         let inventory = []; let sales = []; let expenses = []; let customers = [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}];
-        let suppliers = []; let quotations = []; let categories = ["General"]; 
+        let suppliers = []; let quotations = []; let categories = ["General"]; let deletedItems = [];
         let cart = []; let custTrigger = "list"; let tempBase64Img = ""; let editingProductId = null;
         let editingSaleId = null; let editingSaleDate = null;
         let html5QrcodeScanner = null; let salesChartInstance = null; let pieChartInstance = null;
@@ -1144,6 +1144,7 @@
             try { if(localStorage.getItem('l_sup')) suppliers = JSON.parse(localStorage.getItem('l_sup')); } catch(e){}
             try { if(localStorage.getItem('l_quote')) quotations = JSON.parse(localStorage.getItem('l_quote')); } catch(e){}
             try { if(localStorage.getItem('l_cat')) categories = JSON.parse(localStorage.getItem('l_cat')); } catch(e){}
+            try { if(localStorage.getItem('l_deleted')) deletedItems = JSON.parse(localStorage.getItem('l_deleted')); } catch(e){}
         }
 
         // FULLY AUTOMATIC CLOUD SYNC & MERGE
@@ -1170,12 +1171,15 @@
                         return combined;
                     };
 
-                    inventory = mergeArrays(inventory, c.inventory || []);
-                    sales = mergeArrays(sales, c.sales || []);
-                    expenses = mergeArrays(expenses, c.expenses || []);
-                    customers = mergeArrays(customers, c.customers || []);
-                    suppliers = mergeArrays(suppliers, c.suppliers || []);
-                    quotations = mergeArrays(quotations, c.quotations || []);
+                    let c_deleted = c.deletedItems || [];
+                    deletedItems = [...new Set([...deletedItems, ...c_deleted])];
+
+                    inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(x.id));
+                    sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(x.id));
+                    expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(x.id));
+                    customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(x.id));
+                    suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(x.id));
+                    quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(x.id));
                     
                     let c_cat = c.categories || ["General"];
                     c_cat.forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
@@ -1273,11 +1277,12 @@
             localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
             localStorage.setItem('l_quote', JSON.stringify(quotations));
             localStorage.setItem('l_cat', JSON.stringify(categories));
+            localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
             
             if (currentUid !== "local" && docRef) {
                 try { 
                     if (window.location.protocol !== 'file:') { 
-                        await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories }); 
+                        await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems }); 
                         if(syncText) { syncText.innerText = "Synced"; syncText.style.color = "#28a745"; document.getElementById('last-sync-time').innerText = "Last push: " + new Date().toLocaleTimeString(); } 
                     } 
                 } catch(e) { if(syncText) { syncText.innerText = "Offline (Local Saved)"; syncText.style.color = "#dc3545"; } }
@@ -1289,7 +1294,7 @@
         async function forceCloudRefresh() {
             if(!docRef || window.location.protocol === 'file:') { alert("You are in Local Mode."); return; }
             if(!confirm("Pull latest data from cloud? This will overwrite unsaved local changes.")) return;
-            try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); if(d && Object.keys(d).length > 0) { appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || inventory; sales = d.sales || sales; expenses = d.expenses || expenses; customers = d.customers || customers; suppliers = d.suppliers || suppliers; quotations = d.quotations || quotations; categories = d.categories || categories; } alert("Data refreshed from cloud!"); initApp(); } else { alert("No cloud data found."); saveToStorage(); } } catch (e) { alert("Refresh failed."); }
+            try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); if(d && Object.keys(d).length > 0) { appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || inventory; sales = d.sales || sales; expenses = d.expenses || expenses; customers = d.customers || customers; suppliers = d.suppliers || suppliers; quotations = d.quotations || quotations; categories = d.categories || categories; deletedItems = d.deletedItems || deletedItems; } alert("Data refreshed from cloud!"); initApp(); } else { alert("No cloud data found."); saveToStorage(); } } catch (e) { alert("Refresh failed."); }
         }
 
         document.getElementById('set-profile-pic').addEventListener('change', function(e) { const file = e.target.files[0]; const reader = new FileReader(); reader.onloadend = () => { tempBase64Img = reader.result; }; if (file) reader.readAsDataURL(file); });
@@ -1914,7 +1919,16 @@
             let cid = document.getElementById('posCustomerSelect').value; let c = customers.find(x => x.id == cid);
             let earnedPoints = Math.floor(total / 100);
 
-            let saleId = editingSaleId ? editingSaleId : Date.now().toString().slice(-6);
+            let saleId;
+            if (editingSaleId) {
+                saleId = editingSaleId;
+            } else {
+                let attempt = 0;
+                do {
+                    saleId = (Date.now() + attempt).toString().slice(-6);
+                    attempt++;
+                } while (sales.find(s => s.id === saleId) || deletedItems.includes(saleId));
+            }
             let saleDate = editingSaleDate ? editingSaleDate : new Date().toLocaleString();
 
             let advancePaid = total - due;
@@ -1971,7 +1985,14 @@
 
             let cid = document.getElementById('posCustomerSelect').value; let c = customers.find(x => x.id == cid);
 
-            const newQuote = { id: 'Q' + Date.now().toString().slice(-5), date: new Date().toLocaleString(), cust: c.name, phone: c.phone, total: total, tax: taxAmount, taxMode: taxMode, discount: discountAmount, discountStr: discountStr, shipping: shippingInput, items: JSON.parse(JSON.stringify(cart)) };
+            let qId;
+            let attempt = 0;
+            do {
+                qId = 'Q' + (Date.now() + attempt).toString().slice(-5);
+                attempt++;
+            } while (quotations.find(q => q.id === qId) || deletedItems.includes(qId));
+
+            const newQuote = { id: qId, date: new Date().toLocaleString(), cust: c.name, phone: c.phone, total: total, tax: taxAmount, taxMode: taxMode, discount: discountAmount, discountStr: discountStr, shipping: shippingInput, items: JSON.parse(JSON.stringify(cart)) };
             quotations.push(newQuote);
             
             generateReceiptHTML(newQuote, true); 
@@ -2350,7 +2371,7 @@
         function openBroadcastModal() { document.getElementById('broadcastMsg').value = ''; document.getElementById('broadcastLinksContainer').innerHTML = ''; document.getElementById('broadcastModal').style.display = 'flex'; }
         function generateBroadcastLinks() { const msg = document.getElementById('broadcastMsg').value; const container = document.getElementById('broadcastLinksContainer'); if(msg.trim() === '') return alert("Please type a message."); let linksHtml = ''; let count = 0; customers.forEach(c => { let phone = (c.phone || "").replace(/\D/g,''); if(phone.length === 10) phone = "91" + phone; if(phone.length >= 10 && c.id !== 1) { linksHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;"><span>${c.name} <br><small>${c.phone}</small></span><a href="https://wa.me/${phone}?text=${encodeURIComponent(msg)}" target="_blank" class="btn btn-green" style="text-decoration:none; font-size:0.8em; padding:5px 10px;">Send</a></div>`; count++; } }); container.innerHTML = count === 0 ? '<p style="color:red; text-align:center;">No valid phone numbers found.</p>' : `<p style="color:green; font-weight:bold; margin-bottom:10px;">Found ${count} customers.</p>` + linksHtml; }
         
-        function deleteSale(id) { if(confirm("Delete bill permanently?")) { sales = sales.filter(s => s.id !== id); refreshDisplays(); } }
+        function deleteSale(id) { if(confirm("Delete bill permanently?")) { deletedItems.push(id); sales = sales.filter(s => s.id !== id); refreshDisplays(); } }
         function updatePassword() { let p = document.getElementById('new-pass').value; if(p.length < 4) return alert("Too short"); appPass = p; saveToStorage(); alert("Changed!"); }
         
         function openCustomerModal(s) { custTrigger = s; document.getElementById('customerModal').style.display = 'flex'; }
@@ -2410,10 +2431,10 @@
         function openExpenseModal() { document.getElementById('expenseModal').style.display='flex'; }
         function saveExpense() { expenses.push({id:Date.now(), cat:document.getElementById('eCat').value, date:new Date().toLocaleDateString(), desc:document.getElementById('eDesc').value, amt:parseFloat(document.getElementById('eAmt').value)}); closeModals(); refreshDisplays(); }
         
-        function deleteItem(t, id) { if(confirm("Confirm deletion?")) { if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(i=>i.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); if(t==='sup') suppliers = suppliers.filter(s=>s.id!==id); if(t==='quote') quotations = quotations.filter(q=>q.id!==id); refreshDisplays(); } }
+        function deleteItem(t, id) { if(confirm("Confirm deletion?")) { deletedItems.push(id); if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(i=>i.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); if(t==='sup') suppliers = suppliers.filter(s=>s.id!==id); if(t==='quote') quotations = quotations.filter(q=>q.id!==id); refreshDisplays(); } }
         function filterCustomerDropdown() { const q = document.getElementById('custSearchInput').value.toLowerCase(); document.getElementById('posCustomerSelect').innerHTML = customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).map(c => `<option value="${c.id}">${c.name}</option>`).join(''); }
-        function exportData() { const b = new Blob([JSON.stringify({pass:appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories})], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download=`Backup.json`; a.click(); }
-        async function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}]; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || ["General"]; await saveToStorage(); alert("Restored Successfully!"); location.reload(); } catch (error) { alert("Error: Invalid File"); } }; r.readAsText(e.target.files[0]); }
+        function exportData() { const b = new Blob([JSON.stringify({pass:appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems})], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download=`Backup.json`; a.click(); }
+        async function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}]; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || ["General"]; deletedItems = d.deletedItems || []; await saveToStorage(); alert("Restored Successfully!"); location.reload(); } catch (error) { alert("Error: Invalid File"); } }; r.readAsText(e.target.files[0]); }
         
         function printBarcodeLabel(id) { 
             const p = inventory.find(x => x.id === id); 
