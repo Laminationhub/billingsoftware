@@ -1147,62 +1147,80 @@
             try { if(localStorage.getItem('l_deleted')) deletedItems = JSON.parse(localStorage.getItem('l_deleted')); } catch(e){}
         }
 
-        // FULLY AUTOMATIC CLOUD SYNC & MERGE
-        async function autoSyncMerge() {
-            if (!docRef || window.location.protocol === 'file:') return;
-            
-            try {
-                const doc = await docRef.get();
-                if (doc.exists) {
-                    const c = doc.data();
-                    
-                    const mergeArrays = (localArr, cloudArr) => {
-                        let combined = [...localArr];
-                        if(cloudArr && Array.isArray(cloudArr)) {
-                            cloudArr.forEach(cItem => {
-                                let matchIndex = combined.findIndex(lItem => lItem.id === cItem.id);
-                                if(matchIndex === -1) {
-                                    combined.push(cItem);
-                                } else {
-                                    combined[matchIndex] = cItem;
-                                }
-                            });
+        // LIVE REAL-TIME SYNC
+        let unsubscribeSync = null;
+
+        function startLiveSync() {
+            return new Promise((resolve) => {
+                if (!docRef || window.location.protocol === 'file:') return resolve();
+                if (unsubscribeSync) return resolve();
+                
+                let isFirstFetch = true;
+                unsubscribeSync = docRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        const c = doc.data();
+                        
+                        const mergeArrays = (localArr, cloudArr) => {
+                            let combined = [...localArr];
+                            if(cloudArr && Array.isArray(cloudArr)) {
+                                cloudArr.forEach(cItem => {
+                                    let matchIndex = combined.findIndex(lItem => lItem.id === cItem.id);
+                                    if(matchIndex === -1) {
+                                        combined.push(cItem);
+                                    } else {
+                                        combined[matchIndex] = cItem;
+                                    }
+                                });
+                            }
+                            return combined;
+                        };
+
+                        let c_deleted = c.deletedItems || [];
+                        deletedItems = [...new Set([...deletedItems, ...c_deleted])];
+
+                        inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(x.id));
+                        sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(x.id));
+                        expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(x.id));
+                        customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(x.id));
+                        suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(x.id));
+                        quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(x.id));
+                        
+                        let c_cat = c.categories || ["General"];
+                        c_cat.forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
+
+                        if(c.settings && (!settings.name || settings.name === 'Lamination Hub' || settings.name === 'Billing Hub')) {
+                            settings = c.settings;
                         }
-                        return combined;
-                    };
+                        
+                        // Save locally only to avoid infinite loop with docRef.set
+                        localStorage.setItem('l_pass', appPass); 
+                        localStorage.setItem('l_settings', JSON.stringify(settings));
+                        localStorage.setItem('l_inv', JSON.stringify(inventory)); 
+                        localStorage.setItem('l_sales', JSON.stringify(sales));
+                        localStorage.setItem('l_exp', JSON.stringify(expenses)); 
+                        localStorage.setItem('l_cust', JSON.stringify(customers));
+                        localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
+                        localStorage.setItem('l_quote', JSON.stringify(quotations));
+                        localStorage.setItem('l_cat', JSON.stringify(categories));
+                        localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
 
-                    let c_deleted = c.deletedItems || [];
-                    deletedItems = [...new Set([...deletedItems, ...c_deleted])];
-
-                    inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(x.id));
-                    sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(x.id));
-                    expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(x.id));
-                    customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(x.id));
-                    suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(x.id));
-                    quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(x.id));
-                    
-                    let c_cat = c.categories || ["General"];
-                    c_cat.forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
-
-                    if(c.settings && (!settings.name || settings.name === 'Lamination Hub' || settings.name === 'Billing Hub')) {
-                        settings = c.settings;
+                        refreshDisplays();
+                        
+                        const syncText = document.getElementById('sync-text');
+                        if(syncText) { syncText.innerText = "Live Connected"; syncText.style.color = "#28a745"; }
+                        document.getElementById('last-sync-time').innerText = "Live Update: " + new Date().toLocaleTimeString();
                     }
-                }
-                
-                await saveToStorage(); 
-                refreshDisplays();
-                document.getElementById('last-sync-time').innerText = "Last Sync: " + new Date().toLocaleTimeString();
-                
-            } catch(e) {
-                console.error("Auto Sync Error:", e);
-            }
+                    
+                    if (isFirstFetch) {
+                        isFirstFetch = false;
+                        resolve();
+                    }
+                }, err => {
+                    console.error("Live Sync Error:", err);
+                    resolve();
+                });
+            });
         }
-
-        setInterval(async () => {
-            if (currentUid !== "local" && userRole === 'admin') {
-                await autoSyncMerge();
-            }
-        }, 60000);
 
         auth.onAuthStateChanged(async user => {
             if (user) {
@@ -1210,7 +1228,7 @@
                 document.getElementById('current-user-email').innerText = user.email;
                 document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
                 loadLocalData(); 
-                await autoSyncMerge();
+                await startLiveSync();
                 document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
             }
         });
@@ -1224,7 +1242,7 @@
                 document.getElementById('current-user-email').innerText = result.user.email;
                 document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
                 loadLocalData(); 
-                await autoSyncMerge();
+                await startLiveSync();
                 document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
                 document.getElementById('googleLoginBtn').innerText = "Cloud Connected";
             } catch (error) { alert("Login Failed: " + error.message); document.getElementById('googleLoginBtn').innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Sign in with Google`; }
