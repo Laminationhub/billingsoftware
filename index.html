@@ -438,7 +438,7 @@
                         <button class="btn btn-dark" onclick="openCustomerModal('list')">+ Add New Customer</button>
                     </div>
                 </div>
-                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Points</th><th>Total Spent</th><th>Due Amt</th><th>Actions</th></tr></thead><tbody id="customerTableBody"></tbody></table></div></div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Points</th><th>Total Spent</th><th>Due Amt</th><th>Pending Orders</th><th>Actions</th></tr></thead><tbody id="customerTableBody"></tbody></table></div></div>
             </div>
         </div>
     </div>
@@ -1580,6 +1580,9 @@
             let filteredCustomers = customers.filter(c => c.name.toLowerCase().includes(cSearch) || (c.phone && c.phone.includes(cSearch)));
             
             document.getElementById('customerTableBody').innerHTML = filteredCustomers.map(c => {
+                let custPendingOrders = sales.filter(s => !s.returned && (s.orderStatus === 'Pending' || s.orderStatus === 'Ready' || !s.orderStatus) && s.phone && c.phone && s.phone === c.phone && c.phone !== '--').length;
+                let pendingBadge = custPendingOrders > 0 ? `<span style="background:var(--warning); color:#333; padding:2px 6px; border-radius:10px; font-size:0.8em; font-weight:bold;">${custPendingOrders} Pending</span>` : `<span style="color:#999; font-size:0.8em;">None</span>`;
+
                 let btns = (c.due && c.due > 0) ? `<button class="btn btn-green" style="margin-right:5px; padding: 5px 10px; font-size:0.8em;" onclick="openCustomerPaymentModal(${c.id})">₹ Pay Due</button>` : '';
                 if(userRole === 'admin') {
                     if(c.id !== 1) {
@@ -1588,7 +1591,7 @@
                         btns += `<button class="btn btn-warning" style="padding: 5px 10px; font-size:0.8em;" onclick="resetWalkIn()">🔄 Reset</button>`;
                     }
                 }
-                return `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td><b style="color:var(--primary)">${c.points||0}</b></td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${btns}</td></tr>`;
+                return `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td><b style="color:var(--primary)">${c.points||0}</b></td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${pendingBadge}</td><td>${btns}</td></tr>`;
             }).join('');
             
             let oSearch = (document.getElementById('searchOrders')?.value || '').toLowerCase();
