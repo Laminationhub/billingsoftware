@@ -226,7 +226,7 @@
                             <label style="font-size: 0.8em; font-weight: bold; color: #64748b;">ASSIGN CUSTOMER</label>
                             <input type="text" id="custSearchInput" placeholder="Search name or phone..." style="width: 100%; margin: 10px 0; padding: 8px;" oninput="filterCustomerDropdown()">
                             <div style="display: flex; gap: 8px;">
-                                <select id="posCustomerSelect" style="flex: 1; padding: 10px;" onchange="updateCart()"><option value="1">Walk-in</option></select>
+                                <select id="posCustomerSelect" style="flex: 1; padding: 10px;" onchange="updateCartPrices()"><option value="1">Walk-in</option></select>
                                 <button class="btn btn-green" onclick="openCustomerModal('pos')">+</button>
                             </div>
                         </div>
@@ -628,7 +628,7 @@
         </div>
     </div>
 
-    <div id="customerModal" class="modal-bg"><div class="modal-box"><h3>New Customer</h3><div class="form-group"><label>Full Name</label><input type="text" id="cName"></div><div class="form-group"><label>Phone</label><input type="text" id="cPhone"></div><button class="btn btn-green" style="width:100%" onclick="saveCustomer()">Register</button><br><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button></div></div>
+    <div id="customerModal" class="modal-bg"><div class="modal-box"><h3>New Customer</h3><div class="form-group"><label>Full Name</label><input type="text" id="cName"></div><div class="form-group"><label>Phone</label><input type="text" id="cPhone"></div><div class="form-group"><label>Type</label><select id="cType"><option value="Customer">Customer</option><option value="Reseller">Reseller</option></select></div><button class="btn btn-green" style="width:100%" onclick="saveCustomer()">Register</button><br><br><button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button></div></div>
     
     <div id="supplierModal" class="modal-bg">
         <div class="modal-box modal-box-large">
@@ -715,8 +715,9 @@
 
             <div class="form-group"><label>Warranty</label><input type="text" id="pWarranty" placeholder="e.g. 6 Months, 1 Year, None"></div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Price (₹)</label><input type="number" id="pPrice"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Retail Price (₹)</label><input type="number" id="pPrice"></div>
+                <div class="form-group"><label>Reseller Price (₹)</label><input type="number" id="pResellerPrice"></div>
                 <div class="form-group"><label>Stock Qty</label><input type="number" id="pStock" step="0.01"></div>
             </div>
             <button class="btn btn-blue" style="width:100%" onclick="saveProduct()">Save Product</button><br><br>
@@ -1591,7 +1592,8 @@
                         btns += `<button class="btn btn-warning" style="padding: 5px 10px; font-size:0.8em;" onclick="resetWalkIn()">🔄 Reset</button>`;
                     }
                 }
-                return `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td><b style="color:var(--primary)">${c.points||0}</b></td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${pendingBadge}</td><td>${btns}</td></tr>`;
+                let typeBadge = c.type === 'Reseller' ? '<span style="background:#e0e7ff; color:#4338ca; padding:2px 6px; border-radius:4px; font-size:0.8em; margin-left:5px;">Reseller</span>' : '';
+                return `<tr><td><b>${c.name}</b>${typeBadge}</td><td>${c.phone}</td><td><b style="color:var(--primary)">${c.points||0}</b></td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${pendingBadge}</td><td>${btns}</td></tr>`;
             }).join('');
             
             let oSearch = (document.getElementById('searchOrders')?.value || '').toLowerCase();
@@ -1614,7 +1616,9 @@
                     btns += `</div>`;
                     
                     let itemNames = s.items ? s.items.map(i => i.name).join(', ') : '--';
-                    return `<tr><td>#${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}<br><small style="color:#666;">📱 ${s.phone || '--'}</small></td><td><span style="font-size:0.85em; color:#555;">${itemNames}</span></td><td><span style="color:${statusColor}; font-weight:bold;">${status}</span></td><td>₹${s.total.toFixed(2)}</td><td>₹${adv.toFixed(2)}</td><td style="color:red">₹${s.due||0}</td><td>${btns}</td></tr>`;
+                    let cObj = customers.find(x => x.name === s.cust);
+                    let typeBadge = (cObj && cObj.type === 'Reseller') ? '<span style="background:#e0e7ff; color:#4338ca; padding:2px 4px; border-radius:4px; font-size:0.7em; margin-left:3px;">Reseller</span>' : '';
+                    return `<tr><td>#${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}${typeBadge}<br><small style="color:#666;">📱 ${s.phone || '--'}</small></td><td><span style="font-size:0.85em; color:#555;">${itemNames}</span></td><td><span style="color:${statusColor}; font-weight:bold;">${status}</span></td><td>₹${s.total.toFixed(2)}</td><td>₹${adv.toFixed(2)}</td><td style="color:red">₹${s.due||0}</td><td>${btns}</td></tr>`;
                 }).join('');
             }
 
@@ -1640,14 +1644,18 @@
                 btns += `</div>`;
                 
                 let itemNames = s.items ? s.items.map(i => i.name).join(', ') : '--';
-                return `<tr style="${s.returned ? 'opacity:0.6;' : ''}"><td>#${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}<br><small style="color:#666;">📱 ${s.phone || '--'}</small></td><td><span style="font-size:0.85em; color:#555;">${itemNames}</span></td><td><s style="${s.returned?'':'text-decoration:none;'}">₹${s.total}</s></td><td style="color:red">₹${s.due||0}</td><td>${btns}</td></tr>`;
+                let cObj = customers.find(x => x.name === s.cust);
+                let typeBadge = (cObj && cObj.type === 'Reseller') ? '<span style="background:#e0e7ff; color:#4338ca; padding:2px 4px; border-radius:4px; font-size:0.7em; margin-left:3px;">Reseller</span>' : '';
+                return `<tr style="${s.returned ? 'opacity:0.6;' : ''}"><td>#${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}${typeBadge}<br><small style="color:#666;">📱 ${s.phone || '--'}</small></td><td><span style="font-size:0.85em; color:#555;">${itemNames}</span></td><td><s style="${s.returned?'':'text-decoration:none;'}">₹${s.total}</s></td><td style="color:red">₹${s.due||0}</td><td>${btns}</td></tr>`;
             }).join('');
             
             document.getElementById('quotationTableBody').innerHTML = quotations.slice().reverse().map(q => {
                 let btns = `<button class="btn btn-green" style="padding: 5px 10px; font-size:0.8em; margin-right: 5px;" onclick="sendWhatsApp('${q.id}')">📱 Text</button>
                             <button class="btn btn-blue" style="padding: 5px 10px; font-size:0.8em; margin-right: 5px;" onclick="printQuotation('${q.id}')">🖨️ Print</button>
                             <button class="btn btn-gray" style="color:red; padding: 5px 10px; font-size:0.8em;" onclick="deleteItem('quote', '${q.id}')">Del</button>`;
-                return `<tr><td>${q.id}</td><td>${q.date.split(',')[0]}</td><td>${q.cust}</td><td>₹${q.tax||0}</td><td><b>₹${q.total.toFixed(2)}</b></td><td>${btns}</td></tr>`;
+                let cObj = customers.find(x => x.name === q.cust);
+                let typeBadge = (cObj && cObj.type === 'Reseller') ? '<span style="background:#e0e7ff; color:#4338ca; padding:2px 4px; border-radius:4px; font-size:0.7em; margin-left:3px;">Reseller</span>' : '';
+                return `<tr><td>${q.id}</td><td>${q.date.split(',')[0]}</td><td>${q.cust}${typeBadge}</td><td>₹${q.tax||0}</td><td><b>₹${q.total.toFixed(2)}</b></td><td>${btns}</td></tr>`;
             }).join('');
 
             filterCustomerDropdown(); saveToStorage();
@@ -1680,6 +1688,7 @@
             document.getElementById('pName').value = p.name; 
             document.getElementById('pBarcode').value = p.barcode || ''; 
             document.getElementById('pPrice').value = p.price; 
+            document.getElementById('pResellerPrice').value = p.resellerPrice || p.price; 
             document.getElementById('pStock').value = p.stock; 
             document.getElementById('pCat').value = p.category || 'General'; 
             document.getElementById('pSupplier').value = p.supplier || 'None'; 
@@ -1694,6 +1703,7 @@
             const name = document.getElementById('pName').value; 
             const barcode = document.getElementById('pBarcode').value; 
             const price = parseFloat(document.getElementById('pPrice').value); 
+            const resellerPrice = parseFloat(document.getElementById('pResellerPrice').value) || price; 
             const stock = parseFloat(document.getElementById('pStock').value) || 0; 
             const category = document.getElementById('pCat').value; 
             const supplier = document.getElementById('pSupplier').value; 
@@ -1703,9 +1713,9 @@
 
             if (editingProductId) { 
                 const p = inventory.find(x => x.id === editingProductId); 
-                if (p) { p.name = name; p.barcode = barcode; p.price = price; p.stock = stock; p.category = category; p.supplier = supplier; p.brand = brand; p.unit = unit; p.warranty = warranty; } 
+                if (p) { p.name = name; p.barcode = barcode; p.price = price; p.resellerPrice = resellerPrice; p.stock = stock; p.category = category; p.supplier = supplier; p.brand = brand; p.unit = unit; p.warranty = warranty; } 
             } else { 
-                inventory.push({id:Date.now(), name, barcode, price, stock, category, supplier, brand, unit, warranty}); 
+                inventory.push({id:Date.now(), name, barcode, price, resellerPrice, stock, category, supplier, brand, unit, warranty}); 
             } 
             closeModals(); refreshDisplays(); 
         }
@@ -1748,8 +1758,27 @@
                 return;
             }
             
-            if (ex) ex.qty++; else cart.push({ ...p, qty: 1 }); 
+            let cid = document.getElementById('posCustomerSelect').value;
+            let cust = customers.find(x => x.id == cid);
+            let activePrice = (cust && cust.type === 'Reseller' && p.resellerPrice) ? p.resellerPrice : p.price;
+            
+            if (ex) ex.qty++; else cart.push({ ...p, price: activePrice, qty: 1 }); 
             updateCart(); 
+        }
+
+        function updateCartPrices() {
+            let cid = document.getElementById('posCustomerSelect').value;
+            let cust = customers.find(x => x.id == cid);
+            let isReseller = cust && cust.type === 'Reseller';
+            
+            cart.forEach(item => {
+                if(String(item.id).startsWith('quick_')) return;
+                let invItem = inventory.find(x => x.id === item.id);
+                if(invItem) {
+                    item.price = (isReseller && invItem.resellerPrice) ? invItem.resellerPrice : invItem.price;
+                }
+            });
+            updateCart();
         }
         
         function removeFromCart(id) { cart = cart.filter(c => String(c.id) !== String(id)); updateCart(); }
@@ -1864,7 +1893,8 @@
         function generateWhatsAppText(item, isQuote) {
             const L = settings.receiptLanguage === 'HI' ? { inv: isQuote ? "कोटेशन" : "रसीद", date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "अंक", due: "बकाया", total: isQuote ? "कुल अनुमानित राशि" : "कुल", thx: isQuote ? "कोटेशन मान्य 15 दिन" : "धन्यवाद!", pmode: "भुगतान मोड" } : { inv: isQuote ? "Quotation" : "Invoice", date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Pending Due", total: isQuote ? "Estimated Total" : "Grand Total", thx: isQuote ? "Estimate Valid for 15 Days" : "Thank you for your business!", pmode: "Pay Mode" };
             
-            let text = `🧾 *${settings.name}*\n${L.inv}: #${item.id}\n${L.date}: ${item.date}\n${L.cust}: ${item.cust}\n------------------------\n`;
+            let custType = customers.find(x => x.name === item.cust)?.type === 'Reseller' ? ' (Reseller)' : '';
+            let text = `🧾 *${settings.name}*\n${L.inv}: #${item.id}\n${L.date}: ${item.date}\n${L.cust}: ${item.cust}${custType}\n------------------------\n`;
             item.items.forEach(i => { text += `${i.name} (x${i.qty} ${i.unit||'pcs'}) - ₹${i.price * i.qty}\n`; }); text += `------------------------\n`;
             
             if (item.shipping > 0) text += `Shipping: ₹${item.shipping.toFixed(2)}\n`;
@@ -2246,7 +2276,7 @@
                 </center>
                 <div style="font-size:${fSize}; margin-bottom:8px;">
                     ${L.inv} #${s.id} | ${s.date}<br>
-                    ${L.cust}: ${s.cust}
+                    ${L.cust}: ${s.cust} ${customers.find(x => x.name === s.cust)?.type === 'Reseller' ? '(Reseller)' : ''}
                 </div>
                 ${tableHTML}
                 <hr style="border-top:1px dashed #000; margin:8px 0;">
@@ -2398,7 +2428,7 @@
         function updatePassword() { let p = document.getElementById('new-pass').value; if(p.length < 4) return alert("Too short"); appPass = p; saveToStorage(); alert("Changed!"); }
         
         function openCustomerModal(s) { custTrigger = s; document.getElementById('customerModal').style.display = 'flex'; }
-        function saveCustomer() { let id = Date.now(); customers.push({ id, name: document.getElementById('cName').value, phone: document.getElementById('cPhone').value, spent: 0, due: 0, points: 0 }); if(custTrigger === 'pos') { refreshDisplays(); document.getElementById('posCustomerSelect').value = id; updateCart(); } else refreshDisplays(); closeModals(); }
+        function saveCustomer() { let id = Date.now(); customers.push({ id, name: document.getElementById('cName').value, phone: document.getElementById('cPhone').value, type: document.getElementById('cType') ? document.getElementById('cType').value : 'Customer', spent: 0, due: 0, points: 0 }); if(custTrigger === 'pos') { refreshDisplays(); document.getElementById('posCustomerSelect').value = id; updateCartPrices(); } else refreshDisplays(); closeModals(); }
         
         function openSupplierModal() { document.getElementById('supplierModal').style.display='flex'; }
         function saveSupplier() { 
@@ -2455,7 +2485,7 @@
         function saveExpense() { expenses.push({id:Date.now(), cat:document.getElementById('eCat').value, date:new Date().toLocaleDateString(), desc:document.getElementById('eDesc').value, amt:parseFloat(document.getElementById('eAmt').value)}); closeModals(); refreshDisplays(); }
         
         function deleteItem(t, id) { if(confirm("Confirm deletion?")) { deletedItems.push(id); if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(i=>i.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); if(t==='sup') suppliers = suppliers.filter(s=>s.id!==id); if(t==='quote') quotations = quotations.filter(q=>q.id!==id); refreshDisplays(); } }
-        function filterCustomerDropdown() { const q = document.getElementById('custSearchInput').value.toLowerCase(); document.getElementById('posCustomerSelect').innerHTML = customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).map(c => `<option value="${c.id}">${c.name}</option>`).join(''); }
+        function filterCustomerDropdown() { const q = document.getElementById('custSearchInput').value.toLowerCase(); document.getElementById('posCustomerSelect').innerHTML = customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).map(c => `<option value="${c.id}">${c.name}${c.type === 'Reseller' ? ' (Reseller)' : ''}</option>`).join(''); }
         function exportData() { const b = new Blob([JSON.stringify({pass:appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems})], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download=`Backup.json`; a.click(); }
         async function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}]; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || ["General"]; deletedItems = d.deletedItems || []; await saveToStorage(); alert("Restored Successfully!"); location.reload(); } catch (error) { alert("Error: Invalid File"); } }; r.readAsText(e.target.files[0]); }
         
