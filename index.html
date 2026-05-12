@@ -878,6 +878,7 @@
         let inventory = []; let sales = []; let expenses = []; let customers = [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}];
         let suppliers = []; let quotations = []; let categories = ["General"]; let deletedItems = [];
         let cart = []; let custTrigger = "list"; let tempBase64Img = ""; let editingProductId = null;
+        let editingCustomerId = null;
         let editingSaleId = null; let editingSaleDate = null;
         let html5QrcodeScanner = null; let salesChartInstance = null; let pieChartInstance = null;
 
@@ -1587,6 +1588,7 @@
                 let btns = (c.due && c.due > 0) ? `<button class="btn btn-green" style="margin-right:5px; padding: 5px 10px; font-size:0.8em;" onclick="openCustomerPaymentModal(${c.id})">₹ Pay Due</button>` : '';
                 if(userRole === 'admin') {
                     if(c.id !== 1) {
+                        btns += `<button class="btn btn-warning" style="margin-right:5px; padding: 5px 10px; font-size:0.8em;" onclick="editCustomer(${c.id})">Edit</button>`;
                         btns += `<button class="btn btn-gray" style="color:red; padding: 5px 10px; font-size:0.8em;" onclick="deleteItem('cust', ${c.id})">Del</button>`;
                     } else {
                         btns += `<button class="btn btn-warning" style="padding: 5px 10px; font-size:0.8em;" onclick="resetWalkIn()">🔄 Reset</button>`;
@@ -1723,7 +1725,7 @@
         function openBulkModal() { document.getElementById('bulkItemsContainer').innerHTML = inventory.map(i => `<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f8fafc;"><span style="font-size: 0.9em; flex: 1;">${i.name} <br><small style="color:#999;">Stock: ${i.stock}</small></span><input type="number" step="0.01" class="bulk-qty-input" data-id="${i.id}" placeholder="+0" style="width: 80px; padding: 5px;"></div>`).join(''); document.getElementById('bulkModal').style.display = 'flex'; }
         function saveBulkStock() { let changed = false; document.querySelectorAll('.bulk-qty-input').forEach(input => { const addQty = parseFloat(input.value); if (!isNaN(addQty) && addQty !== 0) { const p = inventory.find(x => x.id == input.getAttribute('data-id')); if (p) { p.stock += addQty; changed = true; } } }); if (changed) { alert("Stock updated!"); refreshDisplays(); } closeModals(); }
         
-        function closeModals() { editingProductId = null; let pTitle = document.querySelector('#productModal h3'); if (pTitle) pTitle.innerText = "Product Info"; closeScanner(); document.querySelectorAll('.modal-bg').forEach(m => m.style.display='none'); document.querySelectorAll('input:not(#posSearch):not(#passInput):not(.search-bar):not([name="supType"]):not(#csvFileInput)').forEach(i => i.value=''); }
+        function closeModals() { editingProductId = null; editingCustomerId = null; let pTitle = document.querySelector('#productModal h3'); if (pTitle) pTitle.innerText = "Product Info"; let cTitle = document.querySelector('#customerModal h3'); if (cTitle) cTitle.innerText = "New Customer"; let cBtn = document.querySelector('#customerModal .btn-green'); if (cBtn) cBtn.innerText = "Register"; closeScanner(); document.querySelectorAll('.modal-bg').forEach(m => m.style.display='none'); document.querySelectorAll('input:not(#posSearch):not(#passInput):not(.search-bar):not([name="supType"]):not(#csvFileInput)').forEach(i => i.value=''); }
         
         function saveShopSettings() { 
             settings.name = document.getElementById('set-name').value; 
@@ -2428,7 +2430,45 @@
         function updatePassword() { let p = document.getElementById('new-pass').value; if(p.length < 4) return alert("Too short"); appPass = p; saveToStorage(); alert("Changed!"); }
         
         function openCustomerModal(s) { custTrigger = s; document.getElementById('customerModal').style.display = 'flex'; }
-        function saveCustomer() { let id = Date.now(); customers.push({ id, name: document.getElementById('cName').value, phone: document.getElementById('cPhone').value, type: document.getElementById('cType') ? document.getElementById('cType').value : 'Customer', spent: 0, due: 0, points: 0 }); if(custTrigger === 'pos') { refreshDisplays(); document.getElementById('posCustomerSelect').value = id; updateCartPrices(); } else refreshDisplays(); closeModals(); }
+        function editCustomer(id) {
+            const c = customers.find(x => x.id === id);
+            if (!c) return;
+            editingCustomerId = id;
+            document.getElementById('cName').value = c.name;
+            document.getElementById('cPhone').value = c.phone || '';
+            if (document.getElementById('cType')) document.getElementById('cType').value = c.type || 'Customer';
+            let cTitle = document.querySelector('#customerModal h3'); if (cTitle) cTitle.innerText = "Edit Customer";
+            let cBtn = document.querySelector('#customerModal .btn-green'); if (cBtn) cBtn.innerText = "Update";
+            openCustomerModal('list');
+        }
+        function saveCustomer() { 
+            let name = document.getElementById('cName').value;
+            let phone = document.getElementById('cPhone').value;
+            let type = document.getElementById('cType') ? document.getElementById('cType').value : 'Customer';
+            let id;
+
+            if (editingCustomerId) {
+                let c = customers.find(x => x.id === editingCustomerId);
+                if (c) {
+                    c.name = name;
+                    c.phone = phone;
+                    c.type = type;
+                    id = c.id;
+                }
+            } else {
+                id = Date.now();
+                customers.push({ id, name, phone, type, spent: 0, due: 0, points: 0 });
+            }
+
+            if(custTrigger === 'pos') { 
+                refreshDisplays(); 
+                document.getElementById('posCustomerSelect').value = id; 
+                updateCartPrices(); 
+            } else {
+                refreshDisplays(); 
+            }
+            closeModals(); 
+        }
         
         function openSupplierModal() { document.getElementById('supplierModal').style.display='flex'; }
         function saveSupplier() { 
