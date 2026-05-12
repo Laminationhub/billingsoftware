@@ -224,7 +224,14 @@
                         <h2 style="margin-top:0;">Checkout</h2>
                         <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #edf2f7;">
                             <label style="font-size: 0.8em; font-weight: bold; color: #64748b;">ASSIGN CUSTOMER</label>
-                            <input type="text" id="custSearchInput" placeholder="Search name or phone..." style="width: 100%; margin: 10px 0; padding: 8px;" oninput="filterCustomerDropdown()">
+                            <div style="display: flex; gap: 8px; margin: 10px 0;">
+                                <input type="text" id="custSearchInput" placeholder="Search name or phone..." style="flex: 1; padding: 8px;" oninput="filterCustomerDropdown()">
+                                <select id="posCustTypeFilter" style="padding: 8px; border-radius: 4px;" onchange="filterCustomerDropdown()">
+                                    <option value="All">All</option>
+                                    <option value="Customer">Customer</option>
+                                    <option value="Reseller">Reseller</option>
+                                </select>
+                            </div>
                             <div style="display: flex; gap: 8px;">
                                 <select id="posCustomerSelect" style="flex: 1; padding: 10px;" onchange="updateCartPrices()"><option value="1">Walk-in</option></select>
                                 <button class="btn btn-green" onclick="openCustomerModal('pos')">+</button>
@@ -411,7 +418,14 @@
             <div id="orders-view" class="view-section">
                 <div class="header">
                     <h1>Order Management</h1>
-                    <input type="text" id="searchOrders" class="search-bar" placeholder="🔍 Search order ID or customer..." oninput="refreshDisplays()">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="searchOrders" class="search-bar" placeholder="🔍 Search order ID or customer..." oninput="refreshDisplays()">
+                        <select id="filterOrderTableType" onchange="refreshDisplays()" class="search-bar" style="width: auto;">
+                            <option value="All">All Types</option>
+                            <option value="Customer">Customers</option>
+                            <option value="Reseller">Resellers</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Date</th><th>Customer</th><th>Items</th><th>Status</th><th>Total</th><th>Advance Paid</th><th>Pending Amount</th><th>Actions</th></tr></thead><tbody id="orderTableBody"></tbody></table></div></div>
             </div>
@@ -419,7 +433,14 @@
             <div id="history-view" class="view-section">
                 <div class="header">
                     <h1>Sales Records</h1>
-                    <input type="text" id="searchHistory" class="search-bar" placeholder="🔍 Search invoice, name or date..." oninput="refreshDisplays()">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="searchHistory" class="search-bar" placeholder="🔍 Search invoice, name or date..." oninput="refreshDisplays()">
+                        <select id="filterHistoryType" onchange="refreshDisplays()" class="search-bar" style="width: auto;">
+                            <option value="All">All Types</option>
+                            <option value="Customer">Customers</option>
+                            <option value="Reseller">Resellers</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>INV #</th><th>Date</th><th>Customer</th><th>Items</th><th>Total Bill</th><th>Due</th><th>Actions</th></tr></thead><tbody id="historyTableBody"></tbody></table></div></div>
             </div>
@@ -434,6 +455,11 @@
                     <h1>Customer Directory</h1>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <input type="text" id="searchCustomersTable" class="search-bar" placeholder="🔍 Search customers..." oninput="refreshDisplays()">
+                        <select id="filterCustomerTableType" onchange="refreshDisplays()" class="search-bar" style="width: auto;">
+                            <option value="All">All Types</option>
+                            <option value="Customer">Customers</option>
+                            <option value="Reseller">Resellers</option>
+                        </select>
                         <button class="btn btn-blue" onclick="openBroadcastModal()">📢 Send Promo</button>
                         <button class="btn btn-dark" onclick="openCustomerModal('list')">+ Add New Customer</button>
                     </div>
@@ -1579,7 +1605,12 @@
             document.getElementById('expenseTableBody').innerHTML = expenses.slice().reverse().map(e => `<tr><td>${e.date}</td><td><span style="background:#e2e8f0; padding:3px 8px; border-radius:4px; font-size:0.8em;">${e.cat||'Other'}</span></td><td>${e.desc}</td><td>₹${e.amt}</td><td>${userRole==='admin'?`<button class="btn btn-gray" style="color:red;" onclick="deleteItem('exp', ${e.id})">Del</button>`:''}</td></tr>`).join('');
             
             let cSearch = (document.getElementById('searchCustomersTable')?.value || '').toLowerCase();
-            let filteredCustomers = customers.filter(c => c.name.toLowerCase().includes(cSearch) || (c.phone && c.phone.includes(cSearch)));
+            let cType = document.getElementById('filterCustomerTableType')?.value || 'All';
+            let filteredCustomers = customers.filter(c => {
+                let matchSearch = c.name.toLowerCase().includes(cSearch) || (c.phone && c.phone.includes(cSearch));
+                let matchType = cType === 'All' ? true : ((c.type || 'Customer') === cType);
+                return matchSearch && matchType;
+            });
             
             document.getElementById('customerTableBody').innerHTML = filteredCustomers.map(c => {
                 let custPendingOrders = sales.filter(s => !s.returned && (s.orderStatus === 'Pending' || s.orderStatus === 'Ready' || !s.orderStatus) && s.phone && c.phone && s.phone === c.phone && c.phone !== '--').length;
@@ -1599,7 +1630,14 @@
             }).join('');
             
             let oSearch = (document.getElementById('searchOrders')?.value || '').toLowerCase();
-            let filteredOrders = sales.filter(s => s.id.toLowerCase().includes(oSearch) || s.cust.toLowerCase().includes(oSearch) || s.date.toLowerCase().includes(oSearch));
+            let oType = document.getElementById('filterOrderTableType')?.value || 'All';
+            let filteredOrders = sales.filter(s => {
+                let matchSearch = s.id.toLowerCase().includes(oSearch) || s.cust.toLowerCase().includes(oSearch) || s.date.toLowerCase().includes(oSearch);
+                let cObj = customers.find(x => x.name === s.cust);
+                let sType = cObj ? (cObj.type || 'Customer') : 'Customer';
+                let matchType = oType === 'All' ? true : (sType === oType);
+                return matchSearch && matchType;
+            });
 
             if (document.getElementById('orderTableBody')) {
                 document.getElementById('orderTableBody').innerHTML = filteredOrders.slice().reverse().map(s => {
@@ -1625,7 +1663,14 @@
             }
 
             let hSearch = (document.getElementById('searchHistory')?.value || '').toLowerCase();
-            let filteredSales = sales.filter(s => s.id.toLowerCase().includes(hSearch) || s.cust.toLowerCase().includes(hSearch) || s.date.toLowerCase().includes(hSearch));
+            let hType = document.getElementById('filterHistoryType')?.value || 'All';
+            let filteredSales = sales.filter(s => {
+                let matchSearch = s.id.toLowerCase().includes(hSearch) || s.cust.toLowerCase().includes(hSearch) || s.date.toLowerCase().includes(hSearch);
+                let cObj = customers.find(x => x.name === s.cust);
+                let sType = cObj ? (cObj.type || 'Customer') : 'Customer';
+                let matchType = hType === 'All' ? true : (sType === hType);
+                return matchSearch && matchType;
+            });
 
             document.getElementById('historyTableBody').innerHTML = filteredSales.slice().reverse().map(s => {
                 let btns = `<div style="display:flex; gap:5px; align-items:center;"><button class="btn btn-blue" style="padding: 5px 10px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️ View</button>`;
@@ -2525,7 +2570,15 @@
         function saveExpense() { expenses.push({id:Date.now(), cat:document.getElementById('eCat').value, date:new Date().toLocaleDateString(), desc:document.getElementById('eDesc').value, amt:parseFloat(document.getElementById('eAmt').value)}); closeModals(); refreshDisplays(); }
         
         function deleteItem(t, id) { if(confirm("Confirm deletion?")) { deletedItems.push(id); if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(i=>i.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); if(t==='sup') suppliers = suppliers.filter(s=>s.id!==id); if(t==='quote') quotations = quotations.filter(q=>q.id!==id); refreshDisplays(); } }
-        function filterCustomerDropdown() { const q = document.getElementById('custSearchInput').value.toLowerCase(); document.getElementById('posCustomerSelect').innerHTML = customers.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q)).map(c => `<option value="${c.id}">${c.name}${c.type === 'Reseller' ? ' (Reseller)' : ''}</option>`).join(''); }
+        function filterCustomerDropdown() { 
+            const q = document.getElementById('custSearchInput').value.toLowerCase(); 
+            const typeFilter = document.getElementById('posCustTypeFilter')?.value || 'All';
+            document.getElementById('posCustomerSelect').innerHTML = customers.filter(c => {
+                let matchSearch = c.name.toLowerCase().includes(q) || c.phone.includes(q);
+                let matchType = typeFilter === 'All' ? true : ((c.type || 'Customer') === typeFilter);
+                return matchSearch && matchType;
+            }).map(c => `<option value="${c.id}">${c.name}${c.type === 'Reseller' ? ' (Reseller)' : ''}</option>`).join(''); 
+        }
         function exportData() { const b = new Blob([JSON.stringify({pass:appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems})], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download=`Backup.json`; a.click(); }
         async function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}]; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || ["General"]; deletedItems = d.deletedItems || []; await saveToStorage(); alert("Restored Successfully!"); location.reload(); } catch (error) { alert("Error: Invalid File"); } }; r.readAsText(e.target.files[0]); }
         
