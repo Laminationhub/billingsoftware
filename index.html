@@ -167,7 +167,6 @@
                 <li id="nav-quotations" onclick="switchTab('quotations')">📝 Quotations</li>
                 <li id="nav-history" onclick="switchTab('history')">📜 Sales History</li>
                 <li id="nav-inventory" onclick="switchTab('inventory')">📦 Inventory</li>
-                <li id="nav-reports" onclick="switchTab('reports')">📈 Tax & Reports</li>
                 <li id="nav-suppliers" onclick="switchTab('suppliers')">🚚 Suppliers & Ledger</li>
                 <li id="nav-expenses" onclick="switchTab('expenses')">💸 Expenses</li>
                 <li id="nav-customers" onclick="switchTab('customers')">👥 Customers</li>
@@ -204,7 +203,7 @@
                         <strong>⚠️ Low Stock Alert!</strong>
                         <div id="low-stock-list" style="font-size: 0.9em; margin-top: 4px;"></div>
                     </div>
-                    <button class="btn btn-warning" id="btn-reorder-banner" onclick="openPurchaseStockModal()">📥 Reorder Items</button>
+                    <button class="btn btn-warning" onclick="openPurchaseStockModal()">📥 Reorder Items</button>
                 </div>
 
                 <h3 style="margin-bottom:12px; color:var(--text-muted);">Today's Snapshot (Daily P/L)</h3>
@@ -331,7 +330,7 @@
                 </div>
             </div>
 
-            <!-- JOB CARDS VIEW -->
+            <!-- NEW JOB CARDS VIEW -->
             <div id="jobcards-view" class="view-section">
                 <div class="header">
                     <h1>Custom Orders (Job Cards)</h1>
@@ -352,13 +351,10 @@
                 </div>
             </div>
 
-            <!-- 3. ADVANCED REPORTS VIEW (ACCESSED VIA SETTINGS) -->
+            <!-- 3. ADVANCED REPORTS VIEW -->
             <div id="reports-view" class="view-section">
                 <div class="header">
-                    <div>
-                        <h1>Tax & Financial Reports (CA Export)</h1>
-                        <button class="btn btn-gray" onclick="switchTab('settings')" style="margin-top:5px;">← Back to Settings</button>
-                    </div>
+                    <h1>Tax & Financial Reports (CA Export)</h1>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <button class="btn btn-green" onclick="exportReportsCSV('sales')">📑 Export Sales (GST) CSV</button>
                         <button class="btn btn-danger" onclick="exportReportsCSV('expenses')">💸 Export Expenses CSV</button>
@@ -407,20 +403,13 @@
                     <h1>Inventory Management</h1>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button class="btn btn-warning" onclick="openCategoryModal()">🏷️ Categories</button>
-                        <button id="btn-import-csv" class="btn btn-dark" onclick="openCSVModal()">📄 Import CSV</button>
-                        <button id="btn-bulk-inv" class="btn btn-blue" onclick="openBulkModal()">🔄 Bulk</button>
-                        <button id="btn-log-purchase" class="btn btn-success" style="background:#10b981; border:none; color:white;" onclick="openPurchaseStockModal()">📥 Log Purchase</button>
+                        <button class="btn btn-dark" onclick="openCSVModal()">📄 Import CSV</button>
+                        <button class="btn btn-blue" onclick="openBulkModal()">🔄 Bulk</button>
+                        <button class="btn btn-success" style="background:#10b981; border:none; color:white;" onclick="openPurchaseStockModal()">📥 Log Purchase</button>
                         <button class="btn btn-green" onclick="openProductModal()">+ Add Product</button>
                     </div>
                 </div>
-                <div class="container" style="padding:0;">
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Item Name</th><th>Category / Brand</th><th>Supplier</th><th id="th-inv-price">Buy / Sell Price</th><th>Stock</th><th>Action</th></tr></thead>
-                            <tbody id="inventoryTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Item Name</th><th>Category / Brand</th><th>Supplier</th><th>Buy / Sell Price</th><th>Stock</th><th>Action</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div></div>
             </div>
 
             <!-- 5. SUPPLIERS VIEW -->
@@ -888,7 +877,7 @@
             <div class="form-group"><label>Warranty</label><input type="text" id="pWarranty" placeholder="e.g. 6 Months, 1 Year, None"></div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
-                <div class="form-group" id="group-pPurchasePrice"><label>Buy Price (₹)</label><input type="number" id="pPurchasePrice"></div>
+                <div class="form-group"><label>Buy Price (₹)</label><input type="number" id="pPurchasePrice"></div>
                 <div class="form-group"><label>Retail Price (₹)</label><input type="number" id="pPrice"></div>
                 <div class="form-group"><label>Reseller Price (₹)</label><input type="number" id="pResellerPrice"></div>
                 <div class="form-group"><label>Stock Qty</label><input type="number" id="pStock" step="0.01"></div>
@@ -1133,103 +1122,58 @@
         }
 
         let unsubscribeSync = null;
-
         function startLiveSync() {
             return new Promise((resolve) => {
                 if (!docRef || window.location.protocol === 'file:') return resolve();
                 if (unsubscribeSync) return resolve();
-                
                 let isFirstFetch = true;
                 unsubscribeSync = docRef.onSnapshot(doc => {
                     if (doc.exists) {
                         const c = doc.data();
-                        
                         const mergeArrays = (localArr, cloudArr) => {
                             let combined = [...localArr];
                             if(cloudArr && Array.isArray(cloudArr)) {
                                 cloudArr.forEach(cItem => {
-                                    let matchIndex = combined.findIndex(lItem => lItem.id === cItem.id);
-                                    if(matchIndex === -1) {
-                                        combined.push(cItem);
-                                    } else {
-                                        combined[matchIndex] = cItem;
-                                    }
+                                    let match = combined.findIndex(l => l.id === cItem.id);
+                                    if(match === -1) combined.push(cItem); else combined[match] = cItem;
                                 });
                             }
                             return combined;
                         };
-
-                        let c_deleted = c.deletedItems || [];
-                        deletedItems = [...new Set([...deletedItems, ...c_deleted])];
-
+                        deletedItems = [...new Set([...deletedItems, ...(c.deletedItems || [])])];
                         inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(x.id));
                         sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(x.id));
                         expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(x.id));
                         customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(x.id));
                         suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(x.id));
                         quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(x.id));
-                        
-                        let c_cat = c.categories || ["General"];
-                        c_cat.forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
-
-                        if(c.settings && (!settings.name || settings.name === 'Lamination Hub' || settings.name === 'Billing Hub')) {
-                            settings = c.settings;
-                        }
-                        
-                        // Save locally only to avoid infinite loop with docRef.set
-                        localStorage.setItem('l_pass', appPass); 
-                        localStorage.setItem('l_settings', JSON.stringify(settings));
-                        localStorage.setItem('l_inv', JSON.stringify(inventory)); 
-                        localStorage.setItem('l_sales', JSON.stringify(sales));
-                        localStorage.setItem('l_exp', JSON.stringify(expenses)); 
-                        localStorage.setItem('l_cust', JSON.stringify(customers));
-                        localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
-                        localStorage.setItem('l_quote', JSON.stringify(quotations));
-                        localStorage.setItem('l_cat', JSON.stringify(categories));
-                        localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
-
+                        (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
+                        if(c.settings) settings = { ...settings, ...c.settings };
                         refreshDisplays();
-                        
-                        const syncText = document.getElementById('sync-text');
-                        if(syncText) { syncText.innerText = "Live Connected"; syncText.style.color = "#28a745"; }
-                        document.getElementById('last-sync-time').innerText = "Live Update: " + new Date().toLocaleTimeString();
+                        document.getElementById('sync-text').innerText = "Live Connected";
+                        document.getElementById('sync-text').style.color = "#28a745";
                     }
-                    
-                    if (isFirstFetch) {
-                        isFirstFetch = false;
-                        resolve();
-                    }
-                }, err => {
-                    console.error("Live Sync Error:", err);
-                    resolve();
-                });
+                    if (isFirstFetch) { isFirstFetch = false; resolve(); }
+                }, () => resolve());
             });
         }
 
         auth.onAuthStateChanged(async user => {
             if (user) {
-                currentUid = user.uid; docRef = db.collection("shops").doc(currentUid); 
-                document.getElementById('current-user-email').innerText = user.email;
-                document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
-                loadLocalData(); 
-                await startLiveSync();
-                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
+                currentUid = user.uid; docRef = db.collection("shops").doc(currentUid);
+                loadLocalData(); await startLiveSync();
+                document.getElementById('login-status').innerText = "Secured. Enter PIN.";
             }
         });
 
         async function handleGoogleLogin() {
-            if (window.location.protocol === 'file:') return alert("Cloud Sync & Google Login cannot run locally (file://). Upload to GitHub for full features!");
-            document.getElementById('googleLoginBtn').innerText = "Connecting...";
-            try { 
-                const result = await auth.signInWithPopup(provider); 
-                currentUid = result.user.uid; docRef = db.collection("shops").doc(currentUid); 
-                document.getElementById('current-user-email').innerText = result.user.email;
-                document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
-                loadLocalData(); 
-                await startLiveSync();
-                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
-                document.getElementById('googleLoginBtn').innerText = "Cloud Connected";
-            } catch (error) { alert("Login Failed: " + error.message); document.getElementById('googleLoginBtn').innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Sign in with Google`; }
+            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://).");
+            try {
+                const res = await auth.signInWithPopup(provider);
+                currentUid = res.user.uid; docRef = db.collection("shops").doc(currentUid);
+                loadLocalData(); await startLiveSync();
+                document.getElementById('login-status').innerText = "Secured. Enter PIN.";
+            } catch (e) { alert("Login failed: " + e.message); }
         }
 
         // LOGIN WITH MULTI-STAFF PIN SUPPORT
@@ -1258,101 +1202,49 @@
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('passInput').value = '';
-            document.getElementById('login-status').innerText = "System Locked. Enter PIN to return.";
-            document.getElementById('loginBtn').innerText = "Unlock System";
-            document.getElementById('loginBtn').disabled = false;
         }
-
         function signOut() { auth.signOut().then(() => location.reload()); }
 
         async function saveToStorage() {
-            const syncText = document.getElementById('sync-text'); if(syncText) { syncText.innerText = "Saving..."; syncText.style.color = "#ffc107"; }
-            
-            localStorage.setItem('l_pass', appPass); 
-            localStorage.setItem('l_settings', JSON.stringify(settings));
-            localStorage.setItem('l_inv', JSON.stringify(inventory)); 
-            localStorage.setItem('l_sales', JSON.stringify(sales));
-            localStorage.setItem('l_exp', JSON.stringify(expenses)); 
-            localStorage.setItem('l_cust', JSON.stringify(customers));
-            localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
-            localStorage.setItem('l_quote', JSON.stringify(quotations));
-            localStorage.setItem('l_cat', JSON.stringify(categories));
-            localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
-            
-            if (currentUid !== "local" && docRef) {
-                try { 
-                    if (window.location.protocol !== 'file:') { 
-                        await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems }); 
-                        if(syncText) { syncText.innerText = "Synced"; syncText.style.color = "#28a745"; document.getElementById('last-sync-time').innerText = "Last push: " + new Date().toLocaleTimeString(); } 
-                    } 
-                } catch(e) { if(syncText) { syncText.innerText = "Offline (Local Saved)"; syncText.style.color = "#dc3545"; } }
-            } else {
-                if(syncText) { syncText.innerText = "Local Mode Saved"; syncText.style.color = "#6c757d"; }
+            localStorage.setItem('l_pass', appPass); localStorage.setItem('l_settings', JSON.stringify(settings));
+            localStorage.setItem('l_inv', JSON.stringify(inventory)); localStorage.setItem('l_sales', JSON.stringify(sales));
+            localStorage.setItem('l_exp', JSON.stringify(expenses)); localStorage.setItem('l_cust', JSON.stringify(customers));
+            localStorage.setItem('l_sup', JSON.stringify(suppliers)); localStorage.setItem('l_quote', JSON.stringify(quotations));
+            localStorage.setItem('l_cat', JSON.stringify(categories)); localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+            if (currentUid !== "local" && docRef && window.location.protocol !== 'file:') {
+                try { await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems }); } catch(e){}
             }
         }
 
         async function forceCloudRefresh() {
-            if(!docRef || window.location.protocol === 'file:') { alert("You are in Local Mode."); return; }
-            if(!confirm("Pull latest data from cloud? This will overwrite unsaved local changes.")) return;
-            try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); if(d && Object.keys(d).length > 0) { appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || inventory; sales = d.sales || sales; expenses = d.expenses || expenses; customers = d.customers || customers; suppliers = d.suppliers || suppliers; quotations = d.quotations || quotations; categories = d.categories || categories; deletedItems = d.deletedItems || deletedItems; } alert("Data refreshed from cloud!"); initApp(); } else { alert("No cloud data found."); saveToStorage(); } } catch (e) { alert("Refresh failed."); }
+            if(!docRef) return;
+            try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || []; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || []; deletedItems = d.deletedItems || []; alert("Synced!"); initApp(); } } catch(e){ alert("Sync failed."); }
         }
 
         function initApp() {
-            document.getElementById('brand-name').innerText = settings.name; document.getElementById('brand-city').innerText = settings.city;
-            document.getElementById('logged-staff-name').innerText = currentStaffName; // ADDED
-            document.getElementById('set-name').value = settings.name; document.getElementById('set-city').value = settings.city;
-            document.getElementById('set-gst').value = settings.gst || ''; document.getElementById('set-phone').value = settings.phone || ''; document.getElementById('set-address').value = settings.address || '';
+            document.getElementById('brand-name').innerText = settings.name;
+            document.getElementById('brand-city').innerText = settings.city;
+            document.getElementById('logged-staff-name').innerText = currentStaffName;
+            document.getElementById('set-name').value = settings.name;
+            document.getElementById('set-city').value = settings.city;
+            document.getElementById('set-gst').value = settings.gst || '';
+            document.getElementById('set-phone').value = settings.phone || '';
+            document.getElementById('set-address').value = settings.address || '';
             document.getElementById('set-email').value = settings.email || '';
-            document.getElementById('set-staff-pin').value = settings.staffPin || ''; document.getElementById('set-printer').value = settings.printerSize || 'A4'; document.getElementById('set-lang').value = settings.receiptLanguage || 'EN';
+            document.getElementById('set-printer').value = settings.printerSize || 'A4';
+            document.getElementById('set-lang').value = settings.receiptLanguage || 'EN';
             document.getElementById('set-upi-id').value = settings.upiId || '';
-            document.getElementById('set-instagram').value = settings.instagram || ''; // ADDED
-            
-            // Set Print Method
+            document.getElementById('set-instagram').value = settings.instagram || '';
             document.getElementById('set-print-method').value = settings.printMethod || 'browser';
-            
-            renderTaxDropdown(); renderStaffList(); // ADDED renderStaffList()
-
-            document.getElementById('set-tax-rate').value = settings.taxRate || 0;
-            let savedTax = (settings.taxRate || 0).toString();
-            let taxDropdown = document.getElementById('tax-dropdown');
-
-            let optionExists = Array.from(taxDropdown.options).some(opt => opt.value === savedTax);
-
-            if (optionExists && savedTax !== 'custom') {
-                taxDropdown.value = savedTax;
-            } else {
-                taxDropdown.value = "custom";
-                document.getElementById('set-tax-rate').value = savedTax;
-            }
-            handleTaxDropdown(); 
-
-            document.getElementById('set-tax-mode').value = settings.taxMode || 'EXCLUSIVE';
-            
             if(settings.profilePic) document.getElementById('sidebar-img').src = settings.profilePic;
 
-            document.getElementById('posTax').placeholder = settings.taxRate ? `Auto (${settings.taxRate}%)` : "0";
-
-            const adminOnlyTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers'];
-            adminOnlyTabs.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
-
-            // HIDE BUY PRICE & PURCHASE BUTTONS FROM STAFF
-            if (document.getElementById('group-pPurchasePrice')) document.getElementById('group-pPurchasePrice').style.display = userRole === 'admin' ? 'block' : 'none';
-            if (document.getElementById('btn-log-purchase')) document.getElementById('btn-log-purchase').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
-            if (document.getElementById('btn-bulk-inv')) document.getElementById('btn-bulk-inv').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
-            if (document.getElementById('btn-import-csv')) document.getElementById('btn-import-csv').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
-            if (document.getElementById('btn-reorder-banner')) document.getElementById('btn-reorder-banner').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
+            renderTaxDropdown(); renderStaffList();
             
-            if (userRole === 'staff' && !['pos-view', 'inventory-view', 'history-view', 'customers-view', 'orders-view', 'jobcards-view'].includes(document.querySelector('.view-section.active').id)) {
-                switchTab('pos');
-            } else { refreshDisplays(); }
+            const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers'];
+            adminTabs.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
             
-            if (currentUid === "local" || !docRef) {
-                let st = document.getElementById('sync-text');
-                if(st) { st.innerText = "Local Mode"; st.style.color = "#6c757d"; }
-            }
+            if (userRole === 'staff') switchTab('pos'); else refreshDisplays();
         }
-
-        document.getElementById('set-profile-pic').addEventListener('change', function(e) { const file = e.target.files[0]; const reader = new FileReader(); reader.onloadend = () => { tempBase64Img = reader.result; }; if (file) reader.readAsDataURL(file); });
 
         // STAFF MANAGEMENT
         function renderStaffList() {
@@ -1481,22 +1373,14 @@
                 }
             });
 
-            // INVENTORY TABLE (BUY PRICE HIDDEN FOR STAFF)
-            let thPrice = document.getElementById('th-inv-price');
-            if (thPrice) thPrice.innerText = userRole === 'admin' ? 'Buy / Sell Price' : 'Sale Price';
-
+            // INVENTORY TABLE
             document.getElementById('inventoryTableBody').innerHTML = inventory.map(i => {
                 let btns = `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="printBarcodeLabel(${i.id})">🖨️ Barcode</button>`;
                 if(userRole === 'admin') btns += `<button class="btn btn-gray" style="color:var(--primary); padding: 4px 8px; font-size:0.8em; margin:0 4px;" onclick="editProduct(${i.id})">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('inv', ${i.id})">Del</button>`;
-                
-                let priceHtml = userRole === 'admin' 
-                    ? `<small style="color:var(--text-muted);">Buy: ₹${i.purchasePrice||0}</small><br><b>Sell: ₹${i.price}/${i.unit||'pc'}</b>`
-                    : `<b>₹${i.price}/${i.unit||'pc'}</b>`;
-
                 return `<tr class="${i.stock <= 0 ? 'low-stock' : ''}">
                     <td><b>${i.name}</b><br><small style="color:var(--text-muted);">${i.brand||''}</small></td>
                     <td>${i.category||'General'}</td><td>${i.supplier||'--'}</td>
-                    <td>${priceHtml}</td>
+                    <td><small style="color:var(--text-muted);">Buy: ₹${i.purchasePrice||0}</small><br><b>Sell: ₹${i.price}</b></td>
                     <td><b style="${i.stock <= 0 ? 'color:red;' : ''}">${i.stock}</b></td>
                     <td>${btns}</td>
                 </tr>`;
@@ -1591,53 +1475,21 @@
                 }).join('');
             }
 
-            // SALES HISTORY WITH PARTIAL RETURN, EDIT, AND CASHIER NAME
+            // SALES HISTORY WITH PARTIAL RETURN AND CASHIER NAME
             let hSearch = (document.getElementById('searchHistory')?.value || '').toLowerCase();
-            let hType = document.getElementById('filterHistoryType')?.value || 'All';
-            
-            let filteredSales = sales.filter(s => {
-                let matchSearch = s.id.toLowerCase().includes(hSearch) || s.cust.toLowerCase().includes(hSearch) || s.date.toLowerCase().includes(hSearch);
-                let cObj = customers.find(x => x.name === s.cust);
-                let sType = cObj ? (cObj.type || 'Customer') : 'Customer';
-                let matchType = hType === 'All' ? true : (sType === hType);
-                return matchSearch && matchType;
-            });
-
-            document.getElementById('historyTableBody').innerHTML = filteredSales.slice().reverse().map(s => {
-                let btns = `<div style="display:flex; gap:5px; align-items:center;">
-                            <button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️ View</button>`;
-                
+            document.getElementById('historyTableBody').innerHTML = sales.filter(s => s.id.toLowerCase().includes(hSearch) || s.cust.toLowerCase().includes(hSearch)).slice().reverse().map(s => {
+                let btns = `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️</button>`;
                 if (s.returned) {
                     btns += `<span style="color:red; font-weight:bold; font-size:0.8em; margin: 0 5px;">[RETURNED]</span>`;
-                    if (userRole === 'admin') {
-                        btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em;" onclick="deleteSale('${s.id}')">🗑️</button>`;
-                    }
                 } else {
-                    if (userRole === 'admin') {
-                        btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em;" onclick="editSale('${s.id}')">✏️ Edit</button>`;
-                        btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em;" onclick="openPartialReturnModal('${s.id}')">🔄 Return</button>`;
-                    }
-                    if (s.due > 0) btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="openBillPaymentModal('${s.id}')">₹ Pay</button>`;
+                    if (userRole === 'admin') btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em; margin-left:4px;" onclick="openPartialReturnModal('${s.id}')">🔄 Return</button>`;
+                    if (s.due > 0) btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-left:4px;" onclick="openBillPaymentModal('${s.id}')">₹ Pay</button>`;
                 }
-                btns += `</div>`;
-                
-                let itemNames = s.items ? s.items.map(i => i.name + ' (x' + i.qty + ')').join(', ') : '--';
-                let cObj = customers.find(x => x.name === s.cust);
-                let typeBadge = (cObj && cObj.type === 'Reseller') ? '<span style="background:#e0e7ff; color:#4338ca; padding:2px 4px; border-radius:4px; font-size:0.7em; margin-left:3px;">Reseller</span>' : '';
-                
-                return `<tr style="${s.returned ? 'opacity:0.6;' : ''}">
-                    <td>#${s.id}</td>
-                    <td>${s.date.split(',')[0]}</td>
-                    <td>${s.cust}${typeBadge}<br><small style="color:var(--text-muted);">📱 ${s.phone || '--'}</small></td>
-                    <td><span style="font-size:0.85em; color:var(--text-muted);">${itemNames}</span></td>
-                    <td><s style="${s.returned?'':'text-decoration:none;'}">₹${s.total.toFixed(2)}</s></td>
-                    <td style="color:red">₹${s.due||0}</td>
-                    <td><small>${s.cashier || 'Admin'}</small></td>
-                    <td>${btns}</td>
-                </tr>`;
+                return `<tr><td>#${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}</td><td>${s.items.map(i=>i.name+' (x'+i.qty+')').join(', ')}</td><td>₹${s.total.toFixed(2)}</td><td style="color:red">₹${s.due||0}</td><td><small>${s.cashier || 'Admin'}</small></td><td>${btns}</td></tr>`;
             }).join('');
 
             filterCustomerDropdown();
+            saveToStorage();
         }
 
         // --- JOB CARDS LOGIC ---
@@ -1785,12 +1637,7 @@
 
         // BARCODE CAMERA
         function openCameraScanner() { document.getElementById('scannerModal').style.display = 'flex'; html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false); html5QrcodeScanner.render((code) => { handleBarcodeScan(code); closeScanner(); }, () => {}); }
-        
-        function closeScanner() { 
-            if(html5QrcodeScanner) html5QrcodeScanner.clear(); 
-            document.getElementById('scannerModal').style.display = 'none'; 
-        }
-        
+        function closeScanner() { if(html5QrcodeScanner) html5QrcodeScanner.clear(); document.getElementById('scannerModal').style.display = 'none'; }
         function handleBarcodeScan(code) { const p = inventory.find(x => (x.barcode && x.barcode.toLowerCase() === code.toLowerCase()) || x.id.toString() === code); if (p) { addToCart(p); document.getElementById('posSearch').value = ''; refreshDisplays(); } else alert("Item not found"); }
 
         // PRODUCT & INVENTORY
@@ -1805,12 +1652,7 @@
             document.getElementById('pWarranty').value = p.warranty || '';
             openProductModal();
         }
-        function openProductModal() { 
-            if (document.getElementById('group-pPurchasePrice')) {
-                document.getElementById('group-pPurchasePrice').style.display = userRole === 'admin' ? 'block' : 'none';
-            }
-            document.getElementById('productModal').style.display = 'flex'; 
-        }
+        function openProductModal() { document.getElementById('productModal').style.display = 'flex'; }
         function saveProduct() {
             const name = document.getElementById('pName').value; const barcode = document.getElementById('pBarcode').value;
             const purchasePrice = parseFloat(document.getElementById('pPurchasePrice').value) || 0;
@@ -1822,7 +1664,7 @@
             const warranty = document.getElementById('pWarranty').value;
             if (editingProductId) {
                 const p = inventory.find(x => x.id === editingProductId);
-                if (p) { Object.assign(p, { name, barcode, purchasePrice: userRole === 'admin' ? purchasePrice : p.purchasePrice, price, resellerPrice, stock, category, supplier, brand, unit, warranty }); }
+                if (p) { Object.assign(p, { name, barcode, purchasePrice, price, resellerPrice, stock, category, supplier, brand, unit, warranty }); }
             } else { inventory.push({ id: Date.now(), name, barcode, purchasePrice, price, resellerPrice, stock, category, supplier, brand, unit, warranty }); }
             closeModals(); refreshDisplays();
         }
@@ -1952,50 +1794,13 @@
         function removeFromCart(id) { cart = cart.filter(c => String(c.id) !== String(id)); updateCart(); }
         function decreaseQty(id) { let item = cart.find(c => String(c.id) === String(id)); if(item) { if(item.qty > 1) item.qty--; else cart = cart.filter(c => String(c.id) !== String(id)); updateCart(); } }
         function increaseQty(id) { let item = cart.find(c => String(c.id) === String(id)); if(item) { let inv = inventory.find(x => String(x.id) === String(item.id)); if(inv && item.qty + 1 > inv.stock) return alert("Low stock"); item.qty++; updateCart(); } }
-        function updateItemQty(id, newQty) {
-            let item = cart.find(c => String(c.id) === String(id));
-            if(item) {
-                let parsedQty = parseFloat(newQty);
-                if(isNaN(parsedQty) || parsedQty <= 0) parsedQty = 1;
-                let invItem = inventory.find(x => String(x.id) === String(item.id));
-                if (invItem && parsedQty > invItem.stock) {
-                    alert(`Not enough stock! Only ${invItem.stock} available.`);
-                    item.qty = invItem.stock;
-                } else {
-                    item.qty = parsedQty;
-                }
-                updateCart();
-            }
-        }
-
         function updateCart() {
             let cid = document.getElementById('posCustomerSelect').value; let c = customers.find(x => x.id == cid);
             document.getElementById('availPoints').innerText = c ? (c.points || 0) : 0;
             let subtotal = 0;
             document.getElementById('cartBody').innerHTML = cart.map(i => {
                 subtotal += i.price * i.qty;
-                
-                let qtyControl = '';
-                let decimalUnits = ['kg', 'mtr', 'sqft'];
-                if (decimalUnits.includes(i.unit)) {
-                    qtyControl = `<input type="number" step="0.01" min="0.01" value="${i.qty}" onchange="updateItemQty('${i.id}', this.value)" style="width:60px; height:24px; padding:0 4px; border:1px solid var(--border-color); border-radius:4px; text-align:center; font-size:0.9em; font-weight:bold; outline:none; box-sizing:border-box; background:var(--bg-body); color:var(--text-main);">`;
-                } else {
-                    qtyControl = `<button onclick="decreaseQty('${i.id}')" style="width:24px; height:24px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main); border-radius:4px; cursor:pointer; font-weight:bold; padding:0;">-</button>
-                    <span style="font-size:0.9em; font-weight:bold; min-width:15px; text-align:center;">${i.qty}</span>
-                    <button onclick="increaseQty('${i.id}')" style="width:24px; height:24px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main); border-radius:4px; cursor:pointer; font-weight:bold; padding:0;">+</button>`;
-                }
-
-                return `<tr>
-                    <td style="color:red; cursor:pointer; font-weight:bold; padding-right:10px; font-size:1.1em; vertical-align:middle;" onclick="removeFromCart('${i.id}')">✕</td>
-                    <td style="width:100%; vertical-align:middle;">
-                        ${i.name} <br><small style="color:var(--text-muted);">${i.brand||''}</small>
-                        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-                            ${qtyControl}
-                            <small style="color:var(--text-muted); margin-left:5px;">${i.unit||'pcs'}</small>
-                        </div>
-                    </td>
-                    <td align="right" style="vertical-align:middle; font-weight:bold;">₹${(i.price*i.qty).toFixed(2)}</td>
-                </tr>`;
+                return `<tr><td style="color:red; cursor:pointer;" onclick="removeFromCart('${i.id}')">✕</td><td>${i.name} x${i.qty}</td><td align="right">₹${(i.price*i.qty).toFixed(2)}</td></tr>`;
             }).join('');
             let discInput = parseFloat(document.getElementById('posDiscount').value) || 0;
             let discount = document.getElementById('posDiscountType').value === 'percent' ? (subtotal * (discInput / 100)) : discInput;
@@ -2014,488 +1819,146 @@
             if (cart.length === 0) return;
             let total = parseFloat(document.getElementById('grandTotal').innerText.replace('₹',''));
             let due = parseFloat(document.getElementById('dueTotal').innerText.replace('₹','')) || 0;
-            
-            let subtotal = cart.reduce((a,b)=>a+(b.price*b.qty),0);
-            let discountInput = parseFloat(document.getElementById('posDiscount').value) || 0;
-            let discountType = document.getElementById('posDiscountType').value;
-            let discountAmount = discountType === 'percent' ? (subtotal * (discountInput / 100)) : discountInput;
-            let discountStr = discountType === 'percent' ? `${discountInput}%` : `₹${discountInput}`;
-            
-            let taxableAmount = subtotal - discountAmount;
-            let taxPercentInput = document.getElementById('posTax').value;
-            let taxPercent = taxPercentInput !== "" ? (parseFloat(taxPercentInput) || 0) : (settings.taxRate || 0);
-            let taxMode = settings.taxMode || 'EXCLUSIVE';
-            let shippingInput = parseFloat(document.getElementById('posShipping').value) || 0;
-            let loyaltyUsed = parseFloat(document.getElementById('posLoyalty').value) || 0;
-
-            let taxAmount = 0;
-            if(taxMode === 'INCLUSIVE') {
-                let baseAmount = taxableAmount / (1 + (taxPercent / 100));
-                taxAmount = taxableAmount - baseAmount;
-            } else {
-                taxAmount = taxableAmount * (taxPercent / 100);
-            }
-            
-            let payMode = document.getElementById('posPayMode').value;
             let cid = document.getElementById('posCustomerSelect').value;
             let c = customers.find(x => x.id == cid);
-            let earnedPoints = Math.floor(total / 100);
-            
-            let saleId;
-            if (editingSaleId) {
-                saleId = editingSaleId;
-            } else {
-                let attempt = 0;
-                do {
-                    saleId = (Date.now() + attempt).toString().slice(-6);
-                    attempt++;
-                } while (sales.find(s => s.id === saleId) || deletedItems.includes(saleId));
-            }
-            let saleDate = editingSaleDate ? editingSaleDate : new Date().toLocaleString();
-
-            let advancePaid = total - due;
-            
-            let newSale = { 
-                id: saleId, 
-                date: saleDate, 
-                cust: c.name, 
-                phone: c.phone, 
-                total: total, 
-                tax: taxAmount, 
-                taxPercent: taxPercent, 
-                taxMode: taxMode, 
-                due: due, 
-                advancePaid: advancePaid, 
-                discount: discountAmount, 
-                discountStr: discountStr, 
-                loyaltyUsed: loyaltyUsed, 
-                earnedPoints: earnedPoints, 
-                shipping: shippingInput, 
-                payMode: payMode, 
-                items: JSON.parse(JSON.stringify(cart)), 
-                cashier: currentStaffName, 
-                returned: false, 
-                orderStatus: 'Pending' 
-            };
+            let saleId = (Date.now()).toString().slice(-6);
+            let newSale = { id: saleId, date: new Date().toLocaleString(), cust: c.name, phone: c.phone, total, due, items: JSON.parse(JSON.stringify(cart)), cashier: currentStaffName, returned: false };
             sales.push(newSale);
-            if(c) { c.spent += total; c.due = (c.due || 0) + due; c.points = (c.points || 0) - loyaltyUsed + earnedPoints; }
+            if(c) { c.spent += total; c.due = (c.due || 0) + due; }
             cart.forEach(ci => { let inv = inventory.find(x => x.id == ci.id); if(inv) inv.stock -= ci.qty; });
             generateReceiptHTML(newSale);
-            
-            if(action === 'print') { setTimeout(() => { executePrint(); finishSale(); }, 100); }
-            else if (action === 'text') { sendWhatsApp(saleId); finishSale(); }
-            else { finishSale(); }
-            
-            function finishSale() {
-                editingSaleId = null; editingSaleDate = null;
-                resetCart(); refreshDisplays();
-            }
+            if(action === 'print') { setTimeout(() => { executePrint(); resetCart(); refreshDisplays(); }, 100); }
+            else { sendWhatsApp(saleId); resetCart(); refreshDisplays(); }
         }
 
-        // EDIT SALE FIX
-        function editSale(id) {
-            if(!confirm("Edit this bill? This will reverse the existing bill and load items back into the cart. Proceed?")) return;
-            const sIndex = sales.findIndex(x => x.id === id);
-            if(sIndex === -1) return;
-            const s = sales[sIndex];
-            if(s.returned) return alert("Cannot edit a returned sale.");
-            
-            // Reverse Stock
-            s.items.forEach(ci => { let invI = inventory.find(x => x.id == ci.id); if (invI) invI.stock += ci.qty; });
-            
-            // Reverse Customer Ledger
-            let c = customers.find(x => x.name === s.cust);
-            if (c) { 
-                c.spent -= s.total; 
-                c.due -= (s.due || 0); 
-                c.points = (c.points || 0) + (s.loyaltyUsed || 0) - (s.earnedPoints || 0); 
-                if(c.due < 0) c.due = 0;
-                if(c.points < 0) c.points = 0; 
-            }
+        function resetCart() { cart = []; document.getElementById('posDiscount').value = ''; document.getElementById('posAdvance').value = ''; updateCart(); }
 
-            // Load to POS
-            cart = JSON.parse(JSON.stringify(s.items));
-            
-            if (s.discountStr && s.discountStr.includes('%')) {
-                document.getElementById('posDiscount').value = parseFloat(s.discountStr) || '';
-                document.getElementById('posDiscountType').value = 'percent';
-            } else {
-                document.getElementById('posDiscount').value = s.discount || '';
-                document.getElementById('posDiscountType').value = 'flat';
-            }
-
-            document.getElementById('posTax').value = s.taxPercent || '';
-            document.getElementById('posLoyalty').value = s.loyaltyUsed || '';
-            document.getElementById('posShipping').value = s.shipping || '';
-            
-            if(s.due === 0) document.getElementById('posAdvance').value = 'Full';
-            else document.getElementById('posAdvance').value = s.total - s.due;
-            
-            if(s.payMode) document.getElementById('posPayMode').value = s.payMode;
-            if(c) document.getElementById('posCustomerSelect').value = c.id;
-
-            editingSaleId = s.id;
-            editingSaleDate = s.date;
-
-            // Remove old sale entirely
-            sales.splice(sIndex, 1);
-            
-            switchTab('pos');
-            updateCart();
-        }
-
-        function saveQuotation() {
-            if (cart.length === 0) return;
-            let total = parseFloat(document.getElementById('grandTotal').innerText.replace('₹', ''));
-            
-            let subtotal = cart.reduce((a,b)=>a+(b.price*b.qty),0);
-            let discountInput = parseFloat(document.getElementById('posDiscount').value) || 0;
-            let discountType = document.getElementById('posDiscountType').value;
-            let discountAmount = discountType === 'percent' ? (subtotal * (discountInput / 100)) : discountInput;
-            let discountStr = discountType === 'percent' ? `${discountInput}%` : `₹${discountInput}`;
-            
-            let taxableAmount = subtotal - discountAmount;
-            let taxPercentInput = document.getElementById('posTax').value;
-            let taxPercent = taxPercentInput !== "" ? (parseFloat(taxPercentInput) || 0) : (settings.taxRate || 0);
-            let taxMode = settings.taxMode || 'EXCLUSIVE';
-            let shippingInput = parseFloat(document.getElementById('posShipping').value) || 0;
-
-            let taxAmount = 0;
-            if(taxMode === 'INCLUSIVE') {
-                let baseAmount = taxableAmount / (1 + (taxPercent / 100));
-                taxAmount = taxableAmount - baseAmount;
-            } else {
-                taxAmount = taxableAmount * (taxPercent / 100);
-            }
-
-            let cid = document.getElementById('posCustomerSelect').value; let c = customers.find(x => x.id == cid);
-
-            let qId;
-            let attempt = 0;
-            do {
-                qId = 'Q' + (Date.now() + attempt).toString().slice(-5);
-                attempt++;
-            } while (quotations.find(q => q.id === qId) || deletedItems.includes(qId));
-
-            const newQuote = { id: qId, date: new Date().toLocaleString(), cust: c.name, phone: c.phone, total: total, tax: taxAmount, taxMode: taxMode, discount: discountAmount, discountStr: discountStr, shipping: shippingInput, items: JSON.parse(JSON.stringify(cart)) };
-            quotations.push(newQuote);
-            
-            generateReceiptHTML(newQuote, true); 
-            
-            setTimeout(() => {
-                executePrint();
-                resetCart(); 
-                refreshDisplays(); 
-                alert("Quotation Saved!");
-            }, 100); 
-        }
-
-        function resetCart() { cart = []; document.getElementById('posDiscount').value = ''; document.getElementById('posDiscountType').value = 'flat'; document.getElementById('posTax').value = ''; document.getElementById('posLoyalty').value = ''; document.getElementById('posAdvance').value = ''; document.getElementById('posShipping').value = ''; document.getElementById('posPayMode').value = 'Cash'; updateCart(); }
-
-        function generateReceiptHTML(s, isQuote = false) { 
-            const L = settings.receiptLanguage === 'HI' ? {
-                inv: isQuote ? "कोटेशन" : "रसीद", date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "उपयोग किए गए अंक", due: "बकाया राशि",
-                total: "कुल राशि", thx: isQuote ? "*** कोटेशन मान्य 15 दिन ***" : "*** धन्यवाद! ***", earned: "⭐ आपने अंक अर्जित किए:", gst: "जीएसटी", pmode: "भुगतान मोड"
-            } : {
-                inv: isQuote ? "QUOTATION" : "INV", date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Amount Due",
-                total: "Total", thx: isQuote ? "*** Estimate Valid for 15 Days ***" : "*** Thank You! ***", earned: "⭐ You earned Points:", gst: "GSTIN", pmode: "Pay Mode"
-            };
-
-            let pWidth = "100%"; let fSize = "15px"; let containerCss = "box-sizing:border-box; width:100%; padding:10px;";
-            if(settings.printerSize === '58mm') { pWidth = "58mm"; fSize = "13px"; containerCss="width:58mm; margin:0 auto; padding:5px; font-weight:bold;"; }
-            if(settings.printerSize === '80mm') { pWidth = "80mm"; fSize = "15px"; containerCss="width:80mm; margin:0 auto; padding:5px; font-weight:bold;"; }
-
-            let tableHTML = `<table style="width:100%; border-top:1px solid #000; font-size:${fSize}; text-align:left; border-collapse:collapse;">`;
-            s.items.forEach(i => { 
-                let bStr = i.brand ? ` (${i.brand})` : '';
-                let wStr = i.warranty ? `<br><small>W: ${i.warranty}</small>` : '';
-                tableHTML += `<tr><td style="padding:6px 0; border:none;">${i.name}${bStr} ${wStr}<br><span style="font-size:0.9em;">x${i.qty} ${i.unit||'pcs'} @ ₹${i.price}</span></td><td align="right" style="padding:6px 0; border:none; vertical-align:bottom;">₹${i.price*i.qty}</td></tr>`; 
-            });
-            tableHTML += `</table>`;
-
-            let extras = "";
-            if (s.shipping > 0) {
-                extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">Shipping: ₹${s.shipping.toFixed(2)}</div>`;
-            }
-            if (s.discount > 0) {
-                let discLabel = s.discountStr ? ` (${s.discountStr})` : '';
-                extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">${L.disc}${discLabel}: -₹${s.discount.toFixed(2)}</div>`;
-            }
-            if (s.tax > 0) {
-                let halfTax = (s.tax / 2).toFixed(2);
-                let taxModeStr = s.taxMode === 'INCLUSIVE' ? '(Incl.)' : '(Added)';
-                extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; color:#555;">${L.cgst} ${taxModeStr}: ₹${halfTax}</div>`;
-                extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize}; color:#555;">${L.sgst} ${taxModeStr}: ₹${halfTax}</div>`;
-            }
-            if (s.loyaltyUsed > 0) extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">${L.pts}: -₹${s.loyaltyUsed}</div>`;
-            if (!isQuote) {
-                let advance = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
-                let advLabel = settings.receiptLanguage === 'HI' ? "अग्रिम भुगतान" : "Advance Paid";
-                let pendLabel = settings.receiptLanguage === 'HI' ? "बकाया राशि" : "Pending Amount";
-                extras += `<div style="text-align:right; margin:4px 0; font-size:${fSize};">${advLabel}: ₹${advance.toFixed(2)}</div>`;
-                if (s.due > 0) extras += `<div style="text-align:right; margin:4px 0; color:red; font-size:${fSize};">${pendLabel}: ₹${s.due.toFixed(2)}</div>`;
-            }
-            if (s.earnedPoints > 0 && !isQuote) extras += `<div style="text-align:center; margin:4px 0; font-size:0.9em;">${L.earned} ${s.earnedPoints}</div>`;
-            if (!isQuote && s.payMode) extras += `<div style="text-align:right; margin:4px 0; font-weight:bold; font-size:${fSize};">${L.pmode}: ${s.payMode}</div>`;
-
-            let addressLine = settings.address ? `${settings.address}<br>` : "";
-            let cityLine = settings.city ? `${settings.city}<br>` : "";
-            let gstLine = (settings.gst && settings.gst.trim() !== "") ? `${L.gst}: ${settings.gst}<br>` : "";
-            let emailLine = (settings.email && settings.email.trim() !== "") ? `Email: ${settings.email}<br>` : "";
-            let phoneLine = (settings.phone && settings.phone.trim() !== "") ? `Ph: ${settings.phone}<br>` : "";
-            let instaLine = (settings.instagram && settings.instagram.trim() !== "") ? `Instagram: ${settings.instagram}` : "";
+        function generateReceiptHTML(s) {
+            let addr = settings.address ? `${settings.address}<br>` : '';
+            let gst = settings.gst ? `GSTIN: ${settings.gst}<br>` : '';
+            let insta = settings.instagram ? `Instagram: ${settings.instagram}<br>` : '';
             let jobDetails = s.isJobCard ? `Device: <b>${s.jobDevice}</b><br>Notes: ${s.jobNotes||'--'}<br>Exp: ${s.jobExpDate||'--'}<br>` : '';
             
-            let qrSection = "";
-            let qrAmount = 0;
-            if (settings.upiId && !isQuote) {
-                qrAmount = (s.due > 0) ? s.due : s.total;
-                if (qrAmount > 0) {
-                    qrSection = `<div style="text-align:center; margin:10px 0; border-top:1px dashed #000; padding-top:10px;">
-                        <p style="margin:0 0 5px 0; font-size:${fSize}; font-weight:bold;">Scan to Pay</p>
-                        <center><div id="print-qrcode-container"></div></center>
-                        <p style="margin:5px 0 0 0; font-size:10px;">UPI: ${settings.upiId}</p>
-                    </div>`;
-                }
-            }
-
             document.getElementById('receipt-print-area').innerHTML = `
-            <div style="${containerCss}">
-                <center>
-                    <h2 style="margin:5px 0; font-size:calc(${fSize} + 6px);">${settings.name}</h2>
-                    <div style="font-size:${fSize};">${addressLine}${cityLine}${gstLine}${emailLine}${phoneLine}${instaLine}</div>
-                    <hr style="border-top:1px dashed #000; margin:8px 0;">
-                </center>
-                <div style="font-size:${fSize}; margin-bottom:8px;">
-                    ${s.isJobCard ? 'JOB CARD' : L.inv} #${s.id} | ${s.date}<br>
-                    ${L.cust}: ${s.cust} ${customers.find(x => x.name === s.cust)?.type === 'Reseller' ? '(Reseller)' : ''}<br>
-                    ${jobDetails}Cashier: ${s.cashier || 'Admin'}
-                </div>
-                ${tableHTML}
-                <hr style="border-top:1px dashed #000; margin:8px 0;">
-                ${extras}
-                <h3 style="text-align:right; border-top:1px solid #000; margin:5px 0; padding-top:5px; font-size:calc(${fSize} + 4px);">${L.total}: ₹${s.total.toFixed(2)}</h3>
-                ${qrSection}
-                <center><p style="font-size:${fSize}; margin-top:15px;">${L.thx}</p></center>
-            </div>`;
-
-            if (settings.upiId && !isQuote && qrAmount > 0) {
-                let upiString = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.name)}&am=${qrAmount.toFixed(2)}&cu=INR`;
-                document.getElementById('print-qrcode-container').innerHTML = "";
-                new QRCode(document.getElementById("print-qrcode-container"), {
-                    text: upiString,
-                    width: 100,
-                    height: 100
-                });
-            }
-        }
-
-        function viewPastBill(id) {
-            const s = sales.find(x => x.id === id) || quotations.find(x => x.id === id);
-            if (!s) return;
-            let extras = "";
-            if (s.shipping > 0) {
-                extras += `<h4 align="right" style="margin:5px 0; color: var(--text-muted);">Shipping: ₹${s.shipping.toFixed(2)}</h4>`;
-            }
-            if (s.discount > 0) {
-                let discLabel = s.discountStr ? ` (${s.discountStr})` : '';
-                extras += `<h4 align="right" style="margin:5px 0; color: var(--danger);">Discount${discLabel}: -₹${s.discount.toFixed(2)}</h4>`;
-            }
-            if (s.tax > 0) {
-                let halfTax = (s.tax / 2).toFixed(2);
-                let taxModeStr = s.taxMode === 'INCLUSIVE' ? '(Incl.)' : '(Added)';
-                extras += `<h4 align="right" style="margin:5px 0; color: var(--text-muted);">${taxModeStr} CGST: ₹${halfTax}</h4>`;
-                extras += `<h4 align="right" style="margin:5px 0; color: var(--text-muted);">${taxModeStr} SGST: ₹${halfTax}</h4>`;
-            }
-            if (s.loyaltyUsed > 0) extras += `<h4 align="right" style="margin:5px 0; color: var(--success);">Pts Used: -₹${s.loyaltyUsed}</h4>`;
-            let advance = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
-            extras += `<h4 align="right" style="margin:5px 0; color: var(--primary);">Advance Paid: ₹${advance.toFixed(2)}</h4>`;
-            if (s.due > 0) extras += `<h4 align="right" style="margin:5px 0; color: red;">Pending Amount: ₹${s.due.toFixed(2)}</h4>`;
-            if (s.payMode) extras += `<h4 align="right" style="margin:5px 0; color: var(--text-muted);">Pay Mode: ${s.payMode}</h4>`;
-            
-            let qrScreen = "";
-            if(settings.upiId && s.due > 0) {
-                qrScreen = `<div style="text-align:center; padding:15px; background:var(--bg-body); border-radius:8px; margin:15px 0; border:1px solid var(--border-color);">
-                    <p style="margin-top:0; font-weight:bold; color:var(--primary);">Pending Due: ₹${s.due.toFixed(2)}</p>
-                    <center><div id="view-qrcode-container" style="margin-top:10px; background:white; padding:10px; border-radius:8px; display:inline-block;"></div></center>
-                    <p style="margin-bottom:0; font-size:0.9em; color:var(--text-muted);">Scan to Pay | UPI: ${settings.upiId}</p>
+                <div style="padding:10px; text-align:center;">
+                    <h2>${settings.name}</h2><p>${addr}${gst}${insta}Ph: ${settings.phone||''}</p><hr>
+                    <div style="text-align:left;">${s.isJobCard ? 'JOB CARD' : 'INV'} #${s.id} | ${s.date}<br>Cust: ${s.cust}<br>${jobDetails}Cashier: ${s.cashier || 'Admin'}</div><hr>
+                    <table style="width:100%; text-align:left;">${s.items.map(i => `<tr><td>${i.name} x${i.qty}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}</table>
+                    <hr><h3>Total: ₹${s.total.toFixed(2)}</h3>${s.due > 0 ? `<p style="color:red;">Due: ₹${s.due.toFixed(2)}</p>` : ''}
+                    <p>*** Thank You! ***</p>
                 </div>`;
-            }
-
-            let isQuote = String(id).startsWith('Q');
-            let jobDetails = s.isJobCard ? `<p style="margin:5px 0; color:var(--primary);"><b>Device:</b> ${s.jobDevice}<br><b>Notes:</b> ${s.jobNotes||'--'}</p>` : '';
-
-            document.getElementById('billDetailContent').innerHTML = `<h3>${isQuote ? 'Quotation' : (s.isJobCard ? 'Job Card' : 'Bill')} #${s.id}</h3>
-                <p style="color:var(--text-muted); margin:0;">${s.date}</p>
-                ${jobDetails}
-                <hr>
-                <table style="width:100%">
-                    ${s.items.map(i => `<tr><td>${i.name} <br><small>${i.brand||''}</small> x${i.qty} ${i.unit||'pcs'}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}
-                </table>
-                <hr>${extras}<h2 align="right">Total: ₹${s.total.toFixed(2)}</h2>${qrScreen}<br><br>
-                <button class="btn btn-green" style="width:100%; margin-bottom:10px;" onclick="sendWhatsApp('${s.id}')">📱 Send WhatsApp Text</button>
-                <button class="btn btn-blue" style="width:100%; margin-bottom:10px;" onclick="${isQuote ? `printQuotation('${s.id}')` : `printExistingBill('${s.id}')`}">🖨️ Re-Print</button>
-                <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Close</button>`;
-            document.getElementById('viewBillModal').style.display = 'flex';
-
-            if(settings.upiId && s.due > 0) {
-                 let upiString = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.name)}&am=${s.due.toFixed(2)}&cu=INR`;
-                 document.getElementById('view-qrcode-container').innerHTML = "";
-                 new QRCode(document.getElementById('view-qrcode-container'), { text: upiString, width: 150, height: 150 });
-            }
-        }
-        
-        function printExistingBill(id) { 
-            generateReceiptHTML(sales.find(s=>s.id===id), false); 
-            setTimeout(() => executePrint(), 100); 
-        }
-        
-        function printQuotation(id) { 
-            generateReceiptHTML(quotations.find(q=>q.id===id), true); 
-            setTimeout(() => executePrint(), 100); 
         }
 
         function sendWhatsApp(id) {
-            let item = sales.find(x => x.id === id); if (!item) item = quotations.find(x => x.id === id); if (!item) return;
-            let isQuote = String(id).startsWith('Q');
-            let phone = (item.phone || "").replace(/\D/g,''); if(phone.length === 10) phone = "91" + phone; 
-            if(phone.length < 10) { alert("Customer phone missing."); return; } 
-            
-            const L = settings.receiptLanguage === 'HI' ? { inv: isQuote ? "कोटेशन" : "रसीद", date: "दिनांक", cust: "ग्राहक", disc: "छूट", cgst: "CGST", sgst: "SGST", pts: "अंक", due: "बकाया", total: isQuote ? "कुल अनुमानित राशि" : "कुल", thx: isQuote ? "कोटेशन मान्य 15 दिन" : "धन्यवाद!", pmode: "भुगतान मोड" } : { inv: isQuote ? "Quotation" : "Invoice", date: "Date", cust: "Customer", disc: "Discount", cgst: "CGST", sgst: "SGST", pts: "Pts Used", due: "Pending Due", total: isQuote ? "Estimated Total" : "Grand Total", thx: isQuote ? "Estimate Valid for 15 Days" : "Thank you for your business!", pmode: "Pay Mode" };
-            
-            let custType = customers.find(x => x.name === item.cust)?.type === 'Reseller' ? ' (Reseller)' : '';
-            let text = `🧾 *${settings.name}*\n${item.isJobCard ? 'JOB CARD' : L.inv}: #${item.id}\n${L.date}: ${item.date}\n${L.cust}: ${item.cust}${custType}\n------------------------\n`;
-            item.items.forEach(i => { text += `${i.name} (x${i.qty} ${i.unit||'pcs'}) - ₹${i.price * i.qty}\n`; }); text += `------------------------\n`;
-            
-            if (item.shipping > 0) text += `Shipping: ₹${item.shipping.toFixed(2)}\n`;
-
-            if (item.discount > 0) {
-                let discLabel = item.discountStr ? ` (${item.discountStr})` : '';
-                text += `${L.disc}${discLabel}: -₹${item.discount.toFixed(2)}\n`;
-            }
-            if (item.tax > 0) {
-                let halfTax = (item.tax / 2).toFixed(2);
-                let taxModeStr = item.taxMode === 'INCLUSIVE' ? '(Incl.)' : '(Added)';
-                text += `${L.cgst} ${taxModeStr}: ₹${halfTax}\n${L.sgst} ${taxModeStr}: ₹${halfTax}\n`;
-            }
-            if (!isQuote && item.loyaltyUsed > 0) text += `${L.pts}: -₹${item.loyaltyUsed}\n`;
-            if (!isQuote) {
-                let advance = item.advancePaid !== undefined ? item.advancePaid : (item.total - (item.due || 0));
-                let advLabel = settings.receiptLanguage === 'HI' ? "अग्रिम भुगतान" : "Advance Paid";
-                let pendLabel = settings.receiptLanguage === 'HI' ? "बकाया राशि" : "Pending Amount";
-                text += `${advLabel}: ₹${advance.toFixed(2)}\n`;
-                if (item.due > 0) text += `${pendLabel}: ₹${item.due.toFixed(2)}\n`;
-            }
-            if (!isQuote && item.payMode) text += `${L.pmode}: ${item.payMode}\n`;
-            text += `*${L.total}: ₹${item.total.toFixed(2)}*\n\n`;
-
-            if (settings.upiId && !isQuote && item.due > 0) {
-                let upiString = `upi://pay?pa=${settings.upiId}&pn=${encodeURIComponent(settings.name)}&am=${item.due.toFixed(2)}&cu=INR`;
-                text += `🔗 *Pay Pending ₹${item.due.toFixed(2)} via UPI:*\n${settings.upiId}\n\n`;
-            } else if (settings.upiId && !isQuote) {
-                text += `🏦 *UPI ID:* ${settings.upiId}\n\n`;
-            }
-
-            if (settings.instagram) {
-                text += `📷 *Instagram:* ${settings.instagram}\n\n`;
-            }
-
-            text += `${L.thx}`;
-            
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+            let s = sales.find(x => x.id === id); if(!s) return;
+            let phone = (s.phone||'').replace(/\D/g,'');
+            if(phone.length === 10) phone = '91' + phone;
+            let msg = `🧾 *${settings.name}*\nBill #${s.id}\nTotal: ₹${s.total.toFixed(2)}\nDue: ₹${s.due.toFixed(2)}\n${settings.instagram ? 'Follow us on IG: '+settings.instagram+'\n' : ''}Thank you!`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // UTILITIES
-        function openBillPaymentModal(id) { 
-            const s = sales.find(x => x.id === id); 
-            if (!s) return; 
-            document.getElementById('bpBillId').value = id; 
-            document.getElementById('bpCurrentDue').innerText = s.due; 
-            document.getElementById('bpAmount').value = s.due; 
-            document.getElementById('billPaymentModal').style.display = 'flex'; 
+        // INWARD PURCHASE
+        function openPurchaseStockModal() {
+            document.getElementById('psProductSearch').value = ''; filterPurchaseProducts();
+            document.getElementById('psSupplier').innerHTML = '<option value="None">No Supplier (Logs to Expense)</option>' + suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+            document.getElementById('purchaseStockModal').style.display = 'flex';
+        }
+        function filterPurchaseProducts() {
+            let q = (document.getElementById('psProductSearch')?.value || '').toLowerCase();
+            document.getElementById('psProduct').innerHTML = '<option value="">-- Select Product --</option>' + inventory.filter(p=>p.name.toLowerCase().includes(q)).map(p=>`<option value="${p.id}">${p.name} (Stock: ${p.stock})</option>`).join('');
+        }
+        function loadPurchaseProductDetails() { let p = inventory.find(x => String(x.id) === document.getElementById('psProduct').value); if(p) document.getElementById('psPrice').value = p.purchasePrice||0; calcPurchaseTotal(); }
+        function calcPurchaseTotal() { let q = parseFloat(document.getElementById('psQty').value)||0, p = parseFloat(document.getElementById('psPrice').value)||0; document.getElementById('psTotalStr').innerText = '₹' + (q*p).toFixed(2); }
+        function savePurchaseStock() {
+            let pid = document.getElementById('psProduct').value, q = parseFloat(document.getElementById('psQty').value)||0, p = parseFloat(document.getElementById('psPrice').value)||0, sid = document.getElementById('psSupplier').value;
+            if(!pid || q <= 0) return alert("Select product and valid quantity.");
+            let prod = inventory.find(x => String(x.id) === pid);
+            if(prod) { prod.stock += q; prod.purchasePrice = p; }
+            let total = q * p;
+            if(sid !== "None") { let s = suppliers.find(x => String(x.id) === sid); if(s) { s.totalBought = (s.totalBought||0)+total; s.due = (s.due||0)+total; } }
+            else if(total > 0) { expenses.push({ id: Date.now(), cat: 'Raw Materials', date: new Date().toLocaleDateString(), desc: `Stock In: ${prod.name} x${q}`, amt: total }); }
+            saveToStorage(); refreshDisplays(); closeModals(); alert("Stock updated!");
         }
 
-        function saveBillPayment() {
-            let id = document.getElementById('bpBillId').value;
-            let amt = parseFloat(document.getElementById('bpAmount').value) || 0;
+        // CUSTOMERS & RESELLERS
+        function openCustomerModal(src) { custTrigger = src; document.getElementById('customerModal').style.display = 'flex'; }
+        function editCustomer(id) {
+            let c = customers.find(x => x.id === id); if(!c) return;
+            editingCustomerId = id;
+            document.getElementById('cName').value = c.name; document.getElementById('cPhone').value = c.phone || '';
+            document.getElementById('cDob').value = c.dob || ''; document.getElementById('cAnniversary').value = c.anniversary || '';
+            document.getElementById('cType').value = c.type || 'Customer';
+            openCustomerModal('list');
+        }
+        function saveCustomer() {
+            let name = document.getElementById('cName').value, phone = document.getElementById('cPhone').value, dob = document.getElementById('cDob').value, anniversary = document.getElementById('cAnniversary').value, type = document.getElementById('cType').value;
+            if(editingCustomerId) { let c = customers.find(x => x.id === editingCustomerId); if(c) Object.assign(c, { name, phone, dob, anniversary, type }); }
+            else { customers.push({ id: Date.now(), name, phone, dob, anniversary, type, spent: 0, due: 0, points: 0 }); }
+            closeModals(); refreshDisplays();
+        }
+        function filterCustomerDropdown() {
+            let sel = document.getElementById('posCustomerSelect'); let cur = sel ? sel.value : null;
+            let q = document.getElementById('custSearchInput').value.toLowerCase();
+            let type = document.getElementById('posCustTypeFilter')?.value || 'All';
+            sel.innerHTML = customers.filter(c => (c.name.toLowerCase().includes(q) || c.phone.includes(q)) && (type === 'All' ? true : (c.type || 'Customer') === type)).map(c => `<option value="${c.id}">${c.name}${c.type==='Reseller'?' (Reseller)':''}</option>`).join('');
+            if (cur && Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
+            updateCartPrices();
+        }
+
+        // STATUS NOTIFY LOGIC
+        function updateOrderStatus(id, newStatus) {
             let s = sales.find(x => x.id === id);
-            if (!s) return;
-            if (amt <= 0 || amt > s.due) return alert("Invalid amount. Must be greater than 0 and not more than current due.");
-            
-            s.due -= amt;
-            if (s.advancePaid !== undefined) s.advancePaid += amt;
-            
-            let c = customers.find(x => x.name === s.cust);
-            if (c) { 
-                c.due = (c.due || 0) - amt; 
-                if(c.due < 0) c.due = 0; 
-            }
-            
-            closeModals(); 
-            refreshDisplays();
-        }
-
-        function openCustomerPaymentModal(id) {
-            let c = customers.find(x => x.id === id);
-            if(!c || !c.due) return;
-            document.getElementById('cpCustId').value = id;
-            document.getElementById('cpCurrentDue').innerText = c.due;
-            document.getElementById('cpAmount').value = c.due;
-            document.getElementById('customerPaymentModal').style.display = 'flex';
-        }
-
-        function saveCustomerPayment() {
-            let id = parseInt(document.getElementById('cpCustId').value);
-            let amt = parseFloat(document.getElementById('cpAmount').value) || 0;
-            let c = customers.find(x => x.id === id);
-            if (!c) return;
-            if (amt <= 0 || amt > (c.due || 0)) return alert("Invalid amount.");
-            
-            // Update customer ledger
-            c.due -= amt;
-            if(c.due < 0) c.due = 0;
-            
-            // NEW LOGIC: Distribute payment to specific unpaid bills in Sales History
-            let paymentRemaining = amt;
-            
-            for(let i = 0; i < sales.length; i++) {
-                if(paymentRemaining <= 0) break;
-                
-                let s = sales[i];
-                
-                // Explicitly check by customer name to ensure matching.
-                if(s.cust === c.name && s.due > 0 && !s.returned) {
-                    let toPay = Math.min(s.due, paymentRemaining);
-                    s.due -= toPay;
-                    if (s.advancePaid !== undefined) s.advancePaid += toPay;
-                    paymentRemaining -= toPay;
+            if (s) {
+                if (newStatus === 'Delivered' && s.due > 0) {
+                    document.getElementById('dpPendingAmount').innerText = s.due.toFixed(2);
+                    document.getElementById('dpOrderId').value = id;
+                    document.getElementById('deliveryPaymentPromptModal').style.display = 'flex';
+                    return;
                 }
+                s.orderStatus = newStatus;
+                saveToStorage(); refreshDisplays();
             }
-            
+        }
+        function proceedToDeliveryPayment() { let id = document.getElementById('dpOrderId').value; let s = sales.find(x => x.id === id); if (s) { s.orderStatus = 'Delivered'; saveToStorage(); refreshDisplays(); } closeModals(); openBillPaymentModal(id); }
+        function markDeliveredOnly() { let id = document.getElementById('dpOrderId').value; let s = sales.find(x => x.id === id); if (s) { s.orderStatus = 'Delivered'; saveToStorage(); refreshDisplays(); } closeModals(); }
+
+        let notifySaleId = null;
+        function openReadyNotifyModal(id) {
+            let s = sales.find(x => x.id === id); if (!s) return; notifySaleId = id;
+            let itemStr = s.isJobCard ? s.jobDevice : `(#${s.id})`;
+            let msg = `Hello ${s.cust},\n\nGood news! Your order ${itemStr} from ${settings.name} is now READY for pickup/delivery.\n\n`;
+            if (s.due > 0) msg += `Please note there is a pending balance of ₹${s.due.toFixed(2)}.\n\n`;
+            msg += `Thank you!`;
+            document.getElementById('readyNotifyMsg').value = msg;
+            document.getElementById('readyNotifyModal').style.display = 'flex';
+        }
+        function sendReadyNotify() {
+            let s = sales.find(x => x.id === notifySaleId); if (!s) return;
+            let msg = document.getElementById('readyNotifyMsg').value;
+            let phone = (s.phone || "").replace(/\D/g,''); if(phone.length === 10) phone = "91" + phone;
+            if(phone.length < 10) return alert("Customer phone missing.");
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
             closeModals();
-            refreshDisplays();
         }
 
-        function openBroadcastModal() { document.getElementById('broadcastMsg').value = ''; document.getElementById('broadcastLinksContainer').innerHTML = ''; document.getElementById('broadcastModal').style.display = 'flex'; }
-        function generateBroadcastLinks() { const msg = document.getElementById('broadcastMsg').value; const container = document.getElementById('broadcastLinksContainer'); if(msg.trim() === '') return alert("Please type a message."); let linksHtml = ''; let count = 0; customers.forEach(c => { let phone = (c.phone || "").replace(/\D/g,''); if(phone.length === 10) phone = "91" + phone; if(phone.length >= 10 && c.id !== 1) { linksHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid var(--border-color);"><span>${c.name} <br><small>${c.phone}</small></span><a href="https://wa.me/${phone}?text=${encodeURIComponent(msg)}" target="_blank" class="btn btn-green" style="text-decoration:none; font-size:0.8em; padding:5px 10px;">Send</a></div>`; count++; } }); container.innerHTML = count === 0 ? '<p style="color:red; text-align:center;">No valid phone numbers found.</p>' : `<p style="color:green; font-weight:bold; margin-bottom:10px;">Found ${count} customers.</p>` + linksHtml; }
-        
-        function deleteSale(id) { if(confirm("Delete bill permanently?")) { deletedItems.push(id); sales = sales.filter(s => s.id !== id); refreshDisplays(); } }
-        function updatePassword() { let p = document.getElementById('new-pass').value; if(p.length < 4) return alert("Too short"); appPass = p; saveToStorage(); alert("Changed!"); }
-
-        function closeModals() {
-            editingProductId = null;
-            editingCustomerId = null;
-            let pTitle = document.querySelector('#productModal h3'); if (pTitle) pTitle.innerText = "Product Info"; 
-            let cTitle = document.querySelector('#customerModal h3'); if (cTitle) cTitle.innerText = "New Customer"; 
-            let cBtn = document.querySelector('#customerModal .btn-green'); if (cBtn) cBtn.innerText = "Register"; 
-            
-            try { if (html5QrcodeScanner) html5QrcodeScanner.clear().catch(e => { /* ignore */ }); } catch(e) {}
-            let sm = document.getElementById('scannerModal');
-            if(sm) sm.style.display = 'none';
-
-            document.querySelectorAll('.modal-bg').forEach(m => m.style.display='none'); 
-            document.querySelectorAll('input:not(#posSearch):not(#passInput):not(.search-bar):not([name="supType"]):not(#csvFileInput)').forEach(i => i.value='');
+        // GENERAL UTILS
+        function closeModals() { editingProductId = null; editingCustomerId = null; document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none'); closeScanner(); }
+        function deleteItem(t, id) { if(confirm("Delete item?")) { deletedItems.push(id); if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(e=>e.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); refreshDisplays(); } }
+        function saveShopSettings() {
+            settings.name = document.getElementById('set-name').value; settings.city = document.getElementById('set-city').value;
+            settings.gst = document.getElementById('set-gst').value; settings.phone = document.getElementById('set-phone').value;
+            settings.address = document.getElementById('set-address').value; settings.email = document.getElementById('set-email').value;
+            settings.printerSize = document.getElementById('set-printer').value; settings.receiptLanguage = document.getElementById('set-lang').value;
+            settings.upiId = document.getElementById('set-upi-id').value; settings.instagram = document.getElementById('set-instagram').value;
+            settings.printMethod = document.getElementById('set-print-method').value;
+            saveToStorage(); alert("Settings saved!"); initApp();
         }
+        function exportData() { const b = new Blob([JSON.stringify({ pass: appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Backup.json'; a.click(); }
+        function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || []; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || []; deletedItems = d.deletedItems || []; await saveToStorage(); alert("Restored!"); location.reload(); } catch(err){ alert("Invalid file"); } }; r.readAsText(e.target.files[0]); }
+        function toggleCalc() { let c = document.getElementById('calc-container'); c.style.display = c.style.display === 'none' ? 'block' : 'none'; }
+        function calcInput(v) { document.getElementById('calc-display').value += v; }
+        function calcClear() { document.getElementById('calc-display').value = ''; }
+        function calcEval() { try { document.getElementById('calc-display').value = eval(document.getElementById('calc-display').value); } catch(e){ document.getElementById('calc-display').value = 'Error'; } }
     </script>
 </body>
 </html>
