@@ -167,6 +167,7 @@
                 <li id="nav-quotations" onclick="switchTab('quotations')">📝 Quotations</li>
                 <li id="nav-history" onclick="switchTab('history')">📜 Sales History</li>
                 <li id="nav-inventory" onclick="switchTab('inventory')">📦 Inventory</li>
+                <li id="nav-reports" onclick="switchTab('reports')">📈 Tax & Reports</li>
                 <li id="nav-suppliers" onclick="switchTab('suppliers')">🚚 Suppliers & Ledger</li>
                 <li id="nav-expenses" onclick="switchTab('expenses')">💸 Expenses</li>
                 <li id="nav-customers" onclick="switchTab('customers')">👥 Customers</li>
@@ -1134,7 +1135,11 @@
         let unsubscribeSync = null;
         function startLiveSync() {
             return new Promise((resolve) => {
-                if (!docRef || window.location.protocol === 'file:') return resolve();
+                if (!docRef || window.location.protocol === 'file:') {
+                    let st = document.getElementById('sync-text');
+                    if(st) { st.innerText = "Local Mode"; st.style.color = "#6c757d"; }
+                    return resolve();
+                }
                 if (unsubscribeSync) return resolve();
                 let isFirstFetch = true;
                 unsubscribeSync = docRef.onSnapshot(doc => {
@@ -1160,8 +1165,8 @@
                         (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
                         if(c.settings) settings = { ...settings, ...c.settings };
                         refreshDisplays();
-                        document.getElementById('sync-text').innerText = "Live Connected";
-                        document.getElementById('sync-text').style.color = "#28a745";
+                        let syncText = document.getElementById('sync-text');
+                        if(syncText) { syncText.innerText = "Live Connected"; syncText.style.color = "#28a745"; }
                     }
                     if (isFirstFetch) { isFirstFetch = false; resolve(); }
                 }, () => resolve());
@@ -1172,7 +1177,8 @@
             if (user) {
                 currentUid = user.uid; docRef = db.collection("shops").doc(currentUid);
                 loadLocalData(); await startLiveSync();
-                document.getElementById('login-status').innerText = "Secured. Enter PIN.";
+                let ls = document.getElementById('login-status');
+                if(ls) ls.innerText = "Secured. Enter PIN.";
             }
         });
 
@@ -1182,7 +1188,8 @@
                 const res = await auth.signInWithPopup(provider);
                 currentUid = res.user.uid; docRef = db.collection("shops").doc(currentUid);
                 loadLocalData(); await startLiveSync();
-                document.getElementById('login-status').innerText = "Secured. Enter PIN.";
+                let ls = document.getElementById('login-status');
+                if(ls) ls.innerText = "Secured. Enter PIN.";
             } catch (e) { alert("Login failed: " + e.message); }
         }
 
@@ -1222,7 +1229,17 @@
             localStorage.setItem('l_sup', JSON.stringify(suppliers)); localStorage.setItem('l_quote', JSON.stringify(quotations));
             localStorage.setItem('l_cat', JSON.stringify(categories)); localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
             if (currentUid !== "local" && docRef && window.location.protocol !== 'file:') {
-                try { await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems }); } catch(e){}
+                try { 
+                    await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems }); 
+                    let st = document.getElementById('sync-text');
+                    if(st) { st.innerText = "Synced"; st.style.color = "#28a745"; }
+                } catch(e){
+                    let st = document.getElementById('sync-text');
+                    if(st) { st.innerText = "Offline (Local Saved)"; st.style.color = "#dc3545"; }
+                }
+            } else {
+                let st = document.getElementById('sync-text');
+                if(st) { st.innerText = "Local Mode Saved"; st.style.color = "#6c757d"; }
             }
         }
 
@@ -1262,6 +1279,11 @@
             if (document.getElementById('btn-reorder-banner')) document.getElementById('btn-reorder-banner').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
 
             if (userRole === 'staff') switchTab('pos'); else refreshDisplays();
+            
+            if (currentUid === "local" || !docRef) {
+                let st = document.getElementById('sync-text');
+                if(st) { st.innerText = "Local Mode"; st.style.color = "#6c757d"; }
+            }
         }
 
         // STAFF MANAGEMENT
@@ -1696,7 +1718,11 @@
 
         // BARCODE CAMERA
         function openCameraScanner() { document.getElementById('scannerModal').style.display = 'flex'; html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false); html5QrcodeScanner.render((code) => { handleBarcodeScan(code); closeScanner(); }, () => {}); }
-        function closeScanner() { if(html5QrcodeScanner) html5QrcodeScanner.clear(); document.getElementById('scannerModal').style.display = 'none'; }
+        function closeScanner() {
+            try { if (html5QrcodeScanner) html5QrcodeScanner.clear().catch(e => { /* ignore */ }); } catch(e) {}
+            let sm = document.getElementById('scannerModal');
+            if(sm) sm.style.display = 'none';
+        }
         function handleBarcodeScan(code) { const p = inventory.find(x => (x.barcode && x.barcode.toLowerCase() === code.toLowerCase()) || x.id.toString() === code); if (p) { addToCart(p); document.getElementById('posSearch').value = ''; refreshDisplays(); } else alert("Item not found"); }
 
         // PRODUCT & INVENTORY
@@ -2387,6 +2413,23 @@
         
         function deleteSale(id) { if(confirm("Delete bill permanently?")) { deletedItems.push(id); sales = sales.filter(s => s.id !== id); refreshDisplays(); } }
         function updatePassword() { let p = document.getElementById('new-pass').value; if(p.length < 4) return alert("Too short"); appPass = p; saveToStorage(); alert("Changed!"); }
+
+        function closeModals() {
+            editingProductId = null;
+            editingCustomerId = null;
+            document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none');
+            document.querySelectorAll('input:not(#posSearch):not(#passInput):not(.search-bar):not([name="supType"]):not(#csvFileInput)').forEach(i => {
+                if(i.type !== 'radio' && i.type !== 'checkbox') i.value = '';
+            });
+            try {
+                let pTitle = document.querySelector('#productModal h3'); if (pTitle) pTitle.innerText = "Product Info";
+                let cTitle = document.querySelector('#customerModal h3'); if (cTitle) cTitle.innerText = "New Customer";
+            } catch(e){}
+            
+            try { if (html5QrcodeScanner) html5QrcodeScanner.clear().catch(e => { /* ignore */ }); } catch(e) {}
+            let sm = document.getElementById('scannerModal');
+            if(sm) sm.style.display = 'none';
+        }
     </script>
 </body>
 </html>
