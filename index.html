@@ -203,7 +203,7 @@
                         <strong>⚠️ Low Stock Alert!</strong>
                         <div id="low-stock-list" style="font-size: 0.9em; margin-top: 4px;"></div>
                     </div>
-                    <button class="btn btn-warning" onclick="openPurchaseStockModal()">📥 Reorder Items</button>
+                    <button class="btn btn-warning" id="btn-reorder-banner" onclick="openPurchaseStockModal()">📥 Reorder Items</button>
                 </div>
 
                 <h3 style="margin-bottom:12px; color:var(--text-muted);">Today's Snapshot (Daily P/L)</h3>
@@ -330,7 +330,7 @@
                 </div>
             </div>
 
-            <!-- NEW JOB CARDS VIEW -->
+            <!-- JOB CARDS VIEW -->
             <div id="jobcards-view" class="view-section">
                 <div class="header">
                     <h1>Custom Orders (Job Cards)</h1>
@@ -351,10 +351,13 @@
                 </div>
             </div>
 
-            <!-- 3. ADVANCED REPORTS VIEW -->
+            <!-- 3. ADVANCED REPORTS VIEW (ACCESSED VIA SETTINGS) -->
             <div id="reports-view" class="view-section">
                 <div class="header">
-                    <h1>Tax & Financial Reports (CA Export)</h1>
+                    <div>
+                        <h1>Tax & Financial Reports (CA Export)</h1>
+                        <button class="btn btn-gray" onclick="switchTab('settings')" style="margin-top:5px;">← Back to Settings</button>
+                    </div>
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
                         <button class="btn btn-green" onclick="exportReportsCSV('sales')">📑 Export Sales (GST) CSV</button>
                         <button class="btn btn-danger" onclick="exportReportsCSV('expenses')">💸 Export Expenses CSV</button>
@@ -403,13 +406,20 @@
                     <h1>Inventory Management</h1>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button class="btn btn-warning" onclick="openCategoryModal()">🏷️ Categories</button>
-                        <button class="btn btn-dark" onclick="openCSVModal()">📄 Import CSV</button>
-                        <button class="btn btn-blue" onclick="openBulkModal()">🔄 Bulk</button>
-                        <button class="btn btn-success" style="background:#10b981; border:none; color:white;" onclick="openPurchaseStockModal()">📥 Log Purchase</button>
+                        <button id="btn-import-csv" class="btn btn-dark" onclick="openCSVModal()">📄 Import CSV</button>
+                        <button id="btn-bulk-inv" class="btn btn-blue" onclick="openBulkModal()">🔄 Bulk</button>
+                        <button id="btn-log-purchase" class="btn btn-success" style="background:#10b981; border:none; color:white;" onclick="openPurchaseStockModal()">📥 Log Purchase</button>
                         <button class="btn btn-green" onclick="openProductModal()">+ Add Product</button>
                     </div>
                 </div>
-                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Item Name</th><th>Category / Brand</th><th>Supplier</th><th>Buy / Sell Price</th><th>Stock</th><th>Action</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div></div>
+                <div class="container" style="padding:0;">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Item Name</th><th>Category / Brand</th><th>Supplier</th><th id="th-inv-price">Buy / Sell Price</th><th>Stock</th><th>Action</th></tr></thead>
+                            <tbody id="inventoryTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- 5. SUPPLIERS VIEW -->
@@ -877,7 +887,7 @@
             <div class="form-group"><label>Warranty</label><input type="text" id="pWarranty" placeholder="e.g. 6 Months, 1 Year, None"></div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Buy Price (₹)</label><input type="number" id="pPurchasePrice"></div>
+                <div class="form-group" id="group-pPurchasePrice"><label>Buy Price (₹)</label><input type="number" id="pPurchasePrice"></div>
                 <div class="form-group"><label>Retail Price (₹)</label><input type="number" id="pPrice"></div>
                 <div class="form-group"><label>Reseller Price (₹)</label><input type="number" id="pResellerPrice"></div>
                 <div class="form-group"><label>Stock Qty</label><input type="number" id="pStock" step="0.01"></div>
@@ -1240,9 +1250,17 @@
 
             renderTaxDropdown(); renderStaffList();
             
+            // HIDE ADMIN-ONLY SIDEBAR TABS
             const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers'];
             adminTabs.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
             
+            // HIDE BUY PRICE & PURCHASE BUTTONS FROM STAFF
+            if (document.getElementById('group-pPurchasePrice')) document.getElementById('group-pPurchasePrice').style.display = userRole === 'admin' ? 'block' : 'none';
+            if (document.getElementById('btn-log-purchase')) document.getElementById('btn-log-purchase').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
+            if (document.getElementById('btn-bulk-inv')) document.getElementById('btn-bulk-inv').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
+            if (document.getElementById('btn-import-csv')) document.getElementById('btn-import-csv').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
+            if (document.getElementById('btn-reorder-banner')) document.getElementById('btn-reorder-banner').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
+
             if (userRole === 'staff') switchTab('pos'); else refreshDisplays();
         }
 
@@ -1373,14 +1391,22 @@
                 }
             });
 
-            // INVENTORY TABLE
+            // INVENTORY TABLE (BUY PRICE HIDDEN FOR STAFF)
+            let thPrice = document.getElementById('th-inv-price');
+            if (thPrice) thPrice.innerText = userRole === 'admin' ? 'Buy / Sell Price' : 'Sale Price';
+
             document.getElementById('inventoryTableBody').innerHTML = inventory.map(i => {
                 let btns = `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="printBarcodeLabel(${i.id})">🖨️ Barcode</button>`;
                 if(userRole === 'admin') btns += `<button class="btn btn-gray" style="color:var(--primary); padding: 4px 8px; font-size:0.8em; margin:0 4px;" onclick="editProduct(${i.id})">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('inv', ${i.id})">Del</button>`;
+                
+                let priceHtml = userRole === 'admin' 
+                    ? `<small style="color:var(--text-muted);">Buy: ₹${i.purchasePrice||0}</small><br><b>Sell: ₹${i.price}/${i.unit||'pc'}</b>`
+                    : `<b>₹${i.price}/${i.unit||'pc'}</b>`;
+
                 return `<tr class="${i.stock <= 0 ? 'low-stock' : ''}">
                     <td><b>${i.name}</b><br><small style="color:var(--text-muted);">${i.brand||''}</small></td>
                     <td>${i.category||'General'}</td><td>${i.supplier||'--'}</td>
-                    <td><small style="color:var(--text-muted);">Buy: ₹${i.purchasePrice||0}</small><br><b>Sell: ₹${i.price}</b></td>
+                    <td>${priceHtml}</td>
                     <td><b style="${i.stock <= 0 ? 'color:red;' : ''}">${i.stock}</b></td>
                     <td>${btns}</td>
                 </tr>`;
@@ -1652,7 +1678,12 @@
             document.getElementById('pWarranty').value = p.warranty || '';
             openProductModal();
         }
-        function openProductModal() { document.getElementById('productModal').style.display = 'flex'; }
+        function openProductModal() { 
+            if (document.getElementById('group-pPurchasePrice')) {
+                document.getElementById('group-pPurchasePrice').style.display = userRole === 'admin' ? 'block' : 'none';
+            }
+            document.getElementById('productModal').style.display = 'flex'; 
+        }
         function saveProduct() {
             const name = document.getElementById('pName').value; const barcode = document.getElementById('pBarcode').value;
             const purchasePrice = parseFloat(document.getElementById('pPurchasePrice').value) || 0;
@@ -1664,7 +1695,7 @@
             const warranty = document.getElementById('pWarranty').value;
             if (editingProductId) {
                 const p = inventory.find(x => x.id === editingProductId);
-                if (p) { Object.assign(p, { name, barcode, purchasePrice, price, resellerPrice, stock, category, supplier, brand, unit, warranty }); }
+                if (p) { Object.assign(p, { name, barcode, purchasePrice: userRole === 'admin' ? purchasePrice : p.purchasePrice, price, resellerPrice, stock, category, supplier, brand, unit, warranty }); }
             } else { inventory.push({ id: Date.now(), name, barcode, purchasePrice, price, resellerPrice, stock, category, supplier, brand, unit, warranty }); }
             closeModals(); refreshDisplays();
         }
