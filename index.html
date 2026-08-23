@@ -1477,7 +1477,18 @@
 
             // SALES HISTORY WITH PARTIAL RETURN AND CASHIER NAME
             let hSearch = (document.getElementById('searchHistory')?.value || '').toLowerCase();
-            document.getElementById('historyTableBody').innerHTML = sales.filter(s => s.id.toLowerCase().includes(hSearch) || s.cust.toLowerCase().includes(hSearch)).slice().reverse().map(s => {
+            let hType = document.getElementById('filterHistoryType')?.value || 'All'; // Get the dropdown value
+
+            // Filter by search text AND customer type
+            let filteredHistory = sales.filter(s => {
+                let matchesSearch = s.id.toLowerCase().includes(hSearch) || s.cust.toLowerCase().includes(hSearch);
+                let custObj = customers.find(x => x.name === s.cust);
+                let custType = custObj ? (custObj.type || 'Customer') : 'Customer';
+                let matchesType = hType === 'All' ? true : custType === hType;
+                return matchesSearch && matchesType;
+            });
+
+            document.getElementById('historyTableBody').innerHTML = filteredHistory.slice().reverse().map(s => {
                 let btns = `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️</button>`;
                 if (s.returned) {
                     btns += `<span style="color:red; font-weight:bold; font-size:0.8em; margin: 0 5px;">[RETURNED]</span>`;
@@ -1942,6 +1953,58 @@
         }
 
         // GENERAL UTILS
+        function viewPastBill(id) {
+            let s = sales.find(x => x.id === id);
+            if (!s) return;
+            
+            let addr = settings.address ? `${settings.address}<br>` : '';
+            let gst = settings.gst ? `GSTIN: ${settings.gst}<br>` : '';
+            let insta = settings.instagram ? `Instagram: ${settings.instagram}<br>` : '';
+            let jobDetails = s.isJobCard ? `Device: <b>${s.jobDevice}</b><br>Notes: ${s.jobNotes||'--'}<br>Exp: ${s.jobExpDate||'--'}<br>` : '';
+            
+            let html = `
+                <div style="text-align:center;">
+                    <h3 style="margin-bottom: 5px;">${settings.name}</h3>
+                    <p style="font-size:0.85em; color:var(--text-muted); margin-top:0;">${addr}${gst}${insta}Ph: ${settings.phone||''}</p>
+                    <hr style="border:0; border-top:1px solid var(--border-color); margin:10px 0;">
+                    
+                    <div style="text-align:left; font-size:0.9em; margin-bottom:15px;">
+                        <b>${s.isJobCard ? 'JOB CARD' : 'INVOICE'} #${s.id}</b><br>
+                        Date: ${s.date}<br>
+                        Customer: ${s.cust}<br>
+                        ${jobDetails}
+                        Cashier: ${s.cashier || 'Admin'}
+                    </div>
+                    
+                    <table style="width:100%; text-align:left; font-size:0.9em; margin-bottom:10px; border-collapse: collapse;">
+                        <tr style="border-bottom:1px solid var(--border-color);">
+                            <th style="padding-bottom:5px;">Item</th>
+                            <th style="padding-bottom:5px; text-align:right;">Amt</th>
+                        </tr>
+                        ${s.items.map(i => `
+                        <tr>
+                            <td style="padding:6px 0; border-bottom:1px solid #f1f1f1;">${i.name} x${i.qty}</td>
+                            <td style="padding:6px 0; border-bottom:1px solid #f1f1f1; text-align:right;">₹${(i.price*i.qty).toFixed(2)}</td>
+                        </tr>`).join('')}
+                    </table>
+                    
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.1em; padding-top:10px;">
+                        <span>Total:</span>
+                        <span style="color:var(--primary);">₹${s.total.toFixed(2)}</span>
+                    </div>
+                    ${s.due > 0 ? `
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; color:red; margin-top:5px;">
+                        <span>Due:</span>
+                        <span>₹${s.due.toFixed(2)}</span>
+                    </div>` : ''}
+                </div>
+                <button class="btn btn-gray" style="width:100%; margin-top:20px;" onclick="closeModals()">Close Receipt</button>
+            `;
+            
+            document.getElementById('billDetailContent').innerHTML = html;
+            document.getElementById('viewBillModal').style.display = 'flex';
+        }
+
         function closeModals() { editingProductId = null; editingCustomerId = null; document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none'); closeScanner(); }
         function deleteItem(t, id) { if(confirm("Delete item?")) { deletedItems.push(id); if(t==='inv') inventory = inventory.filter(i=>i.id!==id); if(t==='exp') expenses = expenses.filter(e=>e.id!==id); if(t==='cust') customers = customers.filter(c=>c.id!==id); refreshDisplays(); } }
         function saveShopSettings() {
