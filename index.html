@@ -1428,7 +1428,7 @@
                     let nextStatus = status === 'Designing' ? 'Printing' : (status === 'Printing' ? 'Ready' : (status === 'Ready' ? 'Delivered' : ''));
                     let statusColor = status === 'Delivered' ? 'var(--success)' : (status === 'Ready' ? 'var(--warning)' : 'var(--primary)');
                     
-                    let btns = `<div style="display:flex; gap:5px; align-items:center;">`;
+                    let btns = `<div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">`;
                     if (nextStatus) {
                         btns += `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em;" onclick="updateOrderStatus('${s.id}', '${nextStatus}')">Mark ${nextStatus}</button>`;
                     }
@@ -1436,7 +1436,10 @@
                         btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="openReadyNotifyModal('${s.id}')">📱 Notify</button>`;
                     }
                     btns += `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️ View</button>`;
-                    if(userRole === 'admin') btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em;" onclick="deleteSale('${s.id}')">🗑️</button>`;
+                    if(userRole === 'admin') {
+                        btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em;" onclick="editSale('${s.id}')">✏️ Edit</button>`;
+                        btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em;" onclick="deleteSale('${s.id}')">🗑️ Del</button>`;
+                    }
                     btns += `</div>`;
                     
                     return `<tr>
@@ -1475,11 +1478,10 @@
                 }).join('');
             }
 
-            // SALES HISTORY WITH PARTIAL RETURN AND CASHIER NAME
+            // SALES HISTORY WITH PARTIAL RETURN, CASHIER NAME AND EDIT/DELETE
             let hSearch = (document.getElementById('searchHistory')?.value || '').toLowerCase();
-            let hType = document.getElementById('filterHistoryType')?.value || 'All'; // Get the dropdown value
+            let hType = document.getElementById('filterHistoryType')?.value || 'All';
 
-            // Filter by search text AND customer type
             let filteredHistory = sales.filter(s => {
                 let matchesSearch = s.id.toLowerCase().includes(hSearch) || s.cust.toLowerCase().includes(hSearch);
                 let custObj = customers.find(x => x.name === s.cust);
@@ -1489,13 +1491,22 @@
             });
 
             document.getElementById('historyTableBody').innerHTML = filteredHistory.slice().reverse().map(s => {
-                let btns = `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️</button>`;
+                let btns = `<div style="display:flex; gap:4px; flex-wrap:wrap;">`;
+                btns += `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️</button>`;
+                
                 if (s.returned) {
                     btns += `<span style="color:red; font-weight:bold; font-size:0.8em; margin: 0 5px;">[RETURNED]</span>`;
                 } else {
-                    if (userRole === 'admin') btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em; margin-left:4px;" onclick="openPartialReturnModal('${s.id}')">🔄 Return</button>`;
-                    if (s.due > 0) btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-left:4px;" onclick="openBillPaymentModal('${s.id}')">₹ Pay</button>`;
+                    if (userRole === 'admin') btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em;" onclick="openPartialReturnModal('${s.id}')">🔄 Return</button>`;
+                    if (s.due > 0) btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="openBillPaymentModal('${s.id}')">₹ Pay</button>`;
                 }
+
+                if (userRole === 'admin') {
+                    btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em;" onclick="editSale('${s.id}')">✏️ Edit</button>`;
+                    btns += `<button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteSale('${s.id}')">🗑️ Del</button>`;
+                }
+                btns += `</div>`;
+                
                 return `<tr><td>#${s.id}</td><td>${s.date.split(',')[0]}</td><td>${s.cust}</td><td>${s.items.map(i=>i.name+' (x'+i.qty+')').join(', ')}</td><td>₹${s.total.toFixed(2)}</td><td style="color:red">₹${s.due||0}</td><td><small>${s.cashier || 'Admin'}</small></td><td>${btns}</td></tr>`;
             }).join('');
 
@@ -2003,6 +2014,71 @@
             
             document.getElementById('billDetailContent').innerHTML = html;
             document.getElementById('viewBillModal').style.display = 'flex';
+        }
+
+        // DELETE SALE (Reverts Stock & Customer Balances)
+        function deleteSale(id, skipConfirm = false) {
+            if (!skipConfirm && !confirm("WARNING: This will completely delete the bill, return the items to your inventory stock, and reverse the customer's balances. Continue?")) return false;
+            
+            let sIndex = sales.findIndex(x => x.id === id);
+            if (sIndex === -1) return false;
+            let s = sales[sIndex];
+
+            // 1. Revert Inventory Stock (if it wasn't already returned)
+            if (!s.returned && s.items && Array.isArray(s.items)) {
+                s.items.forEach(item => {
+                    let invItem = inventory.find(x => x.id == item.id);
+                    if (invItem) invItem.stock += item.qty; // Give stock back
+                });
+                
+                // 2. Revert Customer Ledger Balances
+                let c = customers.find(x => x.name === s.cust);
+                if (c) {
+                    c.spent = Math.max(0, (c.spent || 0) - s.total);
+                    c.due = Math.max(0, (c.due || 0) - (s.due || 0));
+                    if (s.earnedPoints) c.points = Math.max(0, (c.points || 0) - s.earnedPoints);
+                }
+            }
+
+            // 3. Remove Sale from Database
+            deletedItems.push(id);
+            sales.splice(sIndex, 1);
+            
+            if (!skipConfirm) {
+                saveToStorage();
+                refreshDisplays();
+                alert("Sale deleted and stock reverted successfully.");
+            }
+            return s; 
+        }
+
+        // EDIT SALE (Sends it back to the POS cart)
+        function editSale(id) {
+            if (!confirm("Editing this bill will reverse it, load its items back into the POS cart, and DELETE the original record. You must complete the checkout again to save the changes. Continue?")) return;
+            
+            // Delete the sale silently behind the scenes to revert stock/ledger
+            let s = deleteSale(id, true);
+            if (!s) return;
+
+            // Load items back into the New Bill cart
+            cart = JSON.parse(JSON.stringify(s.items));
+            
+            // Re-assign the customer in the POS screen
+            let c = customers.find(x => x.name === s.cust);
+            if (c) {
+                let select = document.getElementById('posCustomerSelect');
+                if(Array.from(select.options).some(o => o.value == c.id)) {
+                    select.value = c.id;
+                }
+            }
+            
+            // Re-apply advance payment and shipping
+            document.getElementById('posAdvance').value = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
+            document.getElementById('posShipping').value = s.shipping || 0;
+            
+            saveToStorage(); 
+            updateCart();
+            switchTab('pos'); // Jump the user back to the POS tab
         }
 
         function closeModals() { editingProductId = null; editingCustomerId = null; document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none'); closeScanner(); }
