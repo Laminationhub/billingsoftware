@@ -1133,64 +1133,103 @@
         }
 
         let unsubscribeSync = null;
+
         function startLiveSync() {
             return new Promise((resolve) => {
-                if (!docRef || window.location.protocol === 'file:') {
-                    let st = document.getElementById('sync-text');
-                    if(st) { st.innerText = "Local Mode"; st.style.color = "#6c757d"; }
-                    return resolve();
-                }
+                if (!docRef || window.location.protocol === 'file:') return resolve();
                 if (unsubscribeSync) return resolve();
+                
                 let isFirstFetch = true;
                 unsubscribeSync = docRef.onSnapshot(doc => {
                     if (doc.exists) {
                         const c = doc.data();
+                        
                         const mergeArrays = (localArr, cloudArr) => {
                             let combined = [...localArr];
                             if(cloudArr && Array.isArray(cloudArr)) {
                                 cloudArr.forEach(cItem => {
-                                    let match = combined.findIndex(l => l.id === cItem.id);
-                                    if(match === -1) combined.push(cItem); else combined[match] = cItem;
+                                    let matchIndex = combined.findIndex(lItem => lItem.id === cItem.id);
+                                    if(matchIndex === -1) {
+                                        combined.push(cItem);
+                                    } else {
+                                        combined[matchIndex] = cItem;
+                                    }
                                 });
                             }
                             return combined;
                         };
-                        deletedItems = [...new Set([...deletedItems, ...(c.deletedItems || [])])];
+
+                        let c_deleted = c.deletedItems || [];
+                        deletedItems = [...new Set([...deletedItems, ...c_deleted])];
+
                         inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(x.id));
                         sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(x.id));
                         expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(x.id));
                         customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(x.id));
                         suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(x.id));
                         quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(x.id));
-                        (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
-                        if(c.settings) settings = { ...settings, ...c.settings };
+                        
+                        let c_cat = c.categories || ["General"];
+                        c_cat.forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
+
+                        if(c.settings && (!settings.name || settings.name === 'Lamination Hub' || settings.name === 'Billing Hub')) {
+                            settings = c.settings;
+                        }
+                        
+                        // Save locally only to avoid infinite loop with docRef.set
+                        localStorage.setItem('l_pass', appPass); 
+                        localStorage.setItem('l_settings', JSON.stringify(settings));
+                        localStorage.setItem('l_inv', JSON.stringify(inventory)); 
+                        localStorage.setItem('l_sales', JSON.stringify(sales));
+                        localStorage.setItem('l_exp', JSON.stringify(expenses)); 
+                        localStorage.setItem('l_cust', JSON.stringify(customers));
+                        localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
+                        localStorage.setItem('l_quote', JSON.stringify(quotations));
+                        localStorage.setItem('l_cat', JSON.stringify(categories));
+                        localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+
                         refreshDisplays();
-                        let syncText = document.getElementById('sync-text');
+                        
+                        const syncText = document.getElementById('sync-text');
                         if(syncText) { syncText.innerText = "Live Connected"; syncText.style.color = "#28a745"; }
+                        document.getElementById('last-sync-time').innerText = "Live Update: " + new Date().toLocaleTimeString();
                     }
-                    if (isFirstFetch) { isFirstFetch = false; resolve(); }
-                }, () => resolve());
+                    
+                    if (isFirstFetch) {
+                        isFirstFetch = false;
+                        resolve();
+                    }
+                }, err => {
+                    console.error("Live Sync Error:", err);
+                    resolve();
+                });
             });
         }
 
         auth.onAuthStateChanged(async user => {
             if (user) {
-                currentUid = user.uid; docRef = db.collection("shops").doc(currentUid);
-                loadLocalData(); await startLiveSync();
-                let ls = document.getElementById('login-status');
-                if(ls) ls.innerText = "Secured. Enter PIN.";
+                currentUid = user.uid; docRef = db.collection("shops").doc(currentUid); 
+                document.getElementById('current-user-email').innerText = user.email;
+                document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
+                loadLocalData(); 
+                await startLiveSync();
+                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
             }
         });
 
         async function handleGoogleLogin() {
-            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://).");
-            try {
-                const res = await auth.signInWithPopup(provider);
-                currentUid = res.user.uid; docRef = db.collection("shops").doc(currentUid);
-                loadLocalData(); await startLiveSync();
-                let ls = document.getElementById('login-status');
-                if(ls) ls.innerText = "Secured. Enter PIN.";
-            } catch (e) { alert("Login failed: " + e.message); }
+            if (window.location.protocol === 'file:') return alert("Cloud Sync & Google Login cannot run locally (file://). Upload to GitHub for full features!");
+            document.getElementById('googleLoginBtn').innerText = "Connecting...";
+            try { 
+                const result = await auth.signInWithPopup(provider); 
+                currentUid = result.user.uid; docRef = db.collection("shops").doc(currentUid); 
+                document.getElementById('current-user-email').innerText = result.user.email;
+                document.getElementById('login-status').innerText = "Auto-Syncing with Cloud...";
+                loadLocalData(); 
+                await startLiveSync();
+                document.getElementById('login-status').innerText = "Secured. Enter Admin or Staff PIN.";
+                document.getElementById('googleLoginBtn').innerText = "Cloud Connected";
+            } catch (error) { alert("Login Failed: " + error.message); document.getElementById('googleLoginBtn').innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Sign in with Google`; }
         }
 
         // LOGIN WITH MULTI-STAFF PIN SUPPORT
@@ -1219,72 +1258,101 @@
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('passInput').value = '';
+            document.getElementById('login-status').innerText = "System Locked. Enter PIN to return.";
+            document.getElementById('loginBtn').innerText = "Unlock System";
+            document.getElementById('loginBtn').disabled = false;
         }
+
         function signOut() { auth.signOut().then(() => location.reload()); }
 
         async function saveToStorage() {
-            localStorage.setItem('l_pass', appPass); localStorage.setItem('l_settings', JSON.stringify(settings));
-            localStorage.setItem('l_inv', JSON.stringify(inventory)); localStorage.setItem('l_sales', JSON.stringify(sales));
-            localStorage.setItem('l_exp', JSON.stringify(expenses)); localStorage.setItem('l_cust', JSON.stringify(customers));
-            localStorage.setItem('l_sup', JSON.stringify(suppliers)); localStorage.setItem('l_quote', JSON.stringify(quotations));
-            localStorage.setItem('l_cat', JSON.stringify(categories)); localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
-            if (currentUid !== "local" && docRef && window.location.protocol !== 'file:') {
+            const syncText = document.getElementById('sync-text'); if(syncText) { syncText.innerText = "Saving..."; syncText.style.color = "#ffc107"; }
+            
+            localStorage.setItem('l_pass', appPass); 
+            localStorage.setItem('l_settings', JSON.stringify(settings));
+            localStorage.setItem('l_inv', JSON.stringify(inventory)); 
+            localStorage.setItem('l_sales', JSON.stringify(sales));
+            localStorage.setItem('l_exp', JSON.stringify(expenses)); 
+            localStorage.setItem('l_cust', JSON.stringify(customers));
+            localStorage.setItem('l_sup', JSON.stringify(suppliers)); 
+            localStorage.setItem('l_quote', JSON.stringify(quotations));
+            localStorage.setItem('l_cat', JSON.stringify(categories));
+            localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+            
+            if (currentUid !== "local" && docRef) {
                 try { 
-                    await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems }); 
-                    let st = document.getElementById('sync-text');
-                    if(st) { st.innerText = "Synced"; st.style.color = "#28a745"; }
-                } catch(e){
-                    let st = document.getElementById('sync-text');
-                    if(st) { st.innerText = "Offline (Local Saved)"; st.style.color = "#dc3545"; }
-                }
+                    if (window.location.protocol !== 'file:') { 
+                        await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems }); 
+                        if(syncText) { syncText.innerText = "Synced"; syncText.style.color = "#28a745"; document.getElementById('last-sync-time').innerText = "Last push: " + new Date().toLocaleTimeString(); } 
+                    } 
+                } catch(e) { if(syncText) { syncText.innerText = "Offline (Local Saved)"; syncText.style.color = "#dc3545"; } }
             } else {
-                let st = document.getElementById('sync-text');
-                if(st) { st.innerText = "Local Mode Saved"; st.style.color = "#6c757d"; }
+                if(syncText) { syncText.innerText = "Local Mode Saved"; syncText.style.color = "#6c757d"; }
             }
         }
 
         async function forceCloudRefresh() {
-            if(!docRef) return;
-            try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || []; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || []; deletedItems = d.deletedItems || []; alert("Synced!"); initApp(); } } catch(e){ alert("Sync failed."); }
+            if(!docRef || window.location.protocol === 'file:') { alert("You are in Local Mode."); return; }
+            if(!confirm("Pull latest data from cloud? This will overwrite unsaved local changes.")) return;
+            try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); if(d && Object.keys(d).length > 0) { appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || inventory; sales = d.sales || sales; expenses = d.expenses || expenses; customers = d.customers || customers; suppliers = d.suppliers || suppliers; quotations = d.quotations || quotations; categories = d.categories || categories; deletedItems = d.deletedItems || deletedItems; } alert("Data refreshed from cloud!"); initApp(); } else { alert("No cloud data found."); saveToStorage(); } } catch (e) { alert("Refresh failed."); }
         }
 
         function initApp() {
-            document.getElementById('brand-name').innerText = settings.name;
-            document.getElementById('brand-city').innerText = settings.city;
-            document.getElementById('logged-staff-name').innerText = currentStaffName;
-            document.getElementById('set-name').value = settings.name;
-            document.getElementById('set-city').value = settings.city;
-            document.getElementById('set-gst').value = settings.gst || '';
-            document.getElementById('set-phone').value = settings.phone || '';
-            document.getElementById('set-address').value = settings.address || '';
+            document.getElementById('brand-name').innerText = settings.name; document.getElementById('brand-city').innerText = settings.city;
+            document.getElementById('logged-staff-name').innerText = currentStaffName; // ADDED
+            document.getElementById('set-name').value = settings.name; document.getElementById('set-city').value = settings.city;
+            document.getElementById('set-gst').value = settings.gst || ''; document.getElementById('set-phone').value = settings.phone || ''; document.getElementById('set-address').value = settings.address || '';
             document.getElementById('set-email').value = settings.email || '';
-            document.getElementById('set-printer').value = settings.printerSize || 'A4';
-            document.getElementById('set-lang').value = settings.receiptLanguage || 'EN';
+            document.getElementById('set-staff-pin').value = settings.staffPin || ''; document.getElementById('set-printer').value = settings.printerSize || 'A4'; document.getElementById('set-lang').value = settings.receiptLanguage || 'EN';
             document.getElementById('set-upi-id').value = settings.upiId || '';
-            document.getElementById('set-instagram').value = settings.instagram || '';
+            document.getElementById('set-instagram').value = settings.instagram || ''; // ADDED
+            
+            // Set Print Method
             document.getElementById('set-print-method').value = settings.printMethod || 'browser';
+            
+            renderTaxDropdown(); renderStaffList(); // ADDED renderStaffList()
+
+            document.getElementById('set-tax-rate').value = settings.taxRate || 0;
+            let savedTax = (settings.taxRate || 0).toString();
+            let taxDropdown = document.getElementById('tax-dropdown');
+
+            let optionExists = Array.from(taxDropdown.options).some(opt => opt.value === savedTax);
+
+            if (optionExists && savedTax !== 'custom') {
+                taxDropdown.value = savedTax;
+            } else {
+                taxDropdown.value = "custom";
+                document.getElementById('set-tax-rate').value = savedTax;
+            }
+            handleTaxDropdown(); 
+
+            document.getElementById('set-tax-mode').value = settings.taxMode || 'EXCLUSIVE';
+            
             if(settings.profilePic) document.getElementById('sidebar-img').src = settings.profilePic;
 
-            renderTaxDropdown(); renderStaffList();
-            
-            // HIDE ADMIN-ONLY SIDEBAR TABS
-            const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers'];
-            adminTabs.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
-            
+            document.getElementById('posTax').placeholder = settings.taxRate ? `Auto (${settings.taxRate}%)` : "0";
+
+            const adminOnlyTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers'];
+            adminOnlyTabs.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
+
             // HIDE BUY PRICE & PURCHASE BUTTONS FROM STAFF
             if (document.getElementById('group-pPurchasePrice')) document.getElementById('group-pPurchasePrice').style.display = userRole === 'admin' ? 'block' : 'none';
             if (document.getElementById('btn-log-purchase')) document.getElementById('btn-log-purchase').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
             if (document.getElementById('btn-bulk-inv')) document.getElementById('btn-bulk-inv').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
             if (document.getElementById('btn-import-csv')) document.getElementById('btn-import-csv').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
             if (document.getElementById('btn-reorder-banner')) document.getElementById('btn-reorder-banner').style.display = userRole === 'admin' ? 'inline-flex' : 'none';
-
-            if (userRole === 'staff') switchTab('pos'); else refreshDisplays();
+            
+            if (userRole === 'staff' && !['pos-view', 'inventory-view', 'history-view', 'customers-view', 'orders-view', 'jobcards-view'].includes(document.querySelector('.view-section.active').id)) {
+                switchTab('pos');
+            } else { refreshDisplays(); }
             
             if (currentUid === "local" || !docRef) {
                 let st = document.getElementById('sync-text');
                 if(st) { st.innerText = "Local Mode"; st.style.color = "#6c757d"; }
             }
         }
+
+        document.getElementById('set-profile-pic').addEventListener('change', function(e) { const file = e.target.files[0]; const reader = new FileReader(); reader.onloadend = () => { tempBase64Img = reader.result; }; if (file) reader.readAsDataURL(file); });
 
         // STAFF MANAGEMENT
         function renderStaffList() {
@@ -1570,7 +1638,6 @@
             }).join('');
 
             filterCustomerDropdown();
-            saveToStorage();
         }
 
         // --- JOB CARDS LOGIC ---
@@ -1718,11 +1785,12 @@
 
         // BARCODE CAMERA
         function openCameraScanner() { document.getElementById('scannerModal').style.display = 'flex'; html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false); html5QrcodeScanner.render((code) => { handleBarcodeScan(code); closeScanner(); }, () => {}); }
-        function closeScanner() {
-            try { if (html5QrcodeScanner) html5QrcodeScanner.clear().catch(e => { /* ignore */ }); } catch(e) {}
-            let sm = document.getElementById('scannerModal');
-            if(sm) sm.style.display = 'none';
+        
+        function closeScanner() { 
+            if(html5QrcodeScanner) html5QrcodeScanner.clear(); 
+            document.getElementById('scannerModal').style.display = 'none'; 
         }
+        
         function handleBarcodeScan(code) { const p = inventory.find(x => (x.barcode && x.barcode.toLowerCase() === code.toLowerCase()) || x.id.toString() === code); if (p) { addToCart(p); document.getElementById('posSearch').value = ''; refreshDisplays(); } else alert("Item not found"); }
 
         // PRODUCT & INVENTORY
@@ -2024,7 +2092,7 @@
             }
         }
 
-        // EDIT SALE FIX (Same logic applies here)
+        // EDIT SALE FIX
         function editSale(id) {
             if(!confirm("Edit this bill? This will reverse the existing bill and load items back into the cart. Proceed?")) return;
             const sIndex = sales.findIndex(x => x.id === id);
@@ -2417,18 +2485,16 @@
         function closeModals() {
             editingProductId = null;
             editingCustomerId = null;
-            document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none');
-            document.querySelectorAll('input:not(#posSearch):not(#passInput):not(.search-bar):not([name="supType"]):not(#csvFileInput)').forEach(i => {
-                if(i.type !== 'radio' && i.type !== 'checkbox') i.value = '';
-            });
-            try {
-                let pTitle = document.querySelector('#productModal h3'); if (pTitle) pTitle.innerText = "Product Info";
-                let cTitle = document.querySelector('#customerModal h3'); if (cTitle) cTitle.innerText = "New Customer";
-            } catch(e){}
+            let pTitle = document.querySelector('#productModal h3'); if (pTitle) pTitle.innerText = "Product Info"; 
+            let cTitle = document.querySelector('#customerModal h3'); if (cTitle) cTitle.innerText = "New Customer"; 
+            let cBtn = document.querySelector('#customerModal .btn-green'); if (cBtn) cBtn.innerText = "Register"; 
             
             try { if (html5QrcodeScanner) html5QrcodeScanner.clear().catch(e => { /* ignore */ }); } catch(e) {}
             let sm = document.getElementById('scannerModal');
             if(sm) sm.style.display = 'none';
+
+            document.querySelectorAll('.modal-bg').forEach(m => m.style.display='none'); 
+            document.querySelectorAll('input:not(#posSearch):not(#passInput):not(.search-bar):not([name="supType"]):not(#csvFileInput)').forEach(i => i.value='');
         }
     </script>
 </body>
