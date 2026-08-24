@@ -1126,7 +1126,7 @@
         let qbExpression = "";
         function openQuickBill() { qbExpression = ""; updateQuickBillDisplay(); document.getElementById('quickBillModal').style.display = 'flex'; }
         function qbInput(char) { const ops = ['+','-','*','/']; if (qbExpression === "" && ops.includes(char)) return; let last = qbExpression.slice(-1); if (ops.includes(char) && ops.includes(last)) qbExpression = qbExpression.slice(0,-1) + char; else qbExpression += char; updateQuickBillDisplay(); }
-        function qbBackspace() { qbExpression = qbExpression.slice(0,-1); updateQuickBillDisplay(); }
+        function qbBackspace() { qbExpression = ""; updateQuickBillDisplay(); }
         function qbClear() { qbExpression = ""; updateQuickBillDisplay(); }
         function updateQuickBillDisplay() {
             document.getElementById('qb-expr').innerText = qbExpression.replace(/\*/g,' × ').replace(/\//g,' ÷ ').replace(/\+/g,' + ').replace(/\-/g,' - ');
@@ -1431,8 +1431,8 @@
             });
 
             document.getElementById('inventoryTableBody').innerHTML = inventory.map(i => {
-                let btns = `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="printBarcodeLabel(${i.id})">🖨️ Barcode</button>`;
-                if(userRole === 'admin') btns += `<button class="btn btn-gray" style="color:var(--primary); padding: 4px 8px; font-size:0.8em; margin:0 4px;" onclick="editProduct(${i.id})">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('inv', '${i.id}')">Del</button>`;
+                let btns = `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="printBarcodeLabel('${i.id}')">🖨️ Barcode</button>`;
+                if(userRole === 'admin') btns += `<button class="btn btn-gray" style="color:var(--primary); padding: 4px 8px; font-size:0.8em; margin:0 4px;" onclick="editProduct('${i.id}')">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('inv', '${i.id}')">Del</button>`;
                 return `<tr class="${i.stock <= 0 ? 'low-stock' : ''}">
                     <td><b>${i.name}</b><br><small style="color:var(--text-muted);">${i.brand||''}</small></td>
                     <td>${i.category||'General'}</td><td>${i.supplier||'--'}</td>
@@ -1493,8 +1493,8 @@
             
             document.getElementById('customerTableBody').innerHTML = filteredCust.map(c => {
                 let dates = `${c.dob ? '🎂 ' + c.dob : ''} ${c.anniversary ? '💍 ' + c.anniversary : ''}`.trim() || '--';
-                let btns = (c.due && c.due > 0) ? `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerPaymentModal(${c.id})">₹ Pay Due</button>` : '';
-                if(userRole === 'admin' && c.id !== 1) {
+                let btns = (c.due && c.due > 0) ? `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerPaymentModal('${c.id}')">₹ Pay Due</button>` : '';
+                if(userRole === 'admin' && String(c.id) !== '1') {
                     btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="editCustomer('${c.id}')">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('cust', '${c.id}')">Del</button>`;
                 }
                 return `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td><small>${dates}</small></td><td><b>${c.points||0}</b></td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${btns}</td></tr>`;
@@ -2300,21 +2300,69 @@
         }
 
         // CUSTOMERS & RESELLERS
-        function openCustomerModal(src) { custTrigger = src; document.getElementById('customerModal').style.display = 'flex'; }
+        function openCustomerModal(src) { 
+            custTrigger = src; 
+            if (src !== 'edit') {
+                editingCustomerId = null;
+                document.getElementById('cName').value = '';
+                document.getElementById('cPhone').value = '';
+                document.getElementById('cDob').value = '';
+                document.getElementById('cAnniversary').value = '';
+                document.getElementById('cType').value = 'Customer';
+            }
+            document.getElementById('customerModal').style.display = 'flex'; 
+        }
+
         function editCustomer(id) {
-            let c = customers.find(x => x.id === id); if(!c) return;
-            editingCustomerId = id;
-            document.getElementById('cName').value = c.name; document.getElementById('cPhone').value = c.phone || '';
-            document.getElementById('cDob').value = c.dob || ''; document.getElementById('cAnniversary').value = c.anniversary || '';
+            let c = customers.find(x => String(x.id) === String(id)); 
+            if(!c) return;
+            editingCustomerId = c.id;
+            document.getElementById('cName').value = c.name || ''; 
+            document.getElementById('cPhone').value = (c.phone === '--') ? '' : (c.phone || '');
+            document.getElementById('cDob').value = c.dob || ''; 
+            document.getElementById('cAnniversary').value = c.anniversary || '';
             document.getElementById('cType').value = c.type || 'Customer';
-            openCustomerModal('list');
+            openCustomerModal('edit');
         }
+
         function saveCustomer() {
-            let name = document.getElementById('cName').value, phone = document.getElementById('cPhone').value, dob = document.getElementById('cDob').value, anniversary = document.getElementById('cAnniversary').value, type = document.getElementById('cType').value;
-            if(editingCustomerId) { let c = customers.find(x => String(x.id) === String(editingCustomerId)); if(c) Object.assign(c, { name, phone, dob, anniversary, type }); }
-            else { customers.push({ id: Date.now(), name, phone, dob, anniversary, type, spent: 0, due: 0, points: 0 }); }
-            closeModals(); refreshDisplays();
+            let name = document.getElementById('cName').value.trim();
+            let phone = document.getElementById('cPhone').value.trim();
+            let dob = document.getElementById('cDob').value;
+            let anniversary = document.getElementById('cAnniversary').value;
+            let type = document.getElementById('cType').value;
+
+            if (!name) return alert("Please enter customer name.");
+
+            if (editingCustomerId) { 
+                let c = customers.find(x => String(x.id) === String(editingCustomerId)); 
+                if (c) {
+                    let oldName = c.name;
+                    Object.assign(c, { name, phone: phone || '--', dob, anniversary, type });
+                    if (oldName !== name) {
+                        sales.forEach(s => {
+                            if (s.cust === oldName) s.cust = name;
+                        });
+                    }
+                }
+            } else { 
+                customers.push({ 
+                    id: Date.now().toString(), 
+                    name, 
+                    phone: phone || '--', 
+                    dob, 
+                    anniversary, 
+                    type, 
+                    spent: 0, 
+                    due: 0, 
+                    points: 0 
+                }); 
+            }
+            saveToStorage();
+            closeModals(); 
+            refreshDisplays();
         }
+
         function filterCustomerDropdown() {
             let sel = document.getElementById('posCustomerSelect'); let cur = sel ? sel.value : null;
             let q = document.getElementById('custSearchInput').value.toLowerCase();
@@ -2884,8 +2932,8 @@
                 if(t==='exp') expenses = expenses.filter(e=>String(e.id)!==String(id)); 
                 if(t==='cust') customers = customers.filter(c=>String(c.id)!==String(id)); 
                 if(t==='sup') suppliers = suppliers.filter(s=>String(s.id)!==String(id));
-                if(t==='quote') quotations = quotations.filter(q=>String(q.id)!==String(id)); // quotations fix
-                saveToStorage(); // storage fix
+                if(t==='quote') quotations = quotations.filter(q=>String(q.id)!==String(id)); 
+                saveToStorage(); 
                 refreshDisplays(); 
             } 
         }
