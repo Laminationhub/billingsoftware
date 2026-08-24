@@ -8,9 +8,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Billing Hub - Powered By Lamination Hub</title>
     
+    <!-- Tailwind & FontAwesome for New Print Bill Template -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link rel="manifest" id="manifest-placeholder">
     
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+        .font-cursive { font-family: 'Dancing Script', cursive; }
+
         :root { 
             --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --dark: #2c3e50; 
             --bg-body: #f4f7f6; --bg-card: #ffffff; --bg-sidebar: #2c3e50; --text-main: #333333; --text-muted: #64748b; 
@@ -74,9 +81,9 @@
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         
         .table-wrap { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: var(--table-header); color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75em; padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color); }
-        td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9em; color: var(--text-main); }
+        table.app-table { width: 100%; border-collapse: collapse; }
+        table.app-table th { background: var(--table-header); color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75em; padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color); }
+        table.app-table td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9em; color: var(--text-main); }
         tr.low-stock { background: rgba(220, 53, 69, 0.08); }
         
         .billing-workspace { display: flex; gap: 20px; flex-wrap: wrap; }
@@ -106,8 +113,12 @@
             @page { margin: 0; size: auto; }
             body, html { margin: 0; padding: 0; background: white !important; color: black !important; }
             body * { visibility: hidden; }
-            #receipt-print-area, #receipt-print-area * { visibility: visible; color: #000 !important; font-family: Arial, sans-serif !important; }
+            #receipt-print-area, #receipt-print-area * { visibility: visible; }
             #receipt-print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; z-index: 9999; }
+            .print\:shadow-none { box-shadow: none !important; }
+            .print\:border-none { border: none !important; }
+            .print\:m-0 { margin: 0 !important; }
+            .print\:p-0 { padding: 0 !important; }
         }
         #reader { width: 100%; border-radius: 8px; overflow: hidden; }
     </style>
@@ -189,7 +200,6 @@
                     </div>
                 </div>
 
-                <!-- BIRTHDAYS & ANNIVERSARIES ALERT BANNER -->
                 <div id="celebration-banner" class="alert-banner celebration" style="display: none;">
                     <div>
                         <strong>🎉 Today's Customer Celebrations!</strong>
@@ -197,7 +207,6 @@
                     </div>
                 </div>
 
-                <!-- LOW STOCK ALERT BANNER -->
                 <div id="low-stock-banner" class="alert-banner warning" style="display: none;">
                     <div>
                         <strong>⚠️ Low Stock Alert!</strong>
@@ -269,7 +278,7 @@
                             </div>
                         </div>
 
-                        <table style="margin-bottom: 10px; width: 100%;"><tbody id="cartBody"></tbody></table>
+                        <table class="app-table" style="margin-bottom: 10px; width: 100%;"><tbody id="cartBody"></tbody></table>
                         
                         <div class="checkout-row">
                             <span style="font-weight: bold; color: var(--text-muted); font-size: 0.9em;">SHIPPING (₹)</span>
@@ -341,7 +350,7 @@
                 </div>
                 <div class="container" style="padding:0;">
                     <div class="table-wrap">
-                        <table>
+                        <table class="app-table">
                             <thead>
                                 <tr><th>Job #</th><th>Exp. Date</th><th>Customer</th><th>Device / Item</th><th>Notes</th><th>Status</th><th>Total</th><th>Due</th><th>Actions</th></tr>
                             </thead>
@@ -387,7 +396,7 @@
 
                 <div class="container" style="padding:0;">
                     <div class="table-wrap">
-                        <table>
+                        <table class="app-table">
                             <thead>
                                 <tr><th>INV #</th><th>Date</th><th>Customer</th><th>Taxable Amt</th><th>CGST</th><th>SGST</th><th>Total Bill</th><th>Cashier</th></tr>
                             </thead>
@@ -409,7 +418,7 @@
                         <button class="btn btn-green" onclick="openProductModal()">+ Add Product</button>
                     </div>
                 </div>
-                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Item Name</th><th>Category / Brand</th><th>Supplier</th><th>Buy / Sell Price</th><th>Stock</th><th>Action</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div></div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table class="app-table"><thead><tr><th>Item Name</th><th>Category / Brand</th><th>Supplier</th><th>Buy / Sell Price</th><th>Stock</th><th>Action</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div></div>
             </div>
 
             <!-- 5. SUPPLIERS VIEW -->
@@ -417,7 +426,7 @@
                 <div class="header"><h1>Supplier Contacts & Ledger</h1><button class="btn btn-dark" onclick="openSupplierModal()">+ Add Supplier</button></div>
                 <div class="container" style="padding:0;">
                     <div class="table-wrap">
-                        <table>
+                        <table class="app-table">
                             <thead><tr><th>Supplier Details</th><th>Contact Info</th><th>Total Bought</th><th>Total Paid</th><th style="color:red;">Pending Due</th><th>Actions</th></tr></thead>
                             <tbody id="supplierTableBody"></tbody>
                         </table>
@@ -428,7 +437,7 @@
             <!-- 6. EXPENSES VIEW -->
             <div id="expenses-view" class="view-section">
                 <div class="header"><h1>Expense Tracker</h1><button class="btn btn-danger" onclick="openExpenseModal()">+ Log Expense</button></div>
-                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Receipt</th><th>Action</th></tr></thead><tbody id="expenseTableBody"></tbody></table></div></div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table class="app-table"><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Receipt</th><th>Action</th></tr></thead><tbody id="expenseTableBody"></tbody></table></div></div>
             </div>
 
             <!-- 7. ORDERS VIEW -->
@@ -444,7 +453,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Date</th><th>Customer</th><th>Items</th><th>Status</th><th>Total</th><th>Advance Paid</th><th>Pending Amount</th><th>Actions</th></tr></thead><tbody id="orderTableBody"></tbody></table></div></div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table class="app-table"><thead><tr><th>Order ID</th><th>Date</th><th>Customer</th><th>Items</th><th>Status</th><th>Total</th><th>Advance Paid</th><th>Pending Amount</th><th>Actions</th></tr></thead><tbody id="orderTableBody"></tbody></table></div></div>
             </div>
 
             <!-- 8. HISTORY VIEW -->
@@ -460,13 +469,13 @@
                         </select>
                     </div>
                 </div>
-                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>INV #</th><th>Date</th><th>Customer</th><th>Items</th><th>Total Bill</th><th>Due</th><th>Cashier</th><th>Actions</th></tr></thead><tbody id="historyTableBody"></tbody></table></div></div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table class="app-table"><thead><tr><th>INV #</th><th>Date</th><th>Customer</th><th>Items</th><th>Total Bill</th><th>Due</th><th>Cashier</th><th>Actions</th></tr></thead><tbody id="historyTableBody"></tbody></table></div></div>
             </div>
 
             <!-- 9. QUOTATIONS VIEW -->
             <div id="quotations-view" class="view-section">
                 <div class="header"><h1>Saved Quotations</h1></div>
-                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>QUOTE #</th><th>Date</th><th>Customer</th><th>Tax</th><th>Total Amt</th><th>Actions</th></tr></thead><tbody id="quotationTableBody"></tbody></table></div></div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table class="app-table"><thead><tr><th>QUOTE #</th><th>Date</th><th>Customer</th><th>Tax</th><th>Total Amt</th><th>Actions</th></tr></thead><tbody id="quotationTableBody"></tbody></table></div></div>
             </div>
             
             <!-- 10. CUSTOMERS VIEW -->
@@ -484,7 +493,7 @@
                         <button class="btn btn-dark" onclick="openCustomerModal('list')">+ Add New Customer</button>
                     </div>
                 </div>
-                <div class="container" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>DOB / Anniversary</th><th>Points</th><th>Total Spent</th><th>Due Amt</th><th>Actions</th></tr></thead><tbody id="customerTableBody"></tbody></table></div></div>
+                <div class="container" style="padding:0;"><div class="table-wrap"><table class="app-table"><thead><tr><th>Name</th><th>Phone</th><th>DOB / Anniversary</th><th>Points</th><th>Total Spent</th><th>Due Amt</th><th>Actions</th></tr></thead><tbody id="customerTableBody"></tbody></table></div></div>
             </div>
 
             <!-- 11. RESELLERS VIEW -->
@@ -498,7 +507,7 @@
                 </div>
                 <div class="container" style="padding:0;">
                     <div class="table-wrap">
-                        <table>
+                        <table class="app-table">
                             <thead>
                                 <tr><th>Name</th><th>Phone</th><th>Total Bought</th><th>Due Amt</th><th>Actions</th></tr>
                             </thead>
@@ -558,7 +567,13 @@
 
                 <div class="container">
                     <h3>🏢 Business Profile & Tax</h3>
-                    <div class="form-group"><label>Profile Picture</label><input type="file" id="set-profile-pic" accept="image/*"></div>
+                    
+                    <div class="form-group">
+                        <label>Business Logo (Appears on Bills)</label>
+                        <input type="file" id="set-profile-pic" accept="image/png, image/jpeg, image/*" onchange="handleLogoUpload(event)">
+                        <small style="color: var(--text-muted);">Upload your shop's logo (PNG or JPG). It will instantly appear on your next print bill.</small>
+                    </div>
+                    
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="form-group"><label>Shop Name</label><input type="text" id="set-name"></div>
                         <div class="form-group"><label>GSTIN Number</label><input type="text" id="set-gst"></div>
@@ -965,6 +980,7 @@
         </div>
     </div>
 
+    <!-- The actual print target container -->
     <div id="receipt-print-area"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -1221,6 +1237,19 @@
             try { const doc = await docRef.get(); if (doc.exists) { const d = doc.data(); appPass = d.appPass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || []; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || []; deletedItems = d.deletedItems || []; alert("Synced!"); initApp(); } } catch(e){ alert("Sync failed."); }
         }
 
+        // SETTINGS LOGO UPLOAD LOGIC
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => { 
+                    settings.profilePic = reader.result; 
+                    if(document.getElementById('sidebar-img')) document.getElementById('sidebar-img').src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
         function initApp() {
             document.getElementById('brand-name').innerText = settings.name;
             document.getElementById('brand-city').innerText = settings.city;
@@ -1236,7 +1265,7 @@
             document.getElementById('set-upi-id').value = settings.upiId || '';
             document.getElementById('set-instagram').value = settings.instagram || '';
             document.getElementById('set-print-method').value = settings.printMethod || 'browser';
-            if(settings.profilePic) document.getElementById('sidebar-img').src = settings.profilePic;
+            if(settings.profilePic && document.getElementById('sidebar-img')) document.getElementById('sidebar-img').src = settings.profilePic;
 
             renderTaxDropdown(); renderStaffList();
             
@@ -1341,7 +1370,6 @@
             document.getElementById('month-sales').innerText = "₹" + mSales.toFixed(2);
             document.getElementById('year-sales').innerText = "₹" + ySales.toFixed(2);
 
-            // 1. CHECK CELEBRATIONS (BIRTHDAYS & ANNIVERSARIES)
             let todayMonthDay = (new Date().getMonth() + 1).toString().padStart(2,'0') + '-' + new Date().getDate().toString().padStart(2,'0');
             let celebrationHTML = "";
             customers.forEach(c => {
@@ -1351,7 +1379,6 @@
             if(celebrationHTML) { document.getElementById('celebration-banner').style.display = 'flex'; document.getElementById('celebration-list').innerHTML = celebrationHTML.slice(0, -2); }
             else { document.getElementById('celebration-banner').style.display = 'none'; }
 
-            // 2. CHECK LOW STOCK
             let lowItems = inventory.filter(i => i.stock <= 5);
             if(lowItems.length > 0) {
                 document.getElementById('low-stock-banner').style.display = 'flex';
@@ -1362,7 +1389,6 @@
 
             if(userRole === 'admin') updateCharts();
 
-            // POS PRODUCTS
             const q = document.getElementById('posSearch').value.toLowerCase();
             const catFilter = document.getElementById('posCategoryFilter').value;
             const pGrid = document.getElementById('posProductList'); pGrid.innerHTML = '';
@@ -1373,7 +1399,6 @@
                 }
             });
 
-            // INVENTORY TABLE
             document.getElementById('inventoryTableBody').innerHTML = inventory.map(i => {
                 let btns = `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="printBarcodeLabel(${i.id})">🖨️ Barcode</button>`;
                 if(userRole === 'admin') btns += `<button class="btn btn-gray" style="color:var(--primary); padding: 4px 8px; font-size:0.8em; margin:0 4px;" onclick="editProduct(${i.id})">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('inv', ${i.id})">Del</button>`;
@@ -1386,7 +1411,6 @@
                 </tr>`;
             }).join('');
 
-            // EXPENSES TABLE WITH RECEIPT BUTTON
             document.getElementById('expenseTableBody').innerHTML = expenses.slice().reverse().map(e => `
                 <tr>
                     <td>${e.date}</td><td><span style="background:var(--border-color); padding:2px 6px; border-radius:4px; font-size:0.8em;">${e.cat||'Other'}</span></td>
@@ -1396,7 +1420,6 @@
                 </tr>
             `).join('');
 
-            // CUSTOMERS TABLE WITH BIRTHDAY/ANNIVERSARY
             let cSearch = (document.getElementById('searchCustomersTable')?.value || '').toLowerCase();
             let cType = document.getElementById('filterCustomerTableType')?.value || 'All';
             let filteredCust = customers.filter(c => (c.name.toLowerCase().includes(cSearch) || (c.phone && c.phone.includes(cSearch))) && (cType === 'All' ? true : (c.type || 'Customer') === cType));
@@ -1410,7 +1433,6 @@
                 return `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td><small>${dates}</small></td><td><b>${c.points||0}</b></td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${btns}</td></tr>`;
             }).join('');
 
-            // RESELLERS TABLE
             let rSearch = (document.getElementById('searchResellersTable')?.value || '').toLowerCase();
             document.getElementById('resellerTableBody').innerHTML = customers.filter(c => c.type === 'Reseller' && (c.name.toLowerCase().includes(rSearch) || c.phone.includes(rSearch))).map(c => {
                 let btns = (c.due && c.due > 0) ? `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerPaymentModal(${c.id})">₹ Pay Due</button>` : '';
@@ -1418,7 +1440,6 @@
                 return `<tr><td><b>${c.name}</b></td><td>${c.phone}</td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${btns}</td></tr>`;
             }).join('');
 
-            // JOB CARDS TABLE
             let jSearch = (document.getElementById('searchJobs')?.value || '').toLowerCase();
             let jobSales = sales.filter(s => s.isJobCard && !s.returned && (s.id.toLowerCase().includes(jSearch) || s.cust.toLowerCase().includes(jSearch) || (s.jobDevice && s.jobDevice.toLowerCase().includes(jSearch))));
             
@@ -1456,7 +1477,6 @@
                 }).join('');
             }
 
-            // ORDERS TABLE (Non-JobCard POS Sales)
             let oSearch = (document.getElementById('searchOrders')?.value || '').toLowerCase();
             let oType = document.getElementById('filterOrderTableType')?.value || 'All';
             let filteredOrders = sales.filter(s => !s.isJobCard && !s.returned && (s.id.toLowerCase().includes(oSearch) || s.cust.toLowerCase().includes(oSearch) || s.date.toLowerCase().includes(oSearch)) && (oType === 'All' ? true : (customers.find(x => x.name === s.cust)?.type || 'Customer') === oType));
@@ -1478,7 +1498,6 @@
                 }).join('');
             }
 
-            // SALES HISTORY WITH PARTIAL RETURN, CASHIER NAME AND EDIT/DELETE
             let hSearch = (document.getElementById('searchHistory')?.value || '').toLowerCase();
             let hType = document.getElementById('filterHistoryType')?.value || 'All';
 
@@ -1575,7 +1594,7 @@
             setTimeout(() => { executePrint(); }, 100);
         }
 
-        // TAX & REPORTS GENERATION (CA EXPORT)
+        // TAX & REPORTS GENERATION
         function resetReportDates() {
             document.getElementById('repFromDate').value = '';
             document.getElementById('repToDate').value = '';
@@ -1691,7 +1710,7 @@
             closeModals(); refreshDisplays();
         }
 
-        // EXPENSE RECEIPT UPLOAD
+        // EXPENSE RECEIPT
         function handleReceiptUpload(e) {
             const file = e.target.files[0];
             if (file) {
@@ -1717,7 +1736,7 @@
             }
         }
 
-        // PARTIAL RETURN LOGIC
+        // PARTIAL RETURN
         function openPartialReturnModal(saleId) {
             let s = sales.find(x => x.id === saleId);
             if (!s) return;
@@ -1765,17 +1784,15 @@
                     let refundAmt = q * item.price;
                     totalRefund += refundAmt;
 
-                    // Restock inventory
                     let invItem = inventory.find(x => x.id == item.id);
                     if (invItem) invItem.stock += q;
 
-                    item.qty -= q; // Deduct quantity from bill
+                    item.qty -= q; 
                 }
             });
 
             if (!hasReturns) return alert("Select at least 1 item to return.");
 
-            // Adjust Customer & Sales Record
             let c = customers.find(x => x.name === s.cust);
             if (c) {
                 c.spent -= totalRefund;
@@ -1816,6 +1833,7 @@
         function removeFromCart(id) { cart = cart.filter(c => String(c.id) !== String(id)); updateCart(); }
         function decreaseQty(id) { let item = cart.find(c => String(c.id) === String(id)); if(item) { if(item.qty > 1) item.qty--; else cart = cart.filter(c => String(c.id) !== String(id)); updateCart(); } }
         function increaseQty(id) { let item = cart.find(c => String(c.id) === String(id)); if(item) { let inv = inventory.find(x => String(x.id) === String(item.id)); if(inv && item.qty + 1 > inv.stock) return alert("Low stock"); item.qty++; updateCart(); } }
+        
         function updateCart() {
             let cid = document.getElementById('posCustomerSelect').value; let c = customers.find(x => x.id == cid);
             document.getElementById('availPoints').innerText = c ? (c.points || 0) : 0;
@@ -1844,10 +1862,15 @@
             let cid = document.getElementById('posCustomerSelect').value;
             let c = customers.find(x => x.id == cid);
             let saleId = (Date.now()).toString().slice(-6);
-            let newSale = { id: saleId, date: new Date().toLocaleString(), cust: c.name, phone: c.phone, total, due, items: JSON.parse(JSON.stringify(cart)), cashier: currentStaffName, returned: false };
+            
+            // Get Payment Mode
+            let payMode = document.getElementById('posPayMode').value;
+            
+            let newSale = { id: saleId, date: new Date().toLocaleString(), cust: c.name, phone: c.phone, total, due, items: JSON.parse(JSON.stringify(cart)), cashier: currentStaffName, returned: false, payMode: payMode };
             sales.push(newSale);
             if(c) { c.spent += total; c.due = (c.due || 0) + due; }
             cart.forEach(ci => { let inv = inventory.find(x => x.id == ci.id); if(inv) inv.stock -= ci.qty; });
+            
             generateReceiptHTML(newSale);
             if(action === 'print') { setTimeout(() => { executePrint(); resetCart(); refreshDisplays(); }, 100); }
             else { sendWhatsApp(saleId); resetCart(); refreshDisplays(); }
@@ -1855,27 +1878,302 @@
 
         function resetCart() { cart = []; document.getElementById('posDiscount').value = ''; document.getElementById('posAdvance').value = ''; updateCart(); }
 
+        // ==========================================
+        // NEW TAILWIND HTML PRINT TEMPLATE INJECTOR
+        // ==========================================
         function generateReceiptHTML(s) {
-            let addr = settings.address ? `${settings.address}<br>` : '';
-            let gst = settings.gst ? `GSTIN: ${settings.gst}<br>` : '';
-            let insta = settings.instagram ? `Instagram: ${settings.instagram}<br>` : '';
-            let jobDetails = s.isJobCard ? `Device: <b>${s.jobDevice}</b><br>Notes: ${s.jobNotes||'--'}<br>Exp: ${s.jobExpDate||'--'}<br>` : '';
+            // 1. Generate dynamic rows for purchased items
+            let itemsHTML = s.items.map((item, index) => `
+                <tr class="h-7 border-b border-gray-400 border-dotted">
+                    <td class="border-x border-gray-400 text-center">${index + 1}</td>
+                    <td class="border-x border-gray-400 px-2 font-semibold text-xs">${item.name}</td>
+                    <td class="border-x border-gray-400 text-center">${item.qty}</td>
+                    <td class="border-x border-gray-400 text-center">${item.price.toFixed(2)}</td>
+                    <td class="border-x border-gray-400 text-center">${(item.price * item.qty).toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            // 2. Pad the table with empty rows to maintain that classic 5-row bill look
+            for (let i = s.items.length; i < 5; i++) {
+                itemsHTML += `
+                <tr class="h-7 border-b border-gray-400 border-dotted">
+                    <td class="border-x border-gray-400 text-center">${i + 1}</td>
+                    <td class="border-x border-gray-400"></td>
+                    <td class="border-x border-gray-400"></td>
+                    <td class="border-x border-gray-400"></td>
+                    <td class="border-x border-gray-400"></td>
+                </tr>`;
+            }
+
+            // 3. Calculate totals for the footer
+            let subTotal = s.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            let discount = (subTotal - s.total) > 0 ? (subTotal - s.total) : 0; 
             
+            // Format Data
+            let profilePicSrc = settings.profilePic ? settings.profilePic : 'https://via.placeholder.com/150';
+            let printDate = s.date.split(',')[0];
+            let upiChecked = s.payMode === 'UPI' ? 'checked' : '';
+            let cashChecked = s.payMode === 'Cash' ? 'checked' : '';
+            let cardChecked = s.payMode === 'Card' ? 'checked' : '';
+            
+            let shopCity = settings.city ? settings.city + ', Sultanpur' : 'Sultanpur, Sultanpur';
+
+            // 4. Inject the exact template structure
             document.getElementById('receipt-print-area').innerHTML = `
-                <div style="padding:10px; text-align:center;">
-                    <h2>${settings.name}</h2><p>${addr}${gst}${insta}Ph: ${settings.phone||''}</p><hr>
-                    <div style="text-align:left;">${s.isJobCard ? 'JOB CARD' : 'INV'} #${s.id} | ${s.date}<br>Cust: ${s.cust}<br>${jobDetails}Cashier: ${s.cashier || 'Admin'}</div><hr>
-                    <table style="width:100%; text-align:left;">${s.items.map(i => `<tr><td>${i.name} x${i.qty}</td><td align="right">₹${i.price*i.qty}</td></tr>`).join('')}</table>
-                    <hr><h3>Total: ₹${s.total.toFixed(2)}</h3>${s.due > 0 ? `<p style="color:red;">Due: ₹${s.due.toFixed(2)}</p>` : ''}
-                    <p>*** Thank You! ***</p>
-                </div>`;
+            <div class="w-full max-w-[800px] bg-white border border-gray-200 text-gray-800 font-sans shadow-lg print:shadow-none print:border-none print:m-0 print:p-0 mx-auto">
+              
+                <!-- Header Section -->
+                <div class="px-8 pt-6 pb-2 text-center relative">
+                    <div class="flex justify-between items-center">
+                        <div class="w-32 h-32 flex items-center justify-center">
+                            <img src="${profilePicSrc}" alt="Logo" class="w-full h-full object-contain" />
+                        </div>
+                        
+                        <div class="flex-1">
+                            <h1 class="text-6xl font-black text-orange-600 tracking-wide m-0 leading-none">${settings.name.toUpperCase()}</h1>
+                            <div class="flex items-center justify-center gap-4 mt-2">
+                                <div class="h-1 w-16 bg-green-700"></div>
+                                <h2 class="text-5xl font-black text-green-700 m-0 leading-none">HUB</h2>
+                                <div class="h-1 w-16 bg-green-700"></div>
+                            </div>
+                            <p class="mt-3 text-sm italic font-semibold text-gray-700">
+                                Tera Style <span class="text-orange-500 px-1">◆</span> Teri Choice <span class="text-orange-500 px-1">◆</span> Lamination Hub Always Right
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Info Bar -->
+                <div class="flex justify-between items-center border-y-2 border-gray-300 py-2 px-8 mx-4 text-sm font-semibold">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-location-dot text-[#d6336c] text-xl"></i>
+                        <div class="leading-tight text-gray-800">
+                            <p>${shopCity}</p>
+                            <p>Uttar Pradesh - 228151</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 border-x-2 border-gray-300 px-6">
+                        <i class="fa-solid fa-phone text-[#d6336c] text-xl"></i>
+                        <span class="text-lg text-gray-800">${settings.phone || '8726195000'}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-brands fa-instagram text-[#d6336c] text-xl"></i>
+                        <span class="text-gray-800">${settings.instagram || 'Lamination_Hub_2.0'}</span>
+                    </div>
+                </div>
+
+                <!-- Services Icons -->
+                <div class="mt-4 flex flex-col items-center">
+                    <span class="bg-green-700 text-white px-6 py-1 rounded-full text-xs font-bold tracking-wider">
+                        OUR SERVICES & PRODUCTS
+                    </span>
+                    <div class="flex justify-between w-full px-8 mt-4">
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-mobile-screen"></i></div><span class="text-[9px] font-semibold">Mobile Skin</span></div>
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-laptop"></i></div><span class="text-[9px] font-semibold">Laptop Skin</span></div>
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-camera"></i></div><span class="text-[9px] font-semibold">DSLR Skin</span></div>
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-image"></i></div><span class="text-[9px] font-semibold">Photo Frame</span></div>
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-mug-hot"></i></div><span class="text-[9px] font-semibold">Premium Mug</span></div>
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-shirt"></i></div><span class="text-[9px] font-semibold">T-Shirt</span></div>
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-key"></i></div><span class="text-[9px] font-semibold">Keychain</span></div>
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-couch"></i></div><span class="text-[9px] font-semibold">Pillow</span></div>
+                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-id-card"></i></div><span class="text-[9px] font-semibold text-center leading-tight">PVC Card</span></div>
+                    </div>
+                </div>
+
+                <!-- Customer Details -->
+                <div class="flex justify-between px-8 mt-6">
+                    <div class="w-[60%] space-y-3 font-semibold text-sm">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-user text-purple-700"></i>
+                            <span class="text-green-700 ml-1">Customer Name :</span>
+                            <div class="flex-1 border-b border-black h-5 text-gray-800 uppercase pl-2">${s.cust}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-phone text-[#d6336c]"></i>
+                            <span class="text-green-700 ml-1">Mobile No. <span class="ml-[22px]">:</span></span>
+                            <div class="flex-1 border-b border-black h-5 pl-2">${s.phone || ''}</div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <i class="fa-solid fa-location-dot text-[#d6336c]"></i>
+                            <span class="text-green-700 ml-1">Address <span class="ml-[34px]">:</span></span>
+                            <div class="flex-1 flex flex-col gap-3 pt-1">
+                                <div class="border-b border-black h-4 w-full"></div>
+                                <div class="border-b border-black h-4 w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-[35%] border border-orange-400 rounded-lg p-3 flex flex-col justify-center gap-3 font-semibold text-sm">
+                        <div class="flex items-center gap-2">
+                            <span>BILL NO. :</span>
+                            <div class="flex-1 border-b border-black h-5 text-red-600 pl-2">#${s.id}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span>DATE <span class="ml-6">:</span></span>
+                            <div class="flex-1 border-b border-black h-5 pl-2">${printDate}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <div class="px-8 mt-6">
+                    <table class="w-full border-collapse border border-gray-400 text-sm">
+                        <thead>
+                            <tr class="bg-green-700 text-white">
+                                <th class="border border-gray-400 py-1 px-2 w-12 text-center">S. NO.</th>
+                                <th class="border border-gray-400 py-1 px-2 text-left">ITEM / SERVICE DESCRIPTION</th>
+                                <th class="border border-gray-400 py-1 px-2 w-16 text-center">QTY.</th>
+                                <th class="border border-gray-400 py-1 px-2 w-24 text-center">RATE (₹)</th>
+                                <th class="border border-gray-400 py-1 px-2 w-32 text-center">AMOUNT (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Layout -->
+                <div class="flex justify-between px-8 mt-4 mb-4">
+                    
+                    <!-- Payment & Terms -->
+                    <div class="w-[35%]">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="h-[2px] bg-orange-500 w-4"></div>
+                            <span class="bg-orange-500 text-white px-3 py-0.5 rounded font-bold text-xs">PAYMENT MODE</span>
+                            <div class="h-[2px] bg-orange-500 w-4"></div>
+                        </div>
+                        <div class="space-y-1 text-xs font-semibold mb-4 w-32">
+                            <div class="flex justify-between items-center"><span class="flex items-center gap-2">💵 CASH</span> <input type="checkbox" class="w-4 h-4" ${cashChecked}/></div>
+                            <div class="flex justify-between items-center"><span class="flex items-center gap-2">📱 UPI</span> <input type="checkbox" class="w-4 h-4" ${upiChecked}/></div>
+                            <div class="flex justify-between items-center"><span class="flex items-center gap-2">💳 CARD</span> <input type="checkbox" class="w-4 h-4" ${cardChecked}/></div>
+                        </div>
+                        
+                        <h4 class="text-orange-500 font-bold text-xs mt-4 mb-1">TERMS & CONDITIONS</h4>
+                        <ul class="text-[9px] font-semibold space-y-1">
+                            <li class="flex gap-1"><span class="text-green-700">✔</span> Goods once sold will not be taken back.</li>
+                            <li class="flex gap-1"><span class="text-green-700">✔</span> No warranty on Mobile Skin & Printed Items.</li>
+                            <li class="flex gap-1"><span class="text-green-700">✔</span> Please check the item before leaving the shop.</li>
+                            <li class="flex gap-1"><span class="text-green-700">✔</span> Keep your bill safe for future reference.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Auto-Generated QR Code Section -->
+                    <div class="w-[25%] flex flex-col items-center justify-start mt-2">
+                        <span class="text-green-700 font-bold text-xs mb-1">SCAN & PAY</span>
+                        <div id="bill-qrcode" class="w-28 h-28 border-2 border-black flex items-center justify-center bg-white p-1"></div>
+                        <span class="text-[10px] font-bold mt-1">UPI Accepted Here</span>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="w-[35%] flex flex-col justify-end pb-4">
+                        <table class="w-full text-sm font-bold border border-gray-400">
+                            <tbody>
+                                <tr class="border-b border-gray-400">
+                                    <td class="py-2 px-2">SUB TOTAL</td>
+                                    <td class="py-2 px-2 border-l border-gray-400 w-24">₹ ${subTotal.toFixed(2)}</td>
+                                </tr>
+                                <tr class="border-b border-gray-400">
+                                    <td class="py-2 px-2">DISCOUNT</td>
+                                    <td class="py-2 px-2 border-l border-gray-400">₹ ${discount.toFixed(2)}</td>
+                                </tr>
+                                <tr class="border-b border-gray-400">
+                                    <td class="py-2 px-2 text-red-600">DUE BALANCE</td>
+                                    <td class="py-2 px-2 border-l border-gray-400 text-red-600">₹ ${(s.due || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr class="bg-green-700 text-white">
+                                    <td class="py-2 px-2">GRAND TOTAL</td>
+                                    <td class="py-2 px-2 border-l border-gray-400">₹ ${s.total.toFixed(2)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="text-center mt-3">
+                            <div class="text-green-700 font-cursive text-3xl italic">Thank You!</div>
+                            <div class="bg-black text-white text-xs font-bold py-1 px-4 mt-1 inline-block rounded-md">VISIT AGAIN</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Banner -->
+                <div class="bg-[#2A2A2A] text-white flex text-xs">
+                    <div class="w-1/2 p-3">
+                        <span class="text-orange-500 font-bold italic text-sm">Deals in : </span>
+                        <span class="italic">Mobile Skin, Laptop Skin, DSLR Skin, Customised Gifts, PVC Card Printing & More...</span>
+                    </div>
+                    <div class="w-1/2 bg-orange-600 p-3 text-right flex items-center justify-end" style="clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);">
+                        <span class="font-bold tracking-wide text-sm leading-tight">YOUR STYLE, YOUR CHOICE <br/> WE MAKE IT PERFECT!</span>
+                    </div>
+                </div>
+            </div>`;
+
+            // 5. Generate QR Code
+            const upiId = settings.upiId || "8726195000@ybl";
+            const upiPaymentString = `upi://pay?pa=${upiId}&pn=Lamination%20Hub&am=${s.total}&cu=INR`;
+            
+            document.getElementById("bill-qrcode").innerHTML = "";
+            new QRCode(document.getElementById("bill-qrcode"), {
+                text: upiPaymentString,
+                width: 104,
+                height: 104,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
         }
 
         function sendWhatsApp(id) {
-            let s = sales.find(x => x.id === id); if(!s) return;
+            let s = sales.find(x => x.id === id); 
+            if(!s) return;
+            
+            // Format Phone Number
             let phone = (s.phone||'').replace(/\D/g,'');
             if(phone.length === 10) phone = '91' + phone;
-            let msg = `🧾 *${settings.name}*\nBill #${s.id}\nTotal: ₹${s.total.toFixed(2)}\nDue: ₹${s.due.toFixed(2)}\n${settings.instagram ? 'Follow us on IG: '+settings.instagram+'\n' : ''}Thank you!`;
+            if(phone.length < 10) return alert("Customer phone number is missing or invalid.");
+
+            // 1. Format Items List
+            let itemsText = s.items.map(i => {
+                let unit = i.unit || 'pcs';
+                return `${i.name} (x${i.qty} ${unit}) - ₹${(i.price * i.qty).toFixed(2)}`;
+            }).join('\n');
+
+            // 2. Calculate Advance Paid
+            let advance = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
+
+            // 3. Generate UPI Text if there is a pending balance
+            let upiText = '';
+            if (s.due > 0) {
+                let upiId = settings.upiId || "8726195000@ybl";
+                upiText = `\n💸 *Pay Pending ₹${s.due.toFixed(2)} via UPI:*\n${upiId}\n`;
+            }
+
+            // 4. Generate Clickable Instagram Link
+            let instaText = '';
+            if (settings.instagram) {
+                // Remove '@' if the user typed it in settings so the link works correctly
+                let cleanInsta = settings.instagram.replace('@', '');
+                instaText = `\n📱 *Follow On Instagram:*\nhttps://instagram.com/${cleanInsta}`;
+            }
+
+            // 5. Build the Final Message String
+            let msg = `🧾 *${settings.name.toUpperCase()}*\n`;
+            msg += `Invoice: #${s.id}\n`;
+            msg += `Date: ${s.date}\n`;
+            msg += `Customer: ${s.cust}\n`;
+            msg += `------------------------\n`;
+            msg += `${itemsText}\n`;
+            msg += `------------------------\n`;
+            msg += `Advance Paid: ₹${advance.toFixed(2)}\n`;
+            
+            if (s.due > 0) {
+                msg += `Pending Amount: ₹${s.due.toFixed(2)}\n`;
+            }
+            
+            msg += `Pay Mode: ${s.payMode || 'Cash'}\n`;
+            msg += `*Grand Total: ₹${s.total.toFixed(2)}*\n`;
+            msg += `${upiText}`;
+            msg += `\nThank you for your business!${instaText}`;
+
+            // 6. Open WhatsApp
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
@@ -2030,7 +2328,7 @@
             setTimeout(() => { executePrint(); }, 100);
         }
 
-        // DELETE SALE (Reverts Stock & Customer Balances)
+        // DELETE SALE
         function deleteSale(id, skipConfirm = false) {
             if (!skipConfirm && !confirm("WARNING: This will completely delete the bill, return the items to your inventory stock, and reverse the customer's balances. Continue?")) return false;
             
@@ -2038,14 +2336,12 @@
             if (sIndex === -1) return false;
             let s = sales[sIndex];
 
-            // 1. Revert Inventory Stock (if it wasn't already returned)
             if (!s.returned && s.items && Array.isArray(s.items)) {
                 s.items.forEach(item => {
                     let invItem = inventory.find(x => x.id == item.id);
-                    if (invItem) invItem.stock += item.qty; // Give stock back
+                    if (invItem) invItem.stock += item.qty;
                 });
                 
-                // 2. Revert Customer Ledger Balances
                 let c = customers.find(x => x.name === s.cust);
                 if (c) {
                     c.spent = Math.max(0, (c.spent || 0) - s.total);
@@ -2054,7 +2350,6 @@
                 }
             }
 
-            // 3. Remove Sale from Database
             deletedItems.push(id);
             sales.splice(sIndex, 1);
             
@@ -2066,18 +2361,15 @@
             return s; 
         }
 
-        // EDIT SALE (Sends it back to the POS cart)
+        // EDIT SALE
         function editSale(id) {
             if (!confirm("Editing this bill will reverse it, load its items back into the POS cart, and DELETE the original record. You must complete the checkout again to save the changes. Continue?")) return;
             
-            // Delete the sale silently behind the scenes to revert stock/ledger
             let s = deleteSale(id, true);
             if (!s) return;
 
-            // Load items back into the New Bill cart
             cart = JSON.parse(JSON.stringify(s.items));
             
-            // Re-assign the customer in the POS screen
             let c = customers.find(x => x.name === s.cust);
             if (c) {
                 let select = document.getElementById('posCustomerSelect');
@@ -2086,13 +2378,12 @@
                 }
             }
             
-            // Re-apply advance payment and shipping
             document.getElementById('posAdvance').value = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
             document.getElementById('posShipping').value = s.shipping || 0;
             
             saveToStorage(); 
             updateCart();
-            switchTab('pos'); // Jump the user back to the POS tab
+            switchTab('pos');
         }
 
         function closeModals() { editingProductId = null; editingCustomerId = null; document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none'); closeScanner(); }
