@@ -109,17 +109,38 @@
         body.dark-theme .alert-banner.celebration { background: #500724; border-color: #831843; color: #fbcfe8; }
         
         #receipt-print-area { display: none; }
+        
+        /* UPDATED MOBILE-FRIENDLY PRINT CSS */
         @media print {
             @page { margin: 0; size: auto; }
-            body, html { margin: 0; padding: 0; background: white !important; color: black !important; }
-            body * { visibility: hidden; }
-            #receipt-print-area, #receipt-print-area * { visibility: visible; }
-            #receipt-print-area { display: block !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; z-index: 9999; }
+            html, body { 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                height: auto !important; 
+                overflow: visible !important; 
+                background: white !important; 
+                color: black !important; 
+            }
+            #main-app, .sidebar, .main-content, #login-screen, .modal-bg, #calculator-widget { 
+                display: none !important; 
+            }
+            #receipt-print-area { 
+                display: block !important; 
+                position: static !important; 
+                width: 100% !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                visibility: visible !important;
+            }
+            #receipt-print-area * { 
+                visibility: visible !important; 
+            }
             .print\:shadow-none { box-shadow: none !important; }
             .print\:border-none { border: none !important; }
             .print\:m-0 { margin: 0 !important; }
             .print\:p-0 { padding: 0 !important; }
         }
+        
         #reader { width: 100%; border-radius: 8px; overflow: hidden; }
     </style>
 
@@ -1113,20 +1134,66 @@
             reader.readAsText(file);
         }
 
-        // PRINT ROUTER
+        // ENHANCED MOBILE & DESKTOP PRINT ROUTER
         function executePrint() {
             let method = settings.printMethod || 'browser';
+            let receiptContent = document.getElementById('receipt-print-area').innerHTML;
+
+            if (!receiptContent.trim()) {
+                return alert("No bill content to print.");
+            }
+
+            // 1. Bluetooth Thermal Printer App (RawBT)
             if (method === 'rawbt') {
-                let htmlToPrint = `<html><head><style>body{margin:0;padding:0;font-family:sans-serif;color:#000;}</style></head><body>${document.getElementById('receipt-print-area').innerHTML}</body></html>`;
+                let htmlToPrint = `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;padding:0;font-family:sans-serif;color:#000;}</style></head><body>${receiptContent}</body></html>`;
                 window.location.href = "rawbt:data:text/html;base64," + btoa(unescape(encodeURIComponent(htmlToPrint)));
-            } else { window.print(); }
+                return;
+            }
+
+            // 2. Mobile System Print / Save PDF (Isolated Printable Window)
+            if (method === 'mobile_pdf' || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                let printWindow = window.open('', '_blank');
+                if (printWindow) {
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Print Receipt - ${settings.name}</title>
+                            <script src="https://cdn.tailwindcss.com"><\/script>
+                            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                            <style>
+                                @page { margin: 5mm; size: auto; }
+                                body { margin: 0; padding: 10px; background: #fff !important; color: #000 !important; font-family: sans-serif; }
+                            </style>
+                        </head>
+                        <body>
+                            ${receiptContent}
+                            <script>
+                                window.onload = function() {
+                                    setTimeout(function() {
+                                        window.print();
+                                        window.close();
+                                    }, 400);
+                                };
+                            <\/script>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    return;
+                }
+            }
+
+            // 3. Standard Desktop Browser Print
+            window.print();
         }
 
         // QUICK BILL
         let qbExpression = "";
         function openQuickBill() { qbExpression = ""; updateQuickBillDisplay(); document.getElementById('quickBillModal').style.display = 'flex'; }
         function qbInput(char) { const ops = ['+','-','*','/']; if (qbExpression === "" && ops.includes(char)) return; let last = qbExpression.slice(-1); if (ops.includes(char) && ops.includes(last)) qbExpression = qbExpression.slice(0,-1) + char; else qbExpression += char; updateQuickBillDisplay(); }
-        function qbBackspace() { qbExpression = ""; updateQuickBillDisplay(); }
+        function qbBackspace() { qbExpression = qbExpression.slice(0,-1); updateQuickBillDisplay(); }
         function qbClear() { qbExpression = ""; updateQuickBillDisplay(); }
         function updateQuickBillDisplay() {
             document.getElementById('qb-expr').innerText = qbExpression.replace(/\*/g,' × ').replace(/\//g,' ÷ ').replace(/\+/g,' + ').replace(/\-/g,' - ');
@@ -1677,7 +1744,7 @@
 
             saveToStorage(); refreshDisplays(); closeModals();
             generateReceiptHTML(newJob);
-            setTimeout(() => { executePrint(); }, 100);
+            setTimeout(() => { executePrint(); }, 350);
         }
 
         // TAX & REPORTS GENERATION
@@ -1962,7 +2029,7 @@
             cart.forEach(ci => { let inv = inventory.find(x => String(x.id) === String(ci.id)); if(inv) inv.stock -= ci.qty; });
             
             generateReceiptHTML(newSale);
-            if(action === 'print') { setTimeout(() => { executePrint(); resetCart(); refreshDisplays(); }, 100); }
+            if(action === 'print') { setTimeout(() => { executePrint(); resetCart(); refreshDisplays(); }, 350); }
             else { sendWhatsApp(saleId); resetCart(); refreshDisplays(); }
         }
 
@@ -2468,10 +2535,10 @@
         }
 
         function printPastBill(id) {
-            let s = sales.find(x => x.id === id);
+            let s = sales.find(x => String(x.id) === String(id));
             if (!s) return;
             generateReceiptHTML(s);
-            setTimeout(() => { executePrint(); }, 100);
+            setTimeout(() => { executePrint(); }, 350);
         }
 
         // DELETE SALE
