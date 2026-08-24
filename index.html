@@ -1134,6 +1134,13 @@
             reader.readAsText(file);
         }
 
+        // AUTO-SWITCH TO 58MM WHEN MOBILE PDF IS SELECTED
+        document.getElementById('set-print-method').addEventListener('change', function(e) {
+            if (e.target.value === 'mobile_pdf' || e.target.value === 'rawbt') {
+                document.getElementById('set-printer').value = '58mm';
+            }
+        });
+
         // ENHANCED MOBILE & DESKTOP PRINT ROUTER
         function executePrint() {
             let method = settings.printMethod || 'browser';
@@ -1154,18 +1161,19 @@
             if (method === 'mobile_pdf' || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
                 let printWindow = window.open('', '_blank');
                 if (printWindow) {
+                    let pageStyle = settings.printerSize === 'A4' 
+                        ? '@page { margin: 5mm; size: auto; } body { margin: 0; padding: 10px; background: #fff; color: #000; font-family: sans-serif; }'
+                        : '@page { margin: 0; size: 58mm auto; } body { margin: 0; padding: 0; display:flex; justify-content:center; background: #fff; color: #000; font-family: sans-serif; }';
+                        
                     printWindow.document.write(`
                         <!DOCTYPE html>
                         <html>
                         <head>
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
                             <title>Print Receipt - ${settings.name}</title>
-                            <script src="https://cdn.tailwindcss.com"><\/script>
+                            ${settings.printerSize === 'A4' ? '<script src="https://cdn.tailwindcss.com"><\/script>' : ''}
                             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                            <style>
-                                @page { margin: 5mm; size: auto; }
-                                body { margin: 0; padding: 10px; background: #fff !important; color: #000 !important; font-family: sans-serif; }
-                            </style>
+                            <style>${pageStyle}</style>
                         </head>
                         <body>
                             ${receiptContent}
@@ -2039,243 +2047,304 @@
         // NEW TAILWIND HTML PRINT TEMPLATE INJECTOR
         // ==========================================
         function generateReceiptHTML(s) {
-            // 1. Generate dynamic rows for purchased items
-            let itemsHTML = s.items.map((item, index) => `
-                <tr class="h-7 border-b border-gray-400 border-dotted">
-                    <td class="border-x border-gray-400 text-center">${index + 1}</td>
-                    <td class="border-x border-gray-400 px-2 font-semibold text-xs">${item.name}</td>
-                    <td class="border-x border-gray-400 text-center">${item.qty}</td>
-                    <td class="border-x border-gray-400 text-center">${item.price.toFixed(2)}</td>
-                    <td class="border-x border-gray-400 text-center">${(item.price * item.qty).toFixed(2)}</td>
-                </tr>
-            `).join('');
-
-            // 2. Pad the table with empty rows to maintain that classic 5-row bill look
-            for (let i = s.items.length; i < 5; i++) {
-                itemsHTML += `
-                <tr class="h-7 border-b border-gray-400 border-dotted">
-                    <td class="border-x border-gray-400 text-center">${i + 1}</td>
-                    <td class="border-x border-gray-400"></td>
-                    <td class="border-x border-gray-400"></td>
-                    <td class="border-x border-gray-400"></td>
-                    <td class="border-x border-gray-400"></td>
-                </tr>`;
-            }
-
-            // 3. Calculate totals for the footer
+            let pSize = settings.printerSize || 'A4';
+            let printDate = s.date.split(',')[0];
             let subTotal = s.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
             let discount = (subTotal - s.total) > 0 ? (subTotal - s.total) : 0; 
-            
-            // Format Data
-            let profilePicSrc = settings.profilePic ? settings.profilePic : 'https://via.placeholder.com/150';
-            let printDate = s.date.split(',')[0];
-            let upiChecked = s.payMode === 'UPI' ? 'checked' : '';
-            let cashChecked = s.payMode === 'Cash' ? 'checked' : '';
-            let cardChecked = s.payMode === 'Card' ? 'checked' : '';
-            
-            let shopCity = settings.city ? settings.city + ', Sultanpur' : 'Sultanpur, Sultanpur';
+            let upiId = settings.upiId || "8726195000@ybl";
 
-            // 4. Inject the exact template structure
-            document.getElementById('receipt-print-area').innerHTML = `
-            <div class="w-full max-w-[800px] bg-white border border-gray-200 text-gray-800 font-sans shadow-lg print:shadow-none print:border-none print:m-0 print:p-0 mx-auto">
-              
-                <!-- Header Section -->
-                <div class="px-8 pt-6 pb-2 text-center relative">
-                    <div class="flex justify-between items-center">
-                        <div class="w-32 h-32 flex items-center justify-center">
-                            <img src="${profilePicSrc}" alt="Logo" class="w-full h-full object-contain" />
-                        </div>
-                        
-                        <div class="flex-1">
-                            <h1 class="text-6xl font-black text-orange-600 tracking-wide m-0 leading-none">${settings.name.toUpperCase()}</h1>
-                            <div class="flex items-center justify-center gap-4 mt-2">
-                                <div class="h-1 w-16 bg-green-700"></div>
-                                <h2 class="text-5xl font-black text-green-700 m-0 leading-none">HUB</h2>
-                                <div class="h-1 w-16 bg-green-700"></div>
-                            </div>
-                            <p class="mt-3 text-sm italic font-semibold text-gray-700">
-                                Tera Style <span class="text-orange-500 px-1">◆</span> Teri Choice <span class="text-orange-500 px-1">◆</span> Lamination Hub Always Right
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            if (pSize === '58mm' || pSize === '80mm') {
+                // THERMAL RECEIPT GENERATOR
+                let thermalWidth = pSize === '58mm' ? '58mm' : '80mm';
+                let fontSize = pSize === '58mm' ? '11px' : '14px';
+                
+                let itemsHTML = s.items.map(item => `
+                    <tr>
+                        <td style="text-align:left; padding:2px 0;">${item.name}</td>
+                        <td style="text-align:center; padding:2px 0;">${item.qty}</td>
+                        <td style="text-align:right; padding:2px 0;">${(item.price * item.qty).toFixed(2)}</td>
+                    </tr>
+                `).join('');
 
-                <!-- Contact Info Bar -->
-                <div class="flex justify-between items-center border-y-2 border-gray-300 py-2 px-8 mx-4 text-sm font-semibold">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-location-dot text-[#d6336c] text-xl"></i>
-                        <div class="leading-tight text-gray-800">
-                            <p>${shopCity}</p>
-                            <p>Uttar Pradesh - 228151</p>
-                        </div>
+                document.getElementById('receipt-print-area').innerHTML = `
+                <div style="width: ${thermalWidth}; margin: 0 auto; font-family: sans-serif; font-size: ${fontSize}; color: #000; background: #fff; padding: 2px; text-align:center;">
+                    <div style="margin-bottom: 5px;">
+                        <h2 style="margin: 0; font-size: 1.5em; font-weight:900;">${settings.name.toUpperCase()}</h2>
+                        <p style="margin: 2px 0;">${settings.city}</p>
+                        <p style="margin: 2px 0;">Ph: ${settings.phone || ''}</p>
+                        ${settings.gst ? `<p style="margin: 2px 0;">GST: ${settings.gst}</p>` : ''}
                     </div>
-                    <div class="flex items-center gap-2 border-x-2 border-gray-300 px-6">
-                        <i class="fa-solid fa-phone text-[#d6336c] text-xl"></i>
-                        <span class="text-lg text-gray-800">${settings.phone || '8726195000'}</span>
+                    <div style="border-bottom: 1px dashed #000; margin-bottom: 5px;"></div>
+                    <div style="text-align:left;">
+                        <p style="margin: 2px 0;">Bill No: #${s.id}</p>
+                        <p style="margin: 2px 0;">Date: ${printDate}</p>
+                        <p style="margin: 2px 0;">Cust: ${s.cust}</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fa-brands fa-instagram text-[#d6336c] text-xl"></i>
-                        <span class="text-gray-800">${settings.instagram || 'Lamination_Hub_2.0'}</span>
-                    </div>
-                </div>
-
-                <!-- Services Icons -->
-                <div class="mt-4 flex flex-col items-center">
-                    <span class="bg-green-700 text-white px-6 py-1 rounded-full text-xs font-bold tracking-wider">
-                        OUR SERVICES & PRODUCTS
-                    </span>
-                    <div class="flex justify-between w-full px-8 mt-4">
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-mobile-screen"></i></div><span class="text-[9px] font-semibold">Mobile Skin</span></div>
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-laptop"></i></div><span class="text-[9px] font-semibold">Laptop Skin</span></div>
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-camera"></i></div><span class="text-[9px] font-semibold">DSLR Skin</span></div>
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-image"></i></div><span class="text-[9px] font-semibold">Photo Frame</span></div>
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-mug-hot"></i></div><span class="text-[9px] font-semibold">Premium Mug</span></div>
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-shirt"></i></div><span class="text-[9px] font-semibold">T-Shirt</span></div>
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-key"></i></div><span class="text-[9px] font-semibold">Keychain</span></div>
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-couch"></i></div><span class="text-[9px] font-semibold">Pillow</span></div>
-                        <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-id-card"></i></div><span class="text-[9px] font-semibold text-center leading-tight">PVC Card</span></div>
-                    </div>
-                </div>
-
-                <!-- Customer Details -->
-                <div class="flex justify-between px-8 mt-6">
-                    <div class="w-[60%] space-y-3 font-semibold text-sm">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-user text-purple-700"></i>
-                            <span class="text-green-700 ml-1">Customer Name :</span>
-                            <div class="flex-1 border-b border-black h-5 text-gray-800 uppercase pl-2">${s.cust}</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-phone text-[#d6336c]"></i>
-                            <span class="text-green-700 ml-1">Mobile No. <span class="ml-[22px]">:</span></span>
-                            <div class="flex-1 border-b border-black h-5 pl-2">${s.phone || ''}</div>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <i class="fa-solid fa-location-dot text-[#d6336c]"></i>
-                            <span class="text-green-700 ml-1">Address <span class="ml-[34px]">:</span></span>
-                            <div class="flex-1 flex flex-col gap-3 pt-1">
-                                <div class="border-b border-black h-4 w-full"></div>
-                                <div class="border-b border-black h-4 w-full"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="w-[35%] border border-orange-400 rounded-lg p-3 flex flex-col justify-center gap-3 font-semibold text-sm">
-                        <div class="flex items-center gap-2">
-                            <span>BILL NO. :</span>
-                            <div class="flex-1 border-b border-black h-5 text-red-600 pl-2">#${s.id}</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span>DATE <span class="ml-6">:</span></span>
-                            <div class="flex-1 border-b border-black h-5 pl-2">${printDate}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Items Table -->
-                <div class="px-8 mt-6">
-                    <table class="w-full border-collapse border border-gray-400 text-sm">
+                    <div style="border-bottom: 1px dashed #000; margin-bottom: 5px; margin-top: 5px;"></div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: ${fontSize};">
                         <thead>
-                            <tr class="bg-green-700 text-white">
-                                <th class="border border-gray-400 py-1 px-2 w-12 text-center">S. NO.</th>
-                                <th class="border border-gray-400 py-1 px-2 text-left">ITEM / SERVICE DESCRIPTION</th>
-                                <th class="border border-gray-400 py-1 px-2 w-16 text-center">QTY.</th>
-                                <th class="border border-gray-400 py-1 px-2 w-24 text-center">RATE (₹)</th>
-                                <th class="border border-gray-400 py-1 px-2 w-32 text-center">AMOUNT (₹)</th>
+                            <tr>
+                                <th style="text-align:left; border-bottom: 1px solid #000;">Item</th>
+                                <th style="text-align:center; border-bottom: 1px solid #000;">Qty</th>
+                                <th style="text-align:right; border-bottom: 1px solid #000;">Amt</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${itemsHTML}
                         </tbody>
                     </table>
-                </div>
+                    <div style="border-bottom: 1px dashed #000; margin-bottom: 5px; margin-top: 5px;"></div>
+                    <table style="width: 100%; font-size: ${fontSize};">
+                        <tr><td style="text-align:left;">Subtotal:</td><td style="text-align:right;">${subTotal.toFixed(2)}</td></tr>
+                        ${discount > 0 ? `<tr><td style="text-align:left;">Discount:</td><td style="text-align:right;">-${discount.toFixed(2)}</td></tr>` : ''}
+                        ${s.due > 0 ? `<tr><td style="text-align:left; color:red;">Due:</td><td style="text-align:right; color:red;">${s.due.toFixed(2)}</td></tr>` : ''}
+                        <tr><td style="text-align:left; font-weight:bold; font-size:1.2em;">Total:</td><td style="text-align:right; font-weight:bold; font-size:1.2em;">${s.total.toFixed(2)}</td></tr>
+                    </table>
+                    <div style="border-bottom: 1px dashed #000; margin-bottom: 5px; margin-top: 5px;"></div>
+                    <div style="margin-top: 5px;">
+                        <p style="margin: 2px 0; font-weight:bold;">Pay via UPI</p>
+                        <div id="bill-qrcode" style="display:flex; justify-content:center; margin: 5px 0;"></div>
+                        <p style="margin: 5px 0 0 0; font-weight:bold;">Thank You! Visit Again.</p>
+                    </div>
+                </div>`;
 
-                <!-- Footer Layout -->
-                <div class="flex justify-between px-8 mt-4 mb-4">
-                    
-                    <!-- Payment & Terms -->
-                    <div class="w-[35%]">
-                        <div class="flex items-center gap-2 mb-2">
-                            <div class="h-[2px] bg-orange-500 w-4"></div>
-                            <span class="bg-orange-500 text-white px-3 py-0.5 rounded font-bold text-xs">PAYMENT MODE</span>
-                            <div class="h-[2px] bg-orange-500 w-4"></div>
+                const upiPaymentString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(settings.name)}&am=${s.total}&cu=INR`;
+                document.getElementById("bill-qrcode").innerHTML = "";
+                new QRCode(document.getElementById("bill-qrcode"), {
+                    text: upiPaymentString,
+                    width: 100,
+                    height: 100,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.L
+                });
+            } else {
+                // A4 TAILWIND GENERATOR
+                let itemsHTML = s.items.map((item, index) => `
+                    <tr class="h-7 border-b border-gray-400 border-dotted">
+                        <td class="border-x border-gray-400 text-center">${index + 1}</td>
+                        <td class="border-x border-gray-400 px-2 font-semibold text-xs">${item.name}</td>
+                        <td class="border-x border-gray-400 text-center">${item.qty}</td>
+                        <td class="border-x border-gray-400 text-center">${item.price.toFixed(2)}</td>
+                        <td class="border-x border-gray-400 text-center">${(item.price * item.qty).toFixed(2)}</td>
+                    </tr>
+                `).join('');
+
+                for (let i = s.items.length; i < 5; i++) {
+                    itemsHTML += `
+                    <tr class="h-7 border-b border-gray-400 border-dotted">
+                        <td class="border-x border-gray-400 text-center">${i + 1}</td>
+                        <td class="border-x border-gray-400"></td>
+                        <td class="border-x border-gray-400"></td>
+                        <td class="border-x border-gray-400"></td>
+                        <td class="border-x border-gray-400"></td>
+                    </tr>`;
+                }
+
+                let profilePicSrc = settings.profilePic ? settings.profilePic : 'https://via.placeholder.com/150';
+                let upiChecked = s.payMode === 'UPI' ? 'checked' : '';
+                let cashChecked = s.payMode === 'Cash' ? 'checked' : '';
+                let cardChecked = s.payMode === 'Card' ? 'checked' : '';
+                let shopCity = settings.city ? settings.city + ', Sultanpur' : 'Sultanpur, Sultanpur';
+
+                document.getElementById('receipt-print-area').innerHTML = `
+                <div class="w-full max-w-[800px] bg-white border border-gray-200 text-gray-800 font-sans shadow-lg print:shadow-none print:border-none print:m-0 print:p-0 mx-auto">
+                  
+                    <!-- Header Section -->
+                    <div class="px-8 pt-6 pb-2 text-center relative">
+                        <div class="flex justify-between items-center">
+                            <div class="w-32 h-32 flex items-center justify-center">
+                                <img src="${profilePicSrc}" alt="Logo" class="w-full h-full object-contain" />
+                            </div>
+                            
+                            <div class="flex-1">
+                                <h1 class="text-6xl font-black text-orange-600 tracking-wide m-0 leading-none">${settings.name.toUpperCase()}</h1>
+                                <div class="flex items-center justify-center gap-4 mt-2">
+                                    <div class="h-1 w-16 bg-green-700"></div>
+                                    <h2 class="text-5xl font-black text-green-700 m-0 leading-none">HUB</h2>
+                                    <div class="h-1 w-16 bg-green-700"></div>
+                                </div>
+                                <p class="mt-3 text-sm italic font-semibold text-gray-700">
+                                    Tera Style <span class="text-orange-500 px-1">◆</span> Teri Choice <span class="text-orange-500 px-1">◆</span> Lamination Hub Always Right
+                                </p>
+                            </div>
                         </div>
-                        <div class="space-y-1 text-xs font-semibold mb-4 w-32">
-                            <div class="flex justify-between items-center"><span class="flex items-center gap-2">💵 CASH</span> <input type="checkbox" class="w-4 h-4" ${cashChecked}/></div>
-                            <div class="flex justify-between items-center"><span class="flex items-center gap-2">📱 UPI</span> <input type="checkbox" class="w-4 h-4" ${upiChecked}/></div>
-                            <div class="flex justify-between items-center"><span class="flex items-center gap-2">💳 CARD</span> <input type="checkbox" class="w-4 h-4" ${cardChecked}/></div>
-                        </div>
-                        
-                        <h4 class="text-orange-500 font-bold text-xs mt-4 mb-1">TERMS & CONDITIONS</h4>
-                        <ul class="text-[9px] font-semibold space-y-1">
-                            <li class="flex gap-1"><span class="text-green-700">✔</span> Goods once sold will not be taken back.</li>
-                            <li class="flex gap-1"><span class="text-green-700">✔</span> No warranty on Mobile Skin & Printed Items.</li>
-                            <li class="flex gap-1"><span class="text-green-700">✔</span> Please check the item before leaving the shop.</li>
-                            <li class="flex gap-1"><span class="text-green-700">✔</span> Keep your bill safe for future reference.</li>
-                        </ul>
                     </div>
 
-                    <!-- Auto-Generated QR Code Section -->
-                    <div class="w-[25%] flex flex-col items-center justify-start mt-2">
-                        <span class="text-green-700 font-bold text-xs mb-1">SCAN & PAY</span>
-                        <div id="bill-qrcode" class="w-28 h-28 border-2 border-black flex items-center justify-center bg-white p-1"></div>
-                        <span class="text-[10px] font-bold mt-1">UPI Accepted Here</span>
+                    <!-- Contact Info Bar -->
+                    <div class="flex justify-between items-center border-y-2 border-gray-300 py-2 px-8 mx-4 text-sm font-semibold">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-location-dot text-[#d6336c] text-xl"></i>
+                            <div class="leading-tight text-gray-800">
+                                <p>${shopCity}</p>
+                                <p>Uttar Pradesh - 228151</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 border-x-2 border-gray-300 px-6">
+                            <i class="fa-solid fa-phone text-[#d6336c] text-xl"></i>
+                            <span class="text-lg text-gray-800">${settings.phone || '8726195000'}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-brands fa-instagram text-[#d6336c] text-xl"></i>
+                            <span class="text-gray-800">${settings.instagram || 'Lamination_Hub_2.0'}</span>
+                        </div>
                     </div>
 
-                    <!-- Totals -->
-                    <div class="w-[35%] flex flex-col justify-end pb-4">
-                        <table class="w-full text-sm font-bold border border-gray-400">
-                            <tbody>
-                                <tr class="border-b border-gray-400">
-                                    <td class="py-2 px-2">SUB TOTAL</td>
-                                    <td class="py-2 px-2 border-l border-gray-400 w-24">₹ ${subTotal.toFixed(2)}</td>
-                                </tr>
-                                <tr class="border-b border-gray-400">
-                                    <td class="py-2 px-2">DISCOUNT</td>
-                                    <td class="py-2 px-2 border-l border-gray-400">₹ ${discount.toFixed(2)}</td>
-                                </tr>
-                                <tr class="border-b border-gray-400">
-                                    <td class="py-2 px-2 text-red-600">DUE BALANCE</td>
-                                    <td class="py-2 px-2 border-l border-gray-400 text-red-600">₹ ${(s.due || 0).toFixed(2)}</td>
-                                </tr>
+                    <!-- Services Icons -->
+                    <div class="mt-4 flex flex-col items-center">
+                        <span class="bg-green-700 text-white px-6 py-1 rounded-full text-xs font-bold tracking-wider">
+                            OUR SERVICES & PRODUCTS
+                        </span>
+                        <div class="flex justify-between w-full px-8 mt-4">
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-mobile-screen"></i></div><span class="text-[9px] font-semibold">Mobile Skin</span></div>
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-laptop"></i></div><span class="text-[9px] font-semibold">Laptop Skin</span></div>
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-camera"></i></div><span class="text-[9px] font-semibold">DSLR Skin</span></div>
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-image"></i></div><span class="text-[9px] font-semibold">Photo Frame</span></div>
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-mug-hot"></i></div><span class="text-[9px] font-semibold">Premium Mug</span></div>
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-shirt"></i></div><span class="text-[9px] font-semibold">T-Shirt</span></div>
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-key"></i></div><span class="text-[9px] font-semibold">Keychain</span></div>
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-couch"></i></div><span class="text-[9px] font-semibold">Pillow</span></div>
+                            <div class="flex flex-col items-center gap-1"><div class="w-10 h-10 border border-orange-300 rounded flex items-center justify-center bg-orange-50 text-orange-600 text-xl"><i class="fa-solid fa-id-card"></i></div><span class="text-[9px] font-semibold text-center leading-tight">PVC Card</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Customer Details -->
+                    <div class="flex justify-between px-8 mt-6">
+                        <div class="w-[60%] space-y-3 font-semibold text-sm">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-user text-purple-700"></i>
+                                <span class="text-green-700 ml-1">Customer Name :</span>
+                                <div class="flex-1 border-b border-black h-5 text-gray-800 uppercase pl-2">${s.cust}</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-phone text-[#d6336c]"></i>
+                                <span class="text-green-700 ml-1">Mobile No. <span class="ml-[22px]">:</span></span>
+                                <div class="flex-1 border-b border-black h-5 pl-2">${s.phone || ''}</div>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i class="fa-solid fa-location-dot text-[#d6336c]"></i>
+                                <span class="text-green-700 ml-1">Address <span class="ml-[34px]">:</span></span>
+                                <div class="flex-1 flex flex-col gap-3 pt-1">
+                                    <div class="border-b border-black h-4 w-full"></div>
+                                    <div class="border-b border-black h-4 w-full"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-[35%] border border-orange-400 rounded-lg p-3 flex flex-col justify-center gap-3 font-semibold text-sm">
+                            <div class="flex items-center gap-2">
+                                <span>BILL NO. :</span>
+                                <div class="flex-1 border-b border-black h-5 text-red-600 pl-2">#${s.id}</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span>DATE <span class="ml-6">:</span></span>
+                                <div class="flex-1 border-b border-black h-5 pl-2">${printDate}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items Table -->
+                    <div class="px-8 mt-6">
+                        <table class="w-full border-collapse border border-gray-400 text-sm">
+                            <thead>
                                 <tr class="bg-green-700 text-white">
-                                    <td class="py-2 px-2">GRAND TOTAL</td>
-                                    <td class="py-2 px-2 border-l border-gray-400">₹ ${s.total.toFixed(2)}</td>
+                                    <th class="border border-gray-400 py-1 px-2 w-12 text-center">S. NO.</th>
+                                    <th class="border border-gray-400 py-1 px-2 text-left">ITEM / SERVICE DESCRIPTION</th>
+                                    <th class="border border-gray-400 py-1 px-2 w-16 text-center">QTY.</th>
+                                    <th class="border border-gray-400 py-1 px-2 w-24 text-center">RATE (₹)</th>
+                                    <th class="border border-gray-400 py-1 px-2 w-32 text-center">AMOUNT (₹)</th>
                                 </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHTML}
                             </tbody>
                         </table>
-                        <div class="text-center mt-3">
-                            <div class="text-green-700 font-cursive text-3xl italic">Thank You!</div>
-                            <div class="bg-black text-white text-xs font-bold py-1 px-4 mt-1 inline-block rounded-md">VISIT AGAIN</div>
+                    </div>
+
+                    <!-- Footer Layout -->
+                    <div class="flex justify-between px-8 mt-4 mb-4">
+                        
+                        <!-- Payment & Terms -->
+                        <div class="w-[35%]">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="h-[2px] bg-orange-500 w-4"></div>
+                                <span class="bg-orange-500 text-white px-3 py-0.5 rounded font-bold text-xs">PAYMENT MODE</span>
+                                <div class="h-[2px] bg-orange-500 w-4"></div>
+                            </div>
+                            <div class="space-y-1 text-xs font-semibold mb-4 w-32">
+                                <div class="flex justify-between items-center"><span class="flex items-center gap-2">💵 CASH</span> <input type="checkbox" class="w-4 h-4" ${cashChecked}/></div>
+                                <div class="flex justify-between items-center"><span class="flex items-center gap-2">📱 UPI</span> <input type="checkbox" class="w-4 h-4" ${upiChecked}/></div>
+                                <div class="flex justify-between items-center"><span class="flex items-center gap-2">💳 CARD</span> <input type="checkbox" class="w-4 h-4" ${cardChecked}/></div>
+                            </div>
+                            
+                            <h4 class="text-orange-500 font-bold text-xs mt-4 mb-1">TERMS & CONDITIONS</h4>
+                            <ul class="text-[9px] font-semibold space-y-1">
+                                <li class="flex gap-1"><span class="text-green-700">✔</span> Goods once sold will not be taken back.</li>
+                                <li class="flex gap-1"><span class="text-green-700">✔</span> No warranty on Mobile Skin & Printed Items.</li>
+                                <li class="flex gap-1"><span class="text-green-700">✔</span> Please check the item before leaving the shop.</li>
+                                <li class="flex gap-1"><span class="text-green-700">✔</span> Keep your bill safe for future reference.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Auto-Generated QR Code Section -->
+                        <div class="w-[25%] flex flex-col items-center justify-start mt-2">
+                            <span class="text-green-700 font-bold text-xs mb-1">SCAN & PAY</span>
+                            <div id="bill-qrcode" class="w-28 h-28 border-2 border-black flex items-center justify-center bg-white p-1"></div>
+                            <span class="text-[10px] font-bold mt-1">UPI Accepted Here</span>
+                        </div>
+
+                        <!-- Totals -->
+                        <div class="w-[35%] flex flex-col justify-end pb-4">
+                            <table class="w-full text-sm font-bold border border-gray-400">
+                                <tbody>
+                                    <tr class="border-b border-gray-400">
+                                        <td class="py-2 px-2">SUB TOTAL</td>
+                                        <td class="py-2 px-2 border-l border-gray-400 w-24">₹ ${subTotal.toFixed(2)}</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-400">
+                                        <td class="py-2 px-2">DISCOUNT</td>
+                                        <td class="py-2 px-2 border-l border-gray-400">₹ ${discount.toFixed(2)}</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-400">
+                                        <td class="py-2 px-2 text-red-600">DUE BALANCE</td>
+                                        <td class="py-2 px-2 border-l border-gray-400 text-red-600">₹ ${(s.due || 0).toFixed(2)}</td>
+                                    </tr>
+                                    <tr class="bg-green-700 text-white">
+                                        <td class="py-2 px-2">GRAND TOTAL</td>
+                                        <td class="py-2 px-2 border-l border-gray-400">₹ ${s.total.toFixed(2)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="text-center mt-3">
+                                <div class="text-green-700 font-cursive text-3xl italic">Thank You!</div>
+                                <div class="bg-black text-white text-xs font-bold py-1 px-4 mt-1 inline-block rounded-md">VISIT AGAIN</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Bottom Banner -->
-                <div class="bg-[#2A2A2A] text-white flex text-xs">
-                    <div class="w-1/2 p-3">
-                        <span class="text-orange-500 font-bold italic text-sm">Deals in : </span>
-                        <span class="italic">Mobile Skin, Laptop Skin, DSLR Skin, Customised Gifts, PVC Card Printing & More...</span>
+                    <!-- Bottom Banner -->
+                    <div class="bg-[#2A2A2A] text-white flex text-xs">
+                        <div class="w-1/2 p-3">
+                            <span class="text-orange-500 font-bold italic text-sm">Deals in : </span>
+                            <span class="italic">Mobile Skin, Laptop Skin, DSLR Skin, Customised Gifts, PVC Card Printing & More...</span>
+                        </div>
+                        <div class="w-1/2 bg-orange-600 p-3 text-right flex items-center justify-end" style="clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);">
+                            <span class="font-bold tracking-wide text-sm leading-tight">YOUR STYLE, YOUR CHOICE <br/> WE MAKE IT PERFECT!</span>
+                        </div>
                     </div>
-                    <div class="w-1/2 bg-orange-600 p-3 text-right flex items-center justify-end" style="clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);">
-                        <span class="font-bold tracking-wide text-sm leading-tight">YOUR STYLE, YOUR CHOICE <br/> WE MAKE IT PERFECT!</span>
-                    </div>
-                </div>
-            </div>`;
+                </div>`;
 
-            // 5. Generate QR Code
-            const upiId = settings.upiId || "8726195000@ybl";
-            const upiPaymentString = `upi://pay?pa=${upiId}&pn=Lamination%20Hub&am=${s.total}&cu=INR`;
-            
-            document.getElementById("bill-qrcode").innerHTML = "";
-            new QRCode(document.getElementById("bill-qrcode"), {
-                text: upiPaymentString,
-                width: 104,
-                height: 104,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+                const upiPaymentString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(settings.name)}&am=${s.total}&cu=INR`;
+                document.getElementById("bill-qrcode").innerHTML = "";
+                new QRCode(document.getElementById("bill-qrcode"), {
+                    text: upiPaymentString,
+                    width: 104,
+                    height: 104,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }
         }
 
         function sendWhatsApp(id) {
