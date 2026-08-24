@@ -1134,16 +1134,10 @@
             reader.readAsText(file);
         }
 
-        // AUTO-SWITCH TO 58MM WHEN MOBILE PDF IS SELECTED
-        document.getElementById('set-print-method').addEventListener('change', function(e) {
-            if (e.target.value === 'mobile_pdf' || e.target.value === 'rawbt') {
-                document.getElementById('set-printer').value = '58mm';
-            }
-        });
-
         // ENHANCED MOBILE & DESKTOP PRINT ROUTER
         function executePrint() {
             let method = settings.printMethod || 'browser';
+            let pSize = settings.printerSize || 'A4';
             let receiptContent = document.getElementById('receipt-print-area').innerHTML;
 
             if (!receiptContent.trim()) {
@@ -1161,9 +1155,9 @@
             if (method === 'mobile_pdf' || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
                 let printWindow = window.open('', '_blank');
                 if (printWindow) {
-                    let pageStyle = settings.printerSize === 'A4' 
-                        ? '@page { margin: 5mm; size: auto; } body { margin: 0; padding: 10px; background: #fff; color: #000; font-family: sans-serif; }'
-                        : '@page { margin: 0; size: 58mm auto; } body { margin: 0; padding: 0; display:flex; justify-content:center; background: #fff; color: #000; font-family: sans-serif; }';
+                    let pageStyle = pSize === 'A4' 
+                        ? '@page { size: A4; margin: 0; } body { margin: 0; padding: 10px; background: #fff; color: #000; font-family: sans-serif; -webkit-print-color-adjust: exact; }'
+                        : `@page { size: ${pSize} auto; margin: 0; } body { margin: 0; padding: 0; display:flex; justify-content:center; background: #fff; color: #000; font-family: sans-serif; }`;
                         
                     printWindow.document.write(`
                         <!DOCTYPE html>
@@ -1171,7 +1165,7 @@
                         <head>
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
                             <title>Print Receipt - ${settings.name}</title>
-                            ${settings.printerSize === 'A4' ? '<script src="https://cdn.tailwindcss.com"><\/script>' : ''}
+                            ${pSize === 'A4' ? '<script src="https://cdn.tailwindcss.com"><\/script>' : ''}
                             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                             <style>${pageStyle}</style>
                         </head>
@@ -1182,7 +1176,7 @@
                                     setTimeout(function() {
                                         window.print();
                                         window.close();
-                                    }, 400);
+                                    }, 800); // Give Tailwind time to load over mobile data
                                 };
                             <\/script>
                         </body>
