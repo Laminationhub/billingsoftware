@@ -1999,7 +1999,18 @@
             let subtotal = 0;
             document.getElementById('cartBody').innerHTML = cart.map(i => {
                 subtotal += i.price * i.qty;
-                return `<tr><td style="color:red; cursor:pointer;" onclick="removeFromCart('${i.id}')">✕</td><td>${i.name} x${i.qty}</td><td align="right">₹${(i.price*i.qty).toFixed(2)}</td></tr>`;
+                return `<tr>
+                    <td style="color:red; cursor:pointer; width:30px; vertical-align:middle;" onclick="removeFromCart('${i.id}')">✕</td>
+                    <td style="padding-top: 8px; padding-bottom: 8px;">
+                        <div style="margin-bottom: 4px; font-weight: 500;">${i.name}</div>
+                        <div style="display:inline-flex; align-items:center; background:var(--bg-body); border-radius:6px; border:1px solid var(--border-color); overflow:hidden;">
+                            <button style="border:none; border-right:1px solid var(--border-color); background:transparent; padding:4px 10px; cursor:pointer; font-weight:bold;" onclick="decreaseQty('${i.id}')">-</button>
+                            <span style="padding:0 10px; font-weight:bold; font-size:0.9em; min-width: 15px; text-align: center;">${i.qty}</span>
+                            <button style="border:none; border-left:1px solid var(--border-color); background:transparent; padding:4px 10px; cursor:pointer; font-weight:bold;" onclick="increaseQty('${i.id}')">+</button>
+                        </div>
+                    </td>
+                    <td align="right" style="vertical-align:middle;">₹${(i.price*i.qty).toFixed(2)}</td>
+                </tr>`;
             }).join('');
             let discInput = parseFloat(document.getElementById('posDiscount').value) || 0;
             let discount = document.getElementById('posDiscountType').value === 'percent' ? (subtotal * (discInput / 100)) : discInput;
@@ -2356,7 +2367,9 @@
                 return `${i.name} (x${i.qty} ${unit}) - ₹${(i.price * i.qty).toFixed(2)}`;
             }).join('\n');
 
-            // 2. Calculate Advance Paid
+            // 2. Calculate Subtotal, Discount & Advance Paid
+            let subTotal = s.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            let discount = (subTotal - s.total) > 0 ? (subTotal - s.total) : 0;
             let advance = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
 
             // 3. Generate UPI Text if there is a pending balance
@@ -2382,6 +2395,12 @@
             msg += `------------------------\n`;
             msg += `${itemsText}\n`;
             msg += `------------------------\n`;
+            
+            if (discount > 0) {
+                msg += `Subtotal: ₹${subTotal.toFixed(2)}\n`;
+                msg += `Discount: -₹${discount.toFixed(2)}\n`;
+            }
+            
             msg += `Advance Paid: ₹${advance.toFixed(2)}\n`;
             
             if (s.due > 0) {
