@@ -2027,16 +2027,28 @@
 
         function completeSale(action = 'print') {
             if (cart.length === 0) return;
+            
+            // Calculate exact subtotal, discount, and shipping at checkout
+            let subtotalAmt = 0;
+            cart.forEach(i => subtotalAmt += (i.price * i.qty));
+            let discInput = parseFloat(document.getElementById('posDiscount').value) || 0;
+            let discountAmt = document.getElementById('posDiscountType').value === 'percent' ? (subtotalAmt * (discInput / 100)) : discInput;
+            let shippingAmt = parseFloat(document.getElementById('posShipping').value) || 0;
+            
             let total = parseFloat(document.getElementById('grandTotal').innerText.replace('₹',''));
             let due = parseFloat(document.getElementById('dueTotal').innerText.replace('₹','')) || 0;
             let cid = document.getElementById('posCustomerSelect').value;
             let c = customers.find(x => String(x.id) === String(cid));
             let saleId = (Date.now()).toString().slice(-6);
-            
-            // Get Payment Mode
             let payMode = document.getElementById('posPayMode').value;
             
-            let newSale = { id: saleId, date: new Date().toLocaleString(), cust: c.name, phone: c.phone, total, due, items: JSON.parse(JSON.stringify(cart)), cashier: currentStaffName, returned: false, payMode: payMode };
+            let newSale = { 
+                id: saleId, date: new Date().toLocaleString(), cust: c.name, phone: c.phone, 
+                total: total, due: due, 
+                subTotal: subtotalAmt, discount: discountAmt, shipping: shippingAmt, 
+                items: JSON.parse(JSON.stringify(cart)), cashier: currentStaffName, returned: false, payMode: payMode 
+            };
+            
             sales.push(newSale);
             if(c) { c.spent += total; c.due = (c.due || 0) + due; }
             cart.forEach(ci => { let inv = inventory.find(x => String(x.id) === String(ci.id)); if(inv) inv.stock -= ci.qty; });
@@ -2361,33 +2373,33 @@
             if(phone.length === 10) phone = '91' + phone;
             if(phone.length < 10) return alert("Customer phone number is missing or invalid.");
 
-            // 1. Format Items List
+            // Format Items List
             let itemsText = s.items.map(i => {
                 let unit = i.unit || 'pcs';
                 return `${i.name} (x${i.qty} ${unit}) - ₹${(i.price * i.qty).toFixed(2)}`;
             }).join('\n');
 
-            // 2. Calculate Subtotal, Discount & Advance Paid
-            let subTotal = s.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            let discount = (subTotal - s.total) > 0 ? (subTotal - s.total) : 0;
+            // Pull Explicit Saved Data (with safe fallback for older bills)
+            let subTotal = s.subTotal !== undefined ? s.subTotal : s.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            let discount = s.discount !== undefined ? s.discount : ((subTotal - s.total) > 0 ? (subTotal - s.total) : 0);
+            let shipping = s.shipping || 0;
             let advance = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
 
-            // 3. Generate UPI Text if there is a pending balance
+            // Generate UPI Text
             let upiText = '';
             if (s.due > 0) {
                 let upiId = settings.upiId || "8726195000@ybl";
                 upiText = `\n💸 *Pay Pending ₹${s.due.toFixed(2)} via UPI:*\n${upiId}\n`;
             }
 
-            // 4. Generate Clickable Instagram Link
+            // Generate Instagram Link
             let instaText = '';
             if (settings.instagram) {
-                // Remove '@' if the user typed it in settings so the link works correctly
                 let cleanInsta = settings.instagram.replace('@', '');
                 instaText = `\n📱 *Follow On Instagram:*\nhttps://instagram.com/${cleanInsta}`;
             }
 
-            // 5. Build the Final Message String
+            // Build the Final Message String
             let msg = `🧾 *${settings.name.toUpperCase()}*\n`;
             msg += `Invoice: #${s.id}\n`;
             msg += `Date: ${s.date}\n`;
@@ -2396,9 +2408,13 @@
             msg += `${itemsText}\n`;
             msg += `------------------------\n`;
             
+            msg += `Subtotal: ₹${subTotal.toFixed(2)}\n`;
+            
             if (discount > 0) {
-                msg += `Subtotal: ₹${subTotal.toFixed(2)}\n`;
                 msg += `Discount: -₹${discount.toFixed(2)}\n`;
+            }
+            if (shipping > 0) {
+                msg += `Shipping: +₹${shipping.toFixed(2)}\n`;
             }
             
             msg += `Advance Paid: ₹${advance.toFixed(2)}\n`;
@@ -2412,7 +2428,7 @@
             msg += `${upiText}`;
             msg += `\nThank you for your business!${instaText}`;
 
-            // 6. Open WhatsApp
+            // Open WhatsApp
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
