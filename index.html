@@ -1999,18 +1999,7 @@
             let subtotal = 0;
             document.getElementById('cartBody').innerHTML = cart.map(i => {
                 subtotal += i.price * i.qty;
-                return `<tr>
-                    <td style="color:red; cursor:pointer;" onclick="removeFromCart('${i.id}')">✕</td>
-                    <td>
-                        ${i.name} <br>
-                        <span style="display:inline-flex; align-items:center; border:1px solid var(--border-color); border-radius:4px; margin-top:4px;">
-                            <button onclick="decreaseQty('${i.id}')" style="background:transparent; border:none; cursor:pointer; padding:2px 8px; font-weight:bold;">-</button>
-                            <span style="padding:0 4px; font-size:0.9em; font-weight:bold;">${i.qty}</span>
-                            <button onclick="increaseQty('${i.id}')" style="background:transparent; border:none; cursor:pointer; padding:2px 8px; font-weight:bold;">+</button>
-                        </span>
-                    </td>
-                    <td align="right">₹${(i.price*i.qty).toFixed(2)}</td>
-                </tr>`;
+                return `<tr><td style="color:red; cursor:pointer;" onclick="removeFromCart('${i.id}')">✕</td><td>${i.name} <div style="display:inline-flex; align-items:center; gap:5px; margin-left:8px; background:var(--bg-body); padding:2px 4px; border-radius:4px; border:1px solid var(--border-color);"><span style="cursor:pointer; padding:0 6px; font-weight:bold; user-select:none;" onclick="decreaseQty('${i.id}')">-</span><span style="font-size:0.9em; font-weight:bold; min-width:15px; text-align:center;">${i.qty}</span><span style="cursor:pointer; padding:0 6px; font-weight:bold; user-select:none;" onclick="increaseQty('${i.id}')">+</span></div></td><td align="right">₹${(i.price*i.qty).toFixed(2)}</td></tr>`;
             }).join('');
             let discInput = parseFloat(document.getElementById('posDiscount').value) || 0;
             let discount = document.getElementById('posDiscountType').value === 'percent' ? (subtotal * (discInput / 100)) : discInput;
@@ -2367,10 +2356,12 @@
                 return `${i.name} (x${i.qty} ${unit}) - ₹${(i.price * i.qty).toFixed(2)}`;
             }).join('\n');
 
-            // 2. Calculate Subtotal, Discount & Advance Paid
-            let subTotal = s.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            let discount = (subTotal - s.total) > 0 ? (subTotal - s.total) : 0;
+            // 2. Calculate Advance Paid
             let advance = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
+
+            // NEW: Calculate Discount
+            let subTotal = s.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            let discount = (subTotal - s.total) > 0 ? (subTotal - s.total) : 0; 
 
             // 3. Generate UPI Text if there is a pending balance
             let upiText = '';
@@ -2395,9 +2386,9 @@
             msg += `------------------------\n`;
             msg += `${itemsText}\n`;
             msg += `------------------------\n`;
-            msg += `Subtotal: ₹${subTotal.toFixed(2)}\n`;
             if (discount > 0) {
-                msg += `Discount: ₹${discount.toFixed(2)}\n`;
+                msg += `Subtotal: ₹${subTotal.toFixed(2)}\n`;
+                msg += `Discount: -₹${discount.toFixed(2)}\n`;
             }
             msg += `Advance Paid: ₹${advance.toFixed(2)}\n`;
             
