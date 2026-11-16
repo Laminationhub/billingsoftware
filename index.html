@@ -184,6 +184,74 @@
         .cust-stat-box { background: var(--bg-body); border-radius: 8px; padding: 12px; text-align: center; border: 1px solid var(--border-color); }
         .cust-stat-val { font-size: 1.3em; font-weight: bold; color: var(--text-main); margin-top: 4px; }
 
+    
+        /* === 4 NEW FEATURES CSS === */
+        /* Public Live Order Tracker Screen */
+        #publicOrderTrackerScreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            z-index: 999999; overflow-y: auto; display: none;
+            color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 20px 10px;
+        }
+        .tracker-card {
+            max-width: 580px; margin: 0 auto; background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .tracker-header {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            padding: 24px 20px; text-align: center; color: white;
+        }
+        .tracker-body { padding: 24px 20px; }
+        .tracker-stepper { display: flex; justify-content: space-between; position: relative; margin: 30px 10px 40px; }
+        .tracker-stepper::before {
+            content: ''; position: absolute; top: 20px; left: 20px; right: 20px; height: 4px;
+            background: #334155; z-index: 1;
+        }
+        .tracker-step {
+            position: relative; z-index: 2; text-align: center; flex: 1;
+        }
+        .tracker-step-circle {
+            width: 44px; height: 44px; border-radius: 50%; background: #334155; color: #94a3b8;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
+            font-size: 1.1em; font-weight: bold; border: 3px solid #1e293b; transition: all 0.3s;
+        }
+        .tracker-step.completed .tracker-step-circle {
+            background: #10b981; color: white; border-color: #059669;
+        }
+        .tracker-step.active .tracker-step-circle {
+            background: #f97316; color: white; border-color: #ea580c;
+            box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.25);
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.6); }
+            70% { box-shadow: 0 0 0 12px rgba(249, 115, 22, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+        }
+        .tracker-step-label { font-size: 0.78em; font-weight: 600; color: #94a3b8; }
+        .tracker-step.active .tracker-step-label { color: #f97316; font-weight: 700; }
+        .tracker-step.completed .tracker-step-label { color: #10b981; }
+
+        /* Coupon Chips in POS */
+        .coupon-chip {
+            background: rgba(0, 123, 255, 0.08); border: 1px dashed var(--primary);
+            color: var(--primary); padding: 3px 8px; border-radius: 6px; font-size: 0.75em;
+            font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex;
+            align-items: center; gap: 4px;
+        }
+        .coupon-chip:hover {
+            background: var(--primary); color: white; border-style: solid;
+        }
+
+        /* Parked Bills Badge */
+        .held-badge {
+            background: #f59e0b; color: #78350f; font-weight: bold; border-radius: 12px;
+            padding: 2px 7px; font-size: 0.75em; margin-left: 4px;
+        }
+
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -366,6 +434,22 @@
                                 </select>
                             </div>
                         </div>
+                        <!-- DISCOUNT COUPON PROMO CODE ROW -->
+                        <div style="background:var(--bg-body); border-radius:8px; padding:10px; margin: 10px 0; border: 1px dashed var(--border-color);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span style="font-size:0.8em; font-weight:bold; color:var(--text-muted);"><i class="fa fa-tag"></i> PROMO / COUPON CODE</span>
+                                <span style="font-size:0.75em; color:var(--primary); cursor:pointer; font-weight:600;" onclick="openCouponsModal()">⚙️ Manage Coupons</span>
+                            </div>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="posCouponInput" placeholder="Enter coupon code..." style="flex:1; padding:7px; font-size:0.85em; text-transform:uppercase; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-card); color:var(--text-main);" onkeypress="if(event.key==='Enter') applyCoupon()">
+                                <button type="button" class="btn btn-blue" style="padding:7px 12px; font-size:0.8em;" onclick="applyCoupon()">Apply</button>
+                            </div>
+                            <div id="appliedCouponBadge" style="display:none; margin-top:6px; font-size:0.82em; color:var(--success); font-weight:bold; background:rgba(40,167,69,0.1); padding:4px 8px; border-radius:4px; align-items:center; justify-content:space-between;">
+                                <span id="appliedCouponText">🏷️ Code applied</span>
+                                <span style="cursor:pointer; color:var(--danger); margin-left:8px;" onclick="removeAppliedCoupon()" title="Remove coupon">✕ Remove</span>
+                            </div>
+                            <div id="posCouponChips" style="display:flex; gap:5px; flex-wrap:wrap; margin-top:8px;"></div>
+                        </div>
                         
                         <div class="checkout-row">
                             <span style="font-weight: bold; color: var(--text-muted); font-size: 0.9em;">LOYALTY POINTS (<span id="availPoints">0</span> avail)</span>
@@ -396,7 +480,13 @@
                             <span style="font-size: 1.2em; font-weight: bold; color: var(--danger);" id="dueTotal">₹0</span>
                         </div>
 
-                        <div style="display:flex; gap:10px; margin-top: 20px;">
+                        <!-- HOLD / PARK BILL BAR -->
+                        <div style="display:flex; gap:8px; margin-top:12px; margin-bottom:4px;">
+                            <button type="button" class="btn btn-outline" style="flex:1; padding:9px; font-size:0.85em; border:1px solid #d97706; color:#d97706; background:transparent; font-weight:600; cursor:pointer;" onclick="holdCurrentBill()" title="Park current cart to attend another customer">⏸️ Hold Bill</button>
+                            <button type="button" class="btn btn-dark" style="flex:1; padding:9px; font-size:0.85em; font-weight:600; cursor:pointer;" onclick="openHeldBillsModal()" title="View and resume parked bills">📑 Parked (<span id="heldBillsBadge">0</span>)</button>
+                        </div>
+
+                        <div style="display:flex; gap:10px; margin-top: 10px;">
                             <button class="btn btn-warning" style="flex: 1; padding: 12px;" onclick="saveQuotation()">📝 QUOTE</button>
                             <button class="btn btn-green" style="flex: 1.5; padding: 12px;" onclick="completeSale('text')">📱 SEND WA</button>
                             <button class="btn btn-blue" style="flex: 1.5; padding: 12px;" onclick="completeSale('print')">✓ PRINT</button>
@@ -876,6 +966,7 @@
                             <option value="Customer">Customers</option>
                             <option value="Reseller">Resellers</option>
                         </select>
+                        <button class="btn btn-danger" onclick="openDueRemindersModal('Customer')" style="font-weight:bold;">💰 Due Reminders</button>
                         <button class="btn btn-green" onclick="openFestivalGreetingModal()">🎉 Festival Greetings</button>
                         <button class="btn btn-blue" onclick="openBroadcastModal()">📢 Send Promo</button>
                         <button class="btn btn-dark" onclick="openCustomerModal('list')">+ Add New Customer</button>
@@ -893,6 +984,7 @@
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <input type="text" id="searchResellersTable" class="search-bar" placeholder="🔍 Search resellers..." oninput="refreshDisplays()">
+                        <button class="btn btn-danger" onclick="openDueRemindersModal('Reseller')" style="font-weight:bold;">💰 Reseller Dues</button>
                         <button class="btn btn-blue" onclick="switchTab('reseller-orders')">📦 View Reseller Orders</button>
                         <button class="btn btn-dark" onclick="openCustomerModal('list'); document.getElementById('cType').value = 'Reseller';">+ Add New Reseller</button>
                     </div>
@@ -1127,7 +1219,19 @@
                 </div>
 
                 <div class="container">
-                    <h3>💾 Data & Sync (Cloud + Local)</h3>
+                    
+                <!-- DISCOUNT COUPONS MANAGEMENT -->
+                <div class="container">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h3 style="margin:0;">🏷️ Promotional Discount Coupons</h3>
+                        <button class="btn btn-blue" onclick="openCouponsModal()">+ Create Coupon</button>
+                    </div>
+                    <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 15px;">Create promotional discount vouchers (e.g. FLAT50, HOLI10, WELCOME) with min order value and expiry limits.</p>
+                    <div id="settingsCouponsContainer" style="border:1px solid var(--border-color); border-radius:8px; padding:10px; max-height:160px; overflow-y:auto;"></div>
+                </div>
+
+
+                <h3>💾 Data & Sync (Cloud + Local)</h3>
                     <div style="display: flex; gap: 15px; align-items: flex-end;">
                         <div class="form-group" style="flex:1; margin:0;"><label>Admin Password</label><input type="password" id="new-pass"></div>
                         <button class="btn btn-danger" onclick="updatePassword()">Update Admin Pass</button>
@@ -1883,6 +1987,261 @@
     </div>
 
 
+    
+    <!-- 1. PUBLIC LIVE ORDER TRACKING SCREEN (STANDALONE FULLSCREEN FOR CUSTOMERS) -->
+    <div id="publicOrderTrackerScreen">
+        <div class="tracker-card">
+            <div class="tracker-header">
+                <h2 id="pt-shop-name" style="margin:0; font-size:1.6em; font-weight:900; letter-spacing:1px;">LAMINATION HUB</h2>
+                <p id="pt-shop-city" style="margin:4px 0 0; font-size:0.9em; opacity:0.9;">Live Order & Production Status</p>
+            </div>
+            
+            <div class="tracker-body">
+                <!-- Search Box (if accessed without ID or order not found) -->
+                <div id="pt-search-box" style="display:none; margin-bottom:20px; background:#0f172a; padding:15px; border-radius:10px;">
+                    <label style="font-size:0.85em; color:#94a3b8; display:block; margin-bottom:6px;">Look up your order status:</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="pt-search-input" placeholder="Enter Bill / Order # (e.g. 123456)" style="flex:1; padding:10px; border-radius:6px; border:1px solid #334155; background:#1e293b; color:white;">
+                        <button class="btn btn-blue" onclick="searchPublicTracker()">Search</button>
+                    </div>
+                </div>
+
+                <div id="pt-order-details">
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid #334155; padding-bottom:12px; margin-bottom:18px;">
+                        <div>
+                            <span style="font-size:0.8em; color:#94a3b8; text-transform:uppercase;">Order Number</span>
+                            <h3 id="pt-order-id" style="margin:2px 0 0; color:#f97316; font-size:1.3em;">#---</h3>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:0.8em; color:#94a3b8;">Order Placed</span>
+                            <div id="pt-order-date" style="font-size:0.9em; font-weight:600;">--</div>
+                        </div>
+                    </div>
+
+                    <div style="background:#0f172a; padding:12px 16px; border-radius:10px; margin-bottom:20px;">
+                        <div style="font-size:0.85em; color:#94a3b8;">Customer: <b id="pt-cust-name" style="color:#f8fafc;">--</b></div>
+                        <div style="font-size:0.95em; color:#f8fafc; font-weight:bold; margin-top:4px;" id="pt-item-name">Custom Order</div>
+                    </div>
+
+                    <!-- STEPPER -->
+                    <div class="tracker-stepper" id="pt-stepper">
+                        <!-- Injected dynamically based on whether it is a Job Card or Retail Order -->
+                    </div>
+
+                    <!-- STATUS HIGHLIGHT BANNER -->
+                    <div id="pt-status-banner" style="background:rgba(249,115,22,0.12); border:1px solid #f97316; border-radius:12px; padding:15px; text-align:center; margin-bottom:24px;">
+                        <div id="pt-status-title" style="font-size:1.15em; font-weight:bold; color:#f97316; margin-bottom:4px;">In Production 🖨️</div>
+                        <p id="pt-status-desc" style="margin:0; font-size:0.85em; color:#cbd5e1;">Your custom mobile skin / print is currently on the machine.</p>
+                    </div>
+
+                    <!-- FINANCIAL SUMMARY -->
+                    <div style="background:#0f172a; border-radius:10px; padding:15px; margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.9em;">
+                            <span style="color:#94a3b8;">Total Order Amount:</span>
+                            <span id="pt-total-amt" style="font-weight:bold;">₹0.00</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.9em;">
+                            <span style="color:#94a3b8;">Advance Paid:</span>
+                            <span id="pt-advance-amt" style="color:#10b981; font-weight:bold;">₹0.00</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px dashed #334155; font-size:1.05em;">
+                            <span style="color:#f87171; font-weight:bold;">Pending on Pickup:</span>
+                            <span id="pt-due-amt" style="color:#f87171; font-weight:bold;">₹0.00</span>
+                        </div>
+                        <div id="pt-upi-box" style="display:none; margin-top:12px; text-align:center; padding-top:10px; border-top:1px solid #334155;">
+                            <a id="pt-upi-link" href="#" class="btn btn-green" style="display:inline-block; padding:8px 16px; font-size:0.9em; text-decoration:none;">💸 Pay Pending via UPI</a>
+                        </div>
+                    </div>
+
+                    <!-- CONTACT & SHOP INFO -->
+                    <div style="display:flex; gap:10px;">
+                        <a id="pt-wa-btn" href="#" target="_blank" class="btn btn-green" style="flex:1; text-align:center; text-decoration:none; padding:10px; font-size:0.9em;">💬 WhatsApp Shop</a>
+                        <a id="pt-call-btn" href="#" class="btn btn-blue" style="flex:1; text-align:center; text-decoration:none; padding:10px; font-size:0.9em;">📞 Call Shop</a>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-top:30px; font-size:0.8em; color:#64748b;">
+                    <p style="margin:0 0 8px;">Lamination Hub Order Tracking System</p>
+                    <button onclick="closePublicTracker()" style="background:none; border:none; color:#94a3b8; text-decoration:underline; cursor:pointer; font-size:0.9em;">🔐 Staff / Admin Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. IN-APP ORDER TRACKER & SHARE MODAL -->
+    <div id="orderTrackerModal" class="modal-bg">
+        <div class="modal-box" style="max-width:480px; text-align:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0;">🔗 Live Order Tracking Link</h3>
+                <button class="btn btn-gray" onclick="closeModals()" style="padding:4px 10px;">✕</button>
+            </div>
+            <p style="font-size:0.85em; color:var(--text-muted); margin-bottom:15px;">Share this private tracking link with the customer so they can track production status live.</p>
+
+            <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px; text-align:left;">
+                <div style="font-size:0.8em; color:var(--text-muted); margin-bottom:3px;">ORDER NUMBER:</div>
+                <div id="otm-order-id" style="font-size:1.1em; font-weight:bold; color:var(--primary); margin-bottom:8px;">#---</div>
+                <div style="font-size:0.8em; color:var(--text-muted); margin-bottom:3px;">TRACKING URL:</div>
+                <input type="text" id="otm-url-input" readonly style="width:100%; font-size:0.85em; font-family:monospace; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-card); color:var(--text-main);" onclick="this.select()">
+            </div>
+
+            <div id="otm-qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-green" style="flex:1;" onclick="sendTrackingLinkWAFromModal()">📱 Share on WhatsApp</button>
+                <button class="btn btn-blue" style="flex:1;" onclick="copyTrackingUrl()">📋 Copy Link</button>
+            </div>
+            <button class="btn btn-gray" style="width:100%; margin-top:10px;" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+
+    <!-- 3. HELD / PARKED BILLS MODAL -->
+    <div id="heldBillsModal" class="modal-bg">
+        <div class="modal-box modal-box-large" style="max-width:700px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+                <div>
+                    <h3 style="margin:0;">⏸️ Parked / Held Bills</h3>
+                    <small style="color:var(--text-muted);">Resume any customer's paused cart to complete billing</small>
+                </div>
+                <button class="btn btn-gray" onclick="closeModals()" style="padding:4px 10px;">✕ Close</button>
+            </div>
+
+            <div id="heldBillsListContainer" style="max-height:360px; overflow-y:auto;"></div>
+
+            <div style="margin-top:15px; text-align:right;">
+                <button class="btn btn-gray" onclick="closeModals()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. COUPONS MANAGEMENT MODAL -->
+    <div id="couponsModal" class="modal-bg">
+        <div class="modal-box modal-box-large" style="max-width:650px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+                <div>
+                    <h3 style="margin:0;">🏷️ Discount Coupons & Promo Codes</h3>
+                    <small style="color:var(--text-muted);">Create promo codes for store campaigns</small>
+                </div>
+                <button class="btn btn-gray" onclick="closeModals()" style="padding:4px 10px;">✕ Close</button>
+            </div>
+
+            <!-- ADD COUPON FORM -->
+            <div style="background:var(--bg-body); padding:15px; border-radius:10px; border:1px solid var(--border-color); margin-bottom:15px;">
+                <h4 style="margin:0 0 10px 0;">+ Create New Coupon</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <div class="form-group" style="margin:0;">
+                        <label>Coupon Code (e.g. FLAT50)</label>
+                        <input type="text" id="coupCode" placeholder="PROMO10" style="text-transform:uppercase;">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Discount Type</label>
+                        <select id="coupType">
+                            <option value="flat">Flat Amount (₹)</option>
+                            <option value="percent">Percentage (%)</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                    <div class="form-group" style="margin:0;">
+                        <label>Discount Value</label>
+                        <input type="number" id="coupVal" placeholder="50">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Min Order (₹)</label>
+                        <input type="number" id="coupMin" placeholder="0">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Max Disc (₹)</label>
+                        <input type="number" id="coupMax" placeholder="No limit">
+                    </div>
+                </div>
+                <button class="btn btn-green" style="width:100%;" onclick="saveCoupon()">Save Coupon</button>
+            </div>
+
+            <div style="max-height:220px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px;">
+                <table class="app-table" style="margin:0; font-size:0.88em;">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Discount</th>
+                            <th>Min Order</th>
+                            <th>Usage</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="couponsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. WHATSAPP DUE PAYMENT REMINDER HUB MODAL -->
+    <div id="dueRemindersModal" class="modal-bg">
+        <div class="modal-box modal-box-large" style="max-width:850px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+                <div>
+                    <h3 style="margin:0;">💰 Due Reminders & Collection Hub</h3>
+                    <small style="color:var(--text-muted);">Track customer & reseller dues and send 1-click WhatsApp payment reminders with UPI</small>
+                </div>
+                <button class="btn btn-gray" onclick="closeModals()" style="padding:4px 10px;">✕ Close</button>
+            </div>
+
+            <!-- SUMMARY CARDS -->
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:15px;">
+                <div class="cust-stat-box" style="border-left:4px solid var(--danger);">
+                    <span style="font-size:0.8em; color:var(--text-muted);">TOTAL MARKET DUES</span>
+                    <div id="dr-total-due" class="cust-stat-val" style="color:var(--danger);">₹0.00</div>
+                </div>
+                <div class="cust-stat-box" style="border-left:4px solid var(--primary);">
+                    <span style="font-size:0.8em; color:var(--text-muted);">CUSTOMERS WITH DUES</span>
+                    <div id="dr-cust-count" class="cust-stat-val">0</div>
+                </div>
+                <div class="cust-stat-box" style="border-left:4px solid var(--warning);">
+                    <span style="font-size:0.8em; color:var(--text-muted);">RESELLER DUES</span>
+                    <div id="dr-reseller-due" class="cust-stat-val" style="color:#d97706;">₹0.00</div>
+                </div>
+            </div>
+
+            <!-- FILTERS & MESSAGE STYLE -->
+            <div style="display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <input type="text" id="drSearch" placeholder="🔍 Search name or phone..." style="padding:7px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main);" oninput="renderDueReminders()">
+                    <select id="drTypeFilter" onchange="renderDueReminders()" style="padding:7px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main);">
+                        <option value="All">All Dues</option>
+                        <option value="Customer">Retail Customers Only</option>
+                        <option value="Reseller">Resellers Only</option>
+                    </select>
+                    <select id="drToneSelect" style="padding:7px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main);">
+                        <option value="friendly">Tone: Friendly Check-in</option>
+                        <option value="formal">Tone: Formal Account Statement</option>
+                        <option value="urgent">Tone: Urgent Payment Overdue</option>
+                    </select>
+                </div>
+                <button class="btn btn-green" onclick="generateBatchDueReminderLinks()">📢 Generate All WA Links</button>
+            </div>
+
+            <div id="drBatchLinksArea" style="display:none; background:var(--bg-body); padding:10px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px; max-height:160px; overflow-y:auto;"></div>
+
+            <!-- TABLE OF DUES -->
+            <div style="max-height:280px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px;">
+                <table class="app-table" style="margin:0; font-size:0.88em;">
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Phone</th>
+                            <th>Category</th>
+                            <th>Due Balance</th>
+                            <th>Unpaid Bills</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dueRemindersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
     <div id="receipt-print-area"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -2245,7 +2604,7 @@
                 googleReviewUrl: '', autoIncludeReviewWa: true, posShowImages: true
             };
             inventory = []; sales = []; expenses = []; customers = [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}];
-            suppliers = []; quotations = []; categories = ["General"]; deletedItems = []; creditNotes = []; auditLogs = [];
+            suppliers = []; quotations = []; categories = ["General"]; deletedItems = []; creditNotes = []; auditLogs = []; heldBills = [];
             try { if(localStorage.getItem('l_pass')) appPass = localStorage.getItem('l_pass'); } catch(e){}
             try { if(localStorage.getItem('l_settings')) settings = JSON.parse(localStorage.getItem('l_settings')); } catch(e){}
             try { if(localStorage.getItem('l_inv')) inventory = JSON.parse(localStorage.getItem('l_inv')); } catch(e){}
@@ -2256,6 +2615,8 @@
             try { if(localStorage.getItem('l_quote')) quotations = JSON.parse(localStorage.getItem('l_quote')); } catch(e){}
             try { if(localStorage.getItem('l_creditnotes')) creditNotes = JSON.parse(localStorage.getItem('l_creditnotes')); } catch(e){}
             try { if(localStorage.getItem('l_audit')) auditLogs = JSON.parse(localStorage.getItem('l_audit')); } catch(e){}
+            try { if(localStorage.getItem('l_held_bills')) heldBills = JSON.parse(localStorage.getItem('l_held_bills')); } catch(e){}
+            try { if(localStorage.getItem('l_coupons')) coupons = JSON.parse(localStorage.getItem('l_coupons')); } catch(e){}
             try { if(localStorage.getItem('l_cat')) categories = JSON.parse(localStorage.getItem('l_cat')); } catch(e){}
             try { if(localStorage.getItem('l_deleted')) deletedItems = JSON.parse(localStorage.getItem('l_deleted')); } catch(e){}
             applyTheme();
@@ -2289,6 +2650,8 @@
                         quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(x.id));
                         if(c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
                         if(c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
+                        if(c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
+                        if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
                         (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
                         if(c.settings) settings = { ...settings, ...c.settings };
                         refreshDisplays();
@@ -2354,8 +2717,9 @@
             localStorage.setItem('l_sup', JSON.stringify(suppliers)); localStorage.setItem('l_quote', JSON.stringify(quotations));
             localStorage.setItem('l_cat', JSON.stringify(categories)); localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
             localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes)); localStorage.setItem('l_audit', JSON.stringify(auditLogs));
+            localStorage.setItem('l_held_bills', JSON.stringify(heldBills)); localStorage.setItem('l_coupons', JSON.stringify(coupons));
             if (currentUid !== "local" && docRef && window.location.protocol !== 'file:') {
-                try { await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs }); } catch(e){}
+                try { await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons }); } catch(e){}
             }
         }
 
@@ -2422,6 +2786,10 @@
             const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers', 'nav-reseller-orders', 'nav-reports'];
             adminTabs.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
             
+            updateHeldBillsBadge();
+            renderPosCouponChips();
+            renderCouponsList();
+            checkUrlTrackingHash();
             if (userRole === 'staff') switchTab('pos'); else refreshDisplays();
         }
 
@@ -2569,6 +2937,8 @@
 
             if(userRole === 'admin') updateCharts();
 
+            updateHeldBillsBadge();
+            renderPosCouponChips();
             // POS PRODUCTS GRID
             const q = document.getElementById('posSearch').value.toLowerCase();
             const catFilter = document.getElementById('posCategoryFilter').value;
@@ -2734,6 +3104,8 @@
                         btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="openReadyNotifyModal('${s.id}')">📱 Notify</button>`;
                     }
                     btns += `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️ View</button>`;
+                    btns += `<button class="btn btn-dark" style="padding: 4px 8px; font-size:0.8em;" onclick="openOrderTracker('${s.id}')" title="Live Tracking">🔗 Track</button>`;
+                    btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="sendOrderTrackingWA('${s.id}')" title="Send Tracking Link via WhatsApp">📱 Link</button>`;
                     if(userRole === 'admin') {
                         btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em;" onclick="editSale('${s.id}')">✏️ Edit</button>`;
                         btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em;" onclick="deleteSale('${s.id}')">🗑️ Del</button>`;
@@ -2788,6 +3160,8 @@
                     if (nextStatus) btns += `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em;" onclick="updateOrderStatus('${s.id}', '${nextStatus}')">Mark ${nextStatus}</button>`;
                     if (status === 'Ready') btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="openReadyNotifyModal('${s.id}')">📱 Notify</button>`;
                     btns += `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️</button>`;
+                    btns += `<button class="btn btn-dark" style="padding: 4px 8px; font-size:0.8em;" onclick="openOrderTracker('${s.id}')" title="Live Tracking">🔗 Track</button>`;
+                    btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="sendOrderTrackingWA('${s.id}')" title="Send Tracking Link via WhatsApp">📱 Link</button>`;
                     btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em;" onclick="requestGoogleReview('${s.id}')" title="Request Review">⭐</button>`;
                     btns += `</div>`;
                     
@@ -3666,6 +4040,11 @@
                 isResellerOrder: isReseller
             };
 
+            if (currentAppliedCoupon) {
+                newSale.couponCode = currentAppliedCoupon.code;
+                currentAppliedCoupon.timesUsed = (currentAppliedCoupon.timesUsed || 0) + 1;
+                logAudit('COUPON_USED', `Applied coupon ${currentAppliedCoupon.code} on Bill #${saleId}`);
+            }
             sales.push(newSale);
             logAudit('BILL_CREATED', `Generated Bill #${saleId} for ₹${total.toFixed(2)} (${payMode}) to ${c ? c.name : 'Walk-in'}`);
             if(c) { c.spent += total; c.due = (c.due || 0) + due; }
@@ -3676,7 +4055,7 @@
             else { sendWhatsApp(saleId); resetCart(); refreshDisplays(); }
         }
 
-        function resetCart() { cart = []; document.getElementById('posDiscount').value = ''; document.getElementById('posAdvance').value = ''; updateCart(); }
+        function resetCart() { cart = []; document.getElementById('posDiscount').value = ''; document.getElementById('posAdvance').value = ''; removeAppliedCoupon(); updateCart(); }
 
         // PRINT TEMPLATE
         function generateReceiptHTML(s) {
@@ -4555,7 +4934,7 @@
             logAudit('SETTINGS', 'Updated business profile & invoice customization settings');
             saveToStorage(); alert("Settings saved successfully!"); initApp();
         }
-        function exportData() { const b = new Blob([JSON.stringify({ pass: appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Backup.json'; a.click(); }
+        function exportData() { const b = new Blob([JSON.stringify({ pass: appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Backup.json'; a.click(); }
         function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || []; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || []; deletedItems = d.deletedItems || []; await saveToStorage(); alert("Restored!"); location.reload(); } catch(err){ alert("Invalid file"); } }; r.readAsText(e.target.files[0]); }
         function toggleCalc() { let c = document.getElementById('calc-container'); c.style.display = c.style.display === 'none' ? 'block' : 'none'; }
         function calcInput(v) { document.getElementById('calc-display').value += v; }
@@ -5528,6 +5907,593 @@
             let targetHtml = document.getElementById('receipt-print-area').innerHTML;
             document.getElementById('billPreviewContainer').innerHTML = targetHtml;
             document.getElementById('billPreviewModal').style.display = 'flex';
+        }
+
+    
+        // =======================================================
+        // === 4 NEW FEATURES: TRACKING, HOLD, COUPONS, DUES ===
+        // =======================================================
+
+        let heldBills = [];
+        let coupons = [
+            { code: 'WELCOME50', type: 'flat', val: 50, minOrder: 250, maxDisc: 50, active: true, timesUsed: 0 },
+            { code: 'FLAT100', type: 'flat', val: 100, minOrder: 500, maxDisc: 100, active: true, timesUsed: 0 },
+            { code: 'FESTIVE10', type: 'percent', val: 10, minOrder: 200, maxDisc: 100, active: true, timesUsed: 0 }
+        ];
+        let currentAppliedCoupon = null;
+        let activeTrackingOrderId = null;
+
+        // ----------------------------------------------------
+        // 1. CUSTOMER LIVE ORDER TRACKING LINK & STANDALONE PAGE
+        // ----------------------------------------------------
+        function getPublicTrackingUrl(orderId) {
+            let base = window.location.href.split('#')[0].split('?')[0];
+            return `${base}#track=${encodeURIComponent(orderId)}`;
+        }
+
+        function checkUrlTrackingHash() {
+            let hash = window.location.hash || '';
+            if (hash.startsWith('#track=')) {
+                let orderId = decodeURIComponent(hash.replace('#track=', '').trim());
+                openPublicTracker(orderId);
+            }
+        }
+        window.addEventListener('hashchange', checkUrlTrackingHash);
+
+        function openPublicTracker(orderId) {
+            let s = sales.find(x => x.id === orderId || x.id.endsWith(orderId) || String(x.id) === String(orderId));
+            
+            document.getElementById('pt-shop-name').innerText = (settings.name || 'LAMINATION HUB').toUpperCase();
+            document.getElementById('pt-shop-city').innerText = `${settings.city || 'Kurebhar'} | Ph: ${settings.phone || '8726195000'}`;
+
+            let screen = document.getElementById('publicOrderTrackerScreen');
+            screen.style.display = 'block';
+
+            if (!s) {
+                document.getElementById('pt-order-details').style.display = 'none';
+                document.getElementById('pt-search-box').style.display = 'block';
+                document.getElementById('pt-search-input').value = orderId;
+                return;
+            }
+
+            document.getElementById('pt-search-box').style.display = 'none';
+            document.getElementById('pt-order-details').style.display = 'block';
+
+            document.getElementById('pt-order-id').innerText = '#' + s.id;
+            document.getElementById('pt-order-date').innerText = (s.date || '').split(',')[0];
+            document.getElementById('pt-cust-name').innerText = s.cust || 'Customer';
+
+            let itemsStr = s.isJobCard ? (s.jobDevice || 'Custom Print Job') : (s.items || []).map(i => `${i.name} (x${i.qty})`).join(', ');
+            document.getElementById('pt-item-name').innerText = itemsStr;
+
+            let curStatus = s.orderStatus || (s.isJobCard ? 'Designing' : 'Pending');
+            let isJC = s.isJobCard === true;
+
+            // Stepper stages
+            let stages = isJC ? [
+                { id: 'Designing', label: 'Designing 🎨', desc: 'Our design team is crafting your custom skin / artwork mockups.' },
+                { id: 'Printing', label: 'Printing 🖨️', desc: 'Your skin is in production on our high-precision printing machines.' },
+                { id: 'Ready', label: 'Ready for Pickup 🎉', desc: 'Your order has passed quality check and is READY to be picked up!' },
+                { id: 'Delivered', label: 'Delivered 📦', desc: 'Order completed and delivered. Thank you for your business!' }
+            ] : [
+                { id: 'Pending', label: 'Order Placed ⏳', desc: 'We have received your order and are preparing the items.' },
+                { id: 'Ready', label: 'Ready for Pickup 🎁', desc: 'Your order is packed and READY for collection at our shop!' },
+                { id: 'Delivered', label: 'Delivered 📦', desc: 'Order completed and handed over. Enjoy your product!' }
+            ];
+
+            let activeIdx = stages.findIndex(st => st.id.toLowerCase() === curStatus.toLowerCase());
+            if (activeIdx === -1) activeIdx = 0;
+
+            let stepperHTML = stages.map((st, idx) => {
+                let cls = 'tracker-step';
+                if (idx < activeIdx) cls += ' completed';
+                else if (idx === activeIdx) cls += ' active';
+                return `
+                    <div class="${cls}">
+                        <div class="tracker-step-circle">${idx < activeIdx ? '✓' : idx + 1}</div>
+                        <div class="tracker-step-label">${st.label}</div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('pt-stepper').innerHTML = stepperHTML;
+
+            // Banner text
+            let activeStageObj = stages[activeIdx] || stages[0];
+            document.getElementById('pt-status-title').innerText = activeStageObj.label;
+            document.getElementById('pt-status-desc').innerText = activeStageObj.desc;
+
+            // Financials
+            document.getElementById('pt-total-amt').innerText = '₹' + (s.total || 0).toFixed(2);
+            let adv = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
+            document.getElementById('pt-advance-amt').innerText = '₹' + adv.toFixed(2);
+            document.getElementById('pt-due-amt').innerText = '₹' + (s.due || 0).toFixed(2);
+
+            // UPI Box if due > 0
+            let upiBox = document.getElementById('pt-upi-box');
+            if (s.due > 0) {
+                let upiId = settings.upiId || "8726195000@ybl";
+                let upiPayString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(settings.name)}&am=${s.due}&cu=INR`;
+                document.getElementById('pt-upi-link').href = upiPayString;
+                upiBox.style.display = 'block';
+            } else {
+                upiBox.style.display = 'none';
+            }
+
+            // Contact buttons
+            let cleanPhone = (settings.phone || '8726195000').replace(/\D/g, '');
+            document.getElementById('pt-wa-btn').href = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent('Hello ' + settings.name + ', I am inquiring about my order #' + s.id)}`;
+            document.getElementById('pt-call-btn').href = `tel:${settings.phone || '8726195000'}`;
+        }
+
+        function closePublicTracker() {
+            document.getElementById('publicOrderTrackerScreen').style.display = 'none';
+            if (window.location.hash.startsWith('#track=')) {
+                history.replaceState(null, null, window.location.pathname);
+            }
+        }
+
+        function searchPublicTracker() {
+            let val = document.getElementById('pt-search-input').value.trim();
+            if (!val) return alert("Please enter an order or bill number.");
+            openPublicTracker(val);
+        }
+
+        function openOrderTracker(orderId) {
+            activeTrackingOrderId = orderId;
+            let url = getPublicTrackingUrl(orderId);
+            document.getElementById('otm-order-id').innerText = '#' + orderId;
+            document.getElementById('otm-url-input').value = url;
+
+            let qrContainer = document.getElementById('otm-qrcode');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: url,
+                width: 128,
+                height: 128,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.M
+            });
+
+            document.getElementById('orderTrackerModal').style.display = 'flex';
+        }
+
+        function copyTrackingUrl() {
+            let el = document.getElementById('otm-url-input');
+            el.select();
+            navigator.clipboard.writeText(el.value);
+            alert("Order tracking link copied to clipboard!");
+        }
+
+        function sendOrderTrackingWA(orderId) {
+            let s = sales.find(x => x.id === orderId);
+            if (!s) return alert("Order not found.");
+            let cleanPhone = (s.phone || '').replace(/\D/g, '');
+            if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+            if (cleanPhone.length < 10) return alert("Customer phone number is missing or invalid.");
+
+            let url = getPublicTrackingUrl(orderId);
+            let status = s.orderStatus || (s.isJobCard ? 'Designing' : 'Pending');
+            let itemDesc = s.isJobCard ? s.jobDevice : (s.items ? s.items.map(i=>i.name).join(', ') : 'Order');
+
+            let msg = `Hello ${s.cust}! 🌟\n\n`;
+            msg += `Your order *#${s.id}* (${itemDesc}) is currently: *${status}*.\n\n`;
+            msg += `📲 *Track live production & readiness status anytime here:*\n${url}\n\n`;
+            if (s.due > 0) msg += `Pending Balance on pickup: *₹${s.due.toFixed(2)}*\n`;
+            msg += `Thank you for choosing *${settings.name.toUpperCase()}*! 🙏`;
+
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function sendTrackingLinkWAFromModal() {
+            if (activeTrackingOrderId) sendOrderTrackingWA(activeTrackingOrderId);
+        }
+
+        // ----------------------------------------------------
+        // 2. HOLD / PARK BILL (DRAFTS) SYSTEM
+        // ----------------------------------------------------
+        function holdCurrentBill() {
+            if (cart.length === 0) return alert("Your cart is empty! Add items before putting a bill on hold.");
+            let cid = document.getElementById('posCustomerSelect').value;
+            let c = customers.find(x => String(x.id) === String(cid));
+            let total = parseFloat(document.getElementById('grandTotal').innerText.replace('₹','')) || 0;
+
+            let defaultLabel = (c && c.name !== 'Walk-in') ? c.name : (cart[0]?.name ? `${cart[0].name} (${cart.length} items)` : 'Draft Bill');
+            let note = prompt("Enter a label or customer note for this parked bill:", defaultLabel);
+            if (note === null) return; // user cancelled
+
+            let draft = {
+                id: 'HOLD-' + (Date.now()).toString().slice(-4),
+                timestamp: new Date().toISOString(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                date: new Date().toLocaleDateString(),
+                note: note.trim() || defaultLabel,
+                customerId: cid,
+                customerName: c ? c.name : 'Walk-in',
+                cart: JSON.parse(JSON.stringify(cart)),
+                shipping: document.getElementById('posShipping').value,
+                tax: document.getElementById('posTax').value,
+                discount: document.getElementById('posDiscount').value,
+                discountType: document.getElementById('posDiscountType').value,
+                loyalty: document.getElementById('posLoyalty').value,
+                advance: document.getElementById('posAdvance').value,
+                payMode: document.getElementById('posPayMode').value,
+                appliedCoupon: currentAppliedCoupon ? { ...currentAppliedCoupon } : null,
+                total: total
+            };
+
+            heldBills.unshift(draft);
+            logAudit('BILL_HELD', `Parked draft bill ${draft.id} for ${draft.customerName} (₹${total.toFixed(2)})`);
+            saveToStorage();
+
+            // Clear active cart for the next customer
+            resetCart();
+            removeAppliedCoupon();
+            updateHeldBillsBadge();
+            alert(`✓ Bill parked successfully as "${draft.note}"! You can now bill the next customer.`);
+        }
+
+        function updateHeldBillsBadge() {
+            let el = document.getElementById('heldBillsBadge');
+            if (el) el.innerText = heldBills.length;
+        }
+
+        function openHeldBillsModal() {
+            let container = document.getElementById('heldBillsListContainer');
+            if (!container) return;
+
+            if (heldBills.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:30px; color:var(--text-muted);">
+                        <div style="font-size:2.5em; margin-bottom:10px;">⏸️</div>
+                        <p style="margin:0; font-weight:600;">No parked bills right now.</p>
+                        <small>Click "⏸️ Hold Bill" in POS whenever a customer is taking time.</small>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = heldBills.map((b, idx) => {
+                    let itemsSummary = (b.cart || []).map(i => `${i.name} (x${i.qty})`).join(', ');
+                    if (itemsSummary.length > 50) itemsSummary = itemsSummary.slice(0, 47) + '...';
+                    return `
+                        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-weight:bold; font-size:1.05em; color:var(--primary);">${b.note}</span>
+                                    <span class="held-badge">${b.id}</span>
+                                    <small style="color:var(--text-muted);">${b.time}</small>
+                                </div>
+                                <div style="font-size:0.85em; color:var(--text-muted); margin-top:4px;">
+                                    Customer: <b>${b.customerName}</b> | Items: <b>${(b.cart||[]).length}</b> | Total: <b style="color:var(--text-main);">₹${b.total.toFixed(2)}</b>
+                                </div>
+                                <div style="font-size:0.8em; color:var(--text-muted); margin-top:2px;">
+                                    <i>${itemsSummary}</i>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:6px;">
+                                <button class="btn btn-blue" style="padding:6px 12px; font-size:0.85em;" onclick="resumeHeldBill('${b.id}')">▶️ Resume</button>
+                                <button class="btn btn-gray" style="color:red; padding:6px 10px; font-size:0.85em;" onclick="discardHeldBill('${b.id}')">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('heldBillsModal').style.display = 'flex';
+        }
+
+        function resumeHeldBill(draftId) {
+            let draft = heldBills.find(b => b.id === draftId);
+            if (!draft) return alert("Draft bill not found.");
+
+            if (cart.length > 0) {
+                if (!confirm("Your current POS cart has items. Resuming this parked bill will replace the current cart. Continue?")) return;
+            }
+
+            cart = JSON.parse(JSON.stringify(draft.cart || []));
+            if (draft.customerId) {
+                let sel = document.getElementById('posCustomerSelect');
+                if (sel && Array.from(sel.options).some(o => o.value == draft.customerId)) {
+                    sel.value = draft.customerId;
+                }
+            }
+            document.getElementById('posShipping').value = draft.shipping || '';
+            document.getElementById('posTax').value = draft.tax || '';
+            document.getElementById('posDiscount').value = draft.discount || '';
+            document.getElementById('posDiscountType').value = draft.discountType || 'flat';
+            document.getElementById('posLoyalty').value = draft.loyalty || '';
+            document.getElementById('posAdvance').value = draft.advance || '';
+            document.getElementById('posPayMode').value = draft.payMode || 'Cash';
+
+            if (draft.appliedCoupon) {
+                currentAppliedCoupon = draft.appliedCoupon;
+                let b = document.getElementById('appliedCouponBadge');
+                if (b) {
+                    b.style.display = 'flex';
+                    document.getElementById('appliedCouponText').innerText = `🏷️ '${currentAppliedCoupon.code}' Applied`;
+                }
+            } else {
+                removeAppliedCoupon();
+            }
+
+            // Remove from held bills
+            heldBills = heldBills.filter(b => b.id !== draftId);
+            saveToStorage();
+            updateHeldBillsBadge();
+            updateCart();
+            closeModals();
+            switchTab('pos');
+        }
+
+        function discardHeldBill(draftId) {
+            if (!confirm("Are you sure you want to discard this parked bill?")) return;
+            heldBills = heldBills.filter(b => b.id !== draftId);
+            saveToStorage();
+            updateHeldBillsBadge();
+            openHeldBillsModal();
+        }
+
+        // ----------------------------------------------------
+        // 3. DISCOUNT COUPON CODES SYSTEM
+        // ----------------------------------------------------
+        function applyCoupon(codeParam = null) {
+            let inputEl = document.getElementById('posCouponInput');
+            let code = (codeParam || (inputEl ? inputEl.value : '')).trim().toUpperCase();
+            if (!code) return alert("Please enter a coupon code.");
+
+            let c = coupons.find(x => x.code.toUpperCase() === code);
+            if (!c) return alert(`Coupon code '${code}' is invalid or does not exist.`);
+            if (!c.active) return alert(`Coupon code '${code}' is currently inactive.`);
+
+            let subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            if (c.minOrder && subtotal < c.minOrder) {
+                return alert(`Coupon '${code}' requires a minimum order of ₹${c.minOrder}. Your current subtotal is ₹${subtotal.toFixed(2)}.`);
+            }
+
+            let discVal = 0;
+            if (c.type === 'percent') {
+                discVal = subtotal * (c.val / 100);
+                if (c.maxDisc && discVal > c.maxDisc) discVal = c.maxDisc;
+                document.getElementById('posDiscountType').value = 'percent';
+                document.getElementById('posDiscount').value = c.val;
+            } else {
+                discVal = c.val;
+                document.getElementById('posDiscountType').value = 'flat';
+                document.getElementById('posDiscount').value = c.val;
+            }
+
+            currentAppliedCoupon = c;
+
+            let badge = document.getElementById('appliedCouponBadge');
+            if (badge) {
+                badge.style.display = 'flex';
+                let discText = c.type === 'percent' ? `${c.val}% (₹${discVal.toFixed(2)})` : `₹${c.val}`;
+                document.getElementById('appliedCouponText').innerText = `🏷️ '${c.code}' Applied: -${discText}`;
+            }
+            if (inputEl) inputEl.value = '';
+
+            updateCart();
+        }
+
+        function removeAppliedCoupon() {
+            currentAppliedCoupon = null;
+            let badge = document.getElementById('appliedCouponBadge');
+            if (badge) badge.style.display = 'none';
+            document.getElementById('posDiscount').value = '';
+            updateCart();
+        }
+
+        function renderPosCouponChips() {
+            let container = document.getElementById('posCouponChips');
+            if (!container) return;
+            let activeCoupons = coupons.filter(c => c.active);
+            if (activeCoupons.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = activeCoupons.map(c => {
+                let label = c.type === 'percent' ? `${c.val}% OFF` : `₹${c.val} OFF`;
+                return `<span class="coupon-chip" onclick="applyCoupon('${c.code}')">🏷️ ${c.code} (${label})</span>`;
+            }).join('');
+        }
+
+        function openCouponsModal() {
+            renderCouponsList();
+            document.getElementById('couponsModal').style.display = 'flex';
+        }
+
+        function renderCouponsList() {
+            let tbody = document.getElementById('couponsTableBody');
+            let setContainer = document.getElementById('settingsCouponsContainer');
+
+            let rowsHTML = coupons.map((c, idx) => {
+                let discStr = c.type === 'percent' ? `${c.val}%` : `₹${c.val}`;
+                let minStr = c.minOrder ? `₹${c.minOrder}` : '--';
+                let statusBadge = c.active ? `<span style="color:var(--success); font-weight:bold;">Active</span>` : `<span style="color:var(--text-muted);">Inactive</span>`;
+                return `
+                    <tr>
+                        <td><b>${c.code}</b></td>
+                        <td>${discStr}</td>
+                        <td>${minStr}</td>
+                        <td>${c.timesUsed || 0} times</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-gray" style="padding:2px 6px; font-size:0.75em;" onclick="toggleCouponStatus('${c.code}')">${c.active ? 'Pause' : 'Activate'}</button>
+                            <button class="btn btn-danger" style="padding:2px 6px; font-size:0.75em;" onclick="deleteCoupon('${c.code}')">Del</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (tbody) {
+                tbody.innerHTML = coupons.length ? rowsHTML : `<tr><td colspan="6" style="text-align:center; padding:15px; color:var(--text-muted);">No coupons created yet.</td></tr>`;
+            }
+            if (setContainer) {
+                setContainer.innerHTML = coupons.length ? `
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        ${coupons.map(c => `<span class="coupon-chip" style="font-size:0.85em;"><b>${c.code}</b>: ${c.type==='percent'?c.val+'%':'₹'+c.val} ${c.active?'(Active)':'(Paused)'}</span>`).join('')}
+                    </div>
+                ` : `<small style="color:var(--text-muted);">No coupons active. Click "Create Coupon" above.</small>`;
+            }
+            renderPosCouponChips();
+        }
+
+        function saveCoupon() {
+            let code = document.getElementById('coupCode').value.trim().toUpperCase();
+            let type = document.getElementById('coupType').value;
+            let val = parseFloat(document.getElementById('coupVal').value) || 0;
+            let minOrder = parseFloat(document.getElementById('coupMin').value) || 0;
+            let maxDisc = parseFloat(document.getElementById('coupMax').value) || 0;
+
+            if (!code || val <= 0) return alert("Please enter valid coupon code and discount value.");
+            if (coupons.some(c => c.code === code)) return alert(`Coupon code '${code}' already exists.`);
+
+            coupons.push({ code, type, val, minOrder, maxDisc, active: true, timesUsed: 0 });
+            logAudit('COUPON_CREATED', `Created discount coupon ${code} (${type==='percent'?val+'%':'₹'+val})`);
+            saveToStorage();
+
+            document.getElementById('coupCode').value = '';
+            document.getElementById('coupVal').value = '';
+            document.getElementById('coupMin').value = '';
+            document.getElementById('coupMax').value = '';
+            renderCouponsList();
+            alert(`Coupon '${code}' created successfully!`);
+        }
+
+        function toggleCouponStatus(code) {
+            let c = coupons.find(x => x.code === code);
+            if (c) {
+                c.active = !c.active;
+                saveToStorage();
+                renderCouponsList();
+            }
+        }
+
+        function deleteCoupon(code) {
+            if (!confirm(`Delete coupon '${code}'?`)) return;
+            coupons = coupons.filter(c => c.code !== code);
+            saveToStorage();
+            renderCouponsList();
+        }
+
+        // ----------------------------------------------------
+        // 4. WHATSAPP DUE PAYMENT REMINDER HUB & BROADCAST
+        // ----------------------------------------------------
+        function openDueRemindersModal(defaultType = 'All') {
+            if (document.getElementById('drTypeFilter')) {
+                document.getElementById('drTypeFilter').value = defaultType;
+            }
+            renderDueReminders();
+            document.getElementById('drBatchLinksArea').style.display = 'none';
+            document.getElementById('dueRemindersModal').style.display = 'flex';
+        }
+
+        function renderDueReminders() {
+            let q = (document.getElementById('drSearch')?.value || '').toLowerCase();
+            let typeFilter = document.getElementById('drTypeFilter')?.value || 'All';
+            let tbody = document.getElementById('dueRemindersTableBody');
+            if (!tbody) return;
+
+            let dueCustomers = customers.filter(c => {
+                if (c.name === 'Walk-in' || !c.due || c.due <= 0) return false;
+                let matchType = (typeFilter === 'All') || (c.type || 'Customer') === typeFilter;
+                let matchQ = !q || c.name.toLowerCase().includes(q) || (c.phone && c.phone.includes(q));
+                return matchType && matchQ;
+            });
+
+            // Metrics
+            let totalDue = customers.filter(c => c.name !== 'Walk-in' && c.due > 0).reduce((sum, c) => sum + (c.due || 0), 0);
+            let resellerDue = customers.filter(c => c.type === 'Reseller' && c.due > 0).reduce((sum, c) => sum + (c.due || 0), 0);
+            let custCount = customers.filter(c => c.name !== 'Walk-in' && c.due > 0).length;
+
+            document.getElementById('dr-total-due').innerText = '₹' + totalDue.toFixed(2);
+            document.getElementById('dr-cust-count').innerText = custCount;
+            document.getElementById('dr-reseller-due').innerText = '₹' + resellerDue.toFixed(2);
+
+            if (dueCustomers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:25px; color:var(--text-muted);">🎉 Awesome! No customers match the pending dues criteria.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = dueCustomers.map(c => {
+                let unpaidBills = sales.filter(s => s.cust === c.name && !s.returned && s.due > 0);
+                return `
+                    <tr>
+                        <td><b>${c.name}</b></td>
+                        <td>${c.phone || '--'}</td>
+                        <td><span style="font-size:0.85em; color:var(--text-muted);">${c.type || 'Customer'}</span></td>
+                        <td style="color:var(--danger); font-weight:bold;">₹${(c.due || 0).toFixed(2)}</td>
+                        <td>${unpaidBills.length} bills</td>
+                        <td>
+                            <button class="btn btn-green" style="padding:3px 8px; font-size:0.8em; margin-right:4px;" onclick="sendCustomerDueReminderWA('${c.id}')">📱 Remind WA</button>
+                            <button class="btn btn-blue" style="padding:3px 8px; font-size:0.8em;" onclick="closeModals(); openCustomerPaymentModal('${c.id}')">💵 Pay</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function sendCustomerDueReminderWA(custId) {
+            let c = customers.find(x => String(x.id) === String(custId));
+            if (!c) return alert("Customer not found.");
+            let cleanPhone = (c.phone || '').replace(/\D/g, '');
+            if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+            if (cleanPhone.length < 10) return alert("Customer phone number is invalid or missing.");
+
+            let unpaidSales = sales.filter(s => s.cust === c.name && !s.returned && s.due > 0);
+            let billsSummary = unpaidSales.map(s => `• Bill #${s.id} (${(s.date||'').split(',')[0]}): Due ₹${s.due.toFixed(2)}`).join('\n');
+
+            let upiId = settings.upiId || "8726195000@ybl";
+            let tone = document.getElementById('drToneSelect')?.value || 'friendly';
+
+            let msg = '';
+            if (tone === 'friendly') {
+                msg = `Dear ${c.name}, greetings from *${settings.name.toUpperCase()}*! 🙏\n\n`;
+                msg += `This is a gentle, friendly reminder regarding your outstanding balance of *₹${(c.due||0).toFixed(2)}*.\n\n`;
+                if (billsSummary) msg += `*Pending Invoice Summary:*\n${billsSummary}\n\n`;
+                msg += `💸 *You can quickly pay online via UPI:*\n${upiId}\n\n`;
+                msg += `Kindly clear the balance at your earliest convenience or let us know if already paid. Thank you! ✨`;
+            } else if (tone === 'formal') {
+                msg = `*STATEMENT OF ACCOUNT - ${settings.name.toUpperCase()}*\n\n`;
+                msg += `Customer Name: *${c.name}*\nPhone: ${c.phone}\nTotal Outstanding Balance: *₹${(c.due||0).toFixed(2)}*\n\n`;
+                if (billsSummary) msg += `*Unpaid Bills List:*\n${billsSummary}\n\n`;
+                msg += `Please remit the amount to UPI ID: *${upiId}* or pay directly at our store.\nFor queries, call: ${settings.phone || '8726195000'}. Thank you!`;
+            } else if (tone === 'urgent') {
+                msg = `⚠️ *URGENT PAYMENT REMINDER - ${settings.name.toUpperCase()}*\n\n`;
+                msg += `Dear ${c.name},\nYour balance of *₹${(c.due||0).toFixed(2)}* is long overdue. Please arrange immediate settlement today.\n\n`;
+                msg += `💸 *Instant UPI Payment ID:* ${upiId}\n\n`;
+                msg += `Kindly send payment screenshot after completing the transfer. Thank you.`;
+            }
+
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function generateBatchDueReminderLinks() {
+            let typeFilter = document.getElementById('drTypeFilter')?.value || 'All';
+            let tone = document.getElementById('drToneSelect')?.value || 'friendly';
+            let upiId = settings.upiId || "8726195000@ybl";
+
+            let dueCustomers = customers.filter(c => {
+                if (c.name === 'Walk-in' || !c.due || c.due <= 0) return false;
+                let clean = (c.phone || '').replace(/\D/g, '');
+                return clean.length >= 10 && (typeFilter === 'All' || (c.type || 'Customer') === typeFilter);
+            });
+
+            if (dueCustomers.length === 0) return alert("No valid customer phone numbers with outstanding dues.");
+
+            let area = document.getElementById('drBatchLinksArea');
+            area.style.display = 'block';
+            area.innerHTML = `<h5 style="margin:0 0 10px 0; color:var(--text-main);">Click to Send Due Reminder (${dueCustomers.length} Customers):</h5>` +
+                dueCustomers.map(c => {
+                    let cleanPhone = c.phone.replace(/\D/g, '');
+                    if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+                    let msg = `Dear ${c.name}, gentle reminder from *${settings.name}* regarding your pending due balance of *₹${(c.due||0).toFixed(2)}*. Kindly pay via UPI: *${upiId}* or visit shop. Thank you! 🙏`;
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color); font-size:0.85em;">
+                            <span><b>${c.name}</b> (${c.phone}) - <b style="color:red;">₹${c.due.toFixed(2)}</b></span>
+                            <a href="https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}" target="_blank" class="btn btn-green" style="padding:3px 8px; font-size:0.8em; text-decoration:none;">📱 Send Reminder</a>
+                        </div>
+                    `;
+                }).join('');
         }
 
     </script>
