@@ -186,54 +186,7 @@
 
     
         /* === 4 NEW FEATURES CSS === */
-        /* Public Live Order Tracker Screen */
-        #publicOrderTrackerScreen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            z-index: 999999; overflow-y: auto; display: none;
-            color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            padding: 20px 10px;
-        }
-        .tracker-card {
-            max-width: 580px; margin: 0 auto; background: #1e293b;
-            border: 1px solid rgba(255,255,255,0.12); border-radius: 16px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-        .tracker-header {
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-            padding: 24px 20px; text-align: center; color: white;
-        }
-        .tracker-body { padding: 24px 20px; }
-        .tracker-stepper { display: flex; justify-content: space-between; position: relative; margin: 30px 10px 40px; }
-        .tracker-stepper::before {
-            content: ''; position: absolute; top: 20px; left: 20px; right: 20px; height: 4px;
-            background: #334155; z-index: 1;
-        }
-        .tracker-step {
-            position: relative; z-index: 2; text-align: center; flex: 1;
-        }
-        .tracker-step-circle {
-            width: 44px; height: 44px; border-radius: 50%; background: #334155; color: #94a3b8;
-            display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;
-            font-size: 1.1em; font-weight: bold; border: 3px solid #1e293b; transition: all 0.3s;
-        }
-        .tracker-step.completed .tracker-step-circle {
-            background: #10b981; color: white; border-color: #059669;
-        }
-        .tracker-step.active .tracker-step-circle {
-            background: #f97316; color: white; border-color: #ea580c;
-            box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.25);
-            animation: pulse-ring 2s infinite;
-        }
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.6); }
-            70% { box-shadow: 0 0 0 12px rgba(249, 115, 22, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
-        }
-        .tracker-step-label { font-size: 0.78em; font-weight: 600; color: #94a3b8; }
-        .tracker-step.active .tracker-step-label { color: #f97316; font-weight: 700; }
-        .tracker-step.completed .tracker-step-label { color: #10b981; }
+
 
         /* Coupon Chips in POS */
         .coupon-chip {
@@ -250,6 +203,37 @@
         .held-badge {
             background: #f59e0b; color: #78350f; font-weight: bold; border-radius: 12px;
             padding: 2px 7px; font-size: 0.75em; margin-left: 4px;
+        }
+
+
+        /* === 5 NEW FEATURES CSS === */
+        /* Hotkeys Badge */
+        .hotkeys-badge {
+            background: rgba(0,123,255,0.1); border: 1px solid var(--primary); color: var(--primary);
+            padding: 4px 10px; border-radius: 20px; font-size: 0.78em; font-weight: 700;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
+        }
+        .hotkeys-badge:hover {
+            background: var(--primary); color: white;
+        }
+
+        /* Artwork Thumbnail in Job Card */
+        .jc-artwork-thumb {
+            width: 40px; height: 40px; object-fit: cover; border-radius: 6px;
+            border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.15s;
+        }
+        .jc-artwork-thumb:hover { transform: scale(1.15); }
+
+        /* Barcode Sheet Grid Preview */
+        .barcode-sheet-grid-a4 {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+            padding: 8px; background: white; border: 1px solid #cbd5e1;
+        }
+        .barcode-label-box {
+            border: 1px dashed #cbd5e1; padding: 4px; text-align: center;
+            font-family: sans-serif; background: white; color: black;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 85px; overflow: hidden;
         }
 
     </style>
@@ -388,6 +372,7 @@
                                 <option value="All">All Categories</option>
                             </select>
                             <button class="btn btn-outline" id="btnTogglePosImg" onclick="togglePosImages()" style="padding:10px 14px; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-card); cursor:pointer; font-weight:600;" title="Toggle Images on Cards">🖼️ Images: ON</button>
+                            <button class="btn btn-outline hotkeys-badge" onclick="openHotkeysCheatSheetModal()" title="Cashier Keyboard Shortcuts (F1..F9, Esc)" style="padding:10px 12px; border:1px solid #6366f1; color:#6366f1; border-radius:8px; background:var(--bg-card); cursor:pointer; font-weight:600;">⌨️ Hotkeys (F1..F9)</button>
                             <button class="btn btn-warning" onclick="openQuickBill()">🖩 QUICK BILL</button>
                             <button class="btn btn-blue" onclick="openCameraScanner()">📷 Scan</button>
                         </div>
@@ -463,12 +448,32 @@
 
                         <div class="checkout-row">
                             <span style="font-weight: bold; color: var(--text-muted); font-size: 0.9em;">PAYMENT MODE</span>
-                            <select id="posPayMode" style="width: 100px; padding: 6px;">
+                            <select id="posPayMode" style="width: 110px; padding: 6px;" onchange="handlePayModeChange()">
                                 <option value="Cash">Cash</option>
                                 <option value="UPI">UPI / QR</option>
                                 <option value="Card">Card</option>
+                                <option value="Split">Split (Cash+UPI)</option>
                             </select>
                         </div>
+
+
+                        <div id="posSplitInputsRow" style="display:none; background:var(--bg-body); padding:10px 12px; border-radius:8px; margin: 8px 0; border: 1px solid var(--border-color);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                                <span style="font-size:0.8em; font-weight:bold; color:var(--text-muted);"><i class="fa fa-wallet"></i> SPLIT PAYMENT AMOUNTS:</span>
+                                <small id="splitBalanceHelper" style="font-size:0.75em; color:var(--primary); font-weight:bold;">Auto-balances to Total</small>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <div style="flex:1;">
+                                    <label style="font-size:0.75em; color:var(--text-muted); font-weight:bold;">💵 Cash (₹)</label>
+                                    <input type="number" id="posSplitCash" placeholder="0" style="width:100%; padding:6px; font-size:0.9em; font-weight:bold; text-align:right; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-card); color:var(--text-main);" oninput="calcSplitUpiFromCash()">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:0.75em; color:var(--text-muted); font-weight:bold;">📱 UPI / QR (₹)</label>
+                                    <input type="number" id="posSplitUpi" placeholder="0" style="width:100%; padding:6px; font-size:0.9em; font-weight:bold; text-align:right; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-card); color:var(--text-main);" oninput="calcSplitCashFromUpi()">
+                                </div>
+                            </div>
+                        </div>
+
 
                         <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top:15px;">
                             <span>Total Payable:</span>
@@ -508,7 +513,7 @@
                     <div class="table-wrap">
                         <table class="app-table">
                             <thead>
-                                <tr><th>Job #</th><th>Exp. Date</th><th>Customer</th><th>Device / Item</th><th>Notes</th><th>Status</th><th>Total</th><th>Due</th><th>Actions</th></tr>
+                                <tr><th>Job #</th><th>Exp. Date</th><th>Customer</th><th>Device / Item</th><th>Artwork</th><th>Notes</th><th>Status</th><th>Total</th><th>Due</th><th>Actions</th></tr>
                             </thead>
                             <tbody id="jobCardTableBody"></tbody>
                         </table>
@@ -796,6 +801,8 @@
                         <small id="inv-count-badge" style="color:var(--text-muted); font-weight:600;">Loading stock...</small>
                     </div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <button class="btn btn-blue" onclick="autoGenerateAllBarcodes()" style="background:#4f46e5; color:white; font-weight:700; border:none; box-shadow:0 2px 4px rgba(79,70,229,0.25);" title="Auto-generate Barcode / SKU for all products in 1 click">⚡ Auto Barcode / SKU (All)</button>
+                        <button class="btn btn-warning" onclick="openBarcodeSheetModal()" style="font-weight:700;">🏷️ Barcode Stickers</button>
                         <button class="btn btn-warning" onclick="openCategoryModal()">🏷️ Categories</button>
                         <button class="btn btn-dark" onclick="openCSVModal()">📄 Import Products</button>
                         <button class="btn btn-blue" style="background:#0284c7; color:white;" onclick="openBuyingCSVModal()">📥 Upload Buying Stock</button>
@@ -1017,6 +1024,40 @@
                         <button class="btn btn-blue" onclick="addNewStaffMember()">+ Add Staff</button>
                     </div>
                     <div id="staffListContainer" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto;"></div>
+
+                    <!-- STAFF PERMISSION MATRIX (SECURITY & ROLES) -->
+                    <div style="margin-top:15px; background:var(--bg-body); padding:12px 16px; border-radius:8px; border:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <h4 style="margin:0; font-size:0.95em; color:var(--primary);"><i class="fa fa-shield-alt"></i> Staff Role Permission Matrix (Security & Controls)</h4>
+                            <small style="color:var(--text-muted);">Enforced when cashier logs in with staff PIN</small>
+                        </div>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:10px; font-size:0.88em; margin-bottom:10px;">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" id="set-staff-hide-cost" checked>
+                                <span>Hide Purchase Cost & Profit Margins</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" id="set-staff-disallow-del" checked>
+                                <span>Disallow Deleting Bills (Requires Admin PIN)</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" id="set-staff-hide-suppliers" checked>
+                                <span>Hide Supplier Purchases & Ledgers</span>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" id="set-staff-disallow-price-edit" checked>
+                                <span>Disallow Direct Price Editing in Checkout</span>
+                            </label>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px; font-size:0.88em; border-top:1px dashed var(--border-color); padding-top:8px;">
+                            <span>Max Discount Allowed for Staff without Admin Authorization:</span>
+                            <div style="display:inline-flex; align-items:center; gap:4px;">
+                                <input type="number" id="set-staff-max-disc" value="10" min="0" max="100" style="width:65px; padding:4px; text-align:right;">
+                                <b>%</b>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="container">
@@ -1273,6 +1314,21 @@
                 <div class="form-group" style="grid-column: span 2;"><label>Design Notes / Instructions</label><textarea id="jcNotes" rows="2" placeholder="e.g. Matte black skin, keep apple logo cut..."></textarea></div>
                 <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="jcAdvance" oninput="calcJcDue()"></div>
                 <div class="form-group"><label>Pending Due (₹)</label><input type="number" id="jcDue" disabled style="background:var(--border-color); font-weight:bold; color:red;"></div>
+
+                <div class="form-group" style="grid-column: span 2; background:var(--bg-body); padding:10px 12px; border-radius:8px; border:1px dashed var(--border-color); margin-top:5px;">
+                    <label style="font-weight:bold; font-size:0.9em;"><i class="fa fa-image"></i> Artwork / Custom Photo Attachment</label>
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+                        <input type="file" id="jcArtworkFile" accept="image/*" style="display:none;" onchange="handleJobArtworkUpload(event)">
+                        <button type="button" class="btn btn-blue" style="padding:6px 12px; font-size:0.85em; white-space:nowrap;" onclick="document.getElementById('jcArtworkFile').click()">📁 Upload Design / Photo</button>
+                        <input type="text" id="jcArtworkUrl" placeholder="Or paste image URL (http...)" style="flex:1; padding:6px; font-size:0.85em;" oninput="updateJobArtworkPreview()">
+                        <button type="button" class="btn btn-gray" style="padding:6px 10px;" onclick="clearJobArtwork()">✕ Clear</button>
+                    </div>
+                    <div id="jcArtworkPreviewBox" style="display:none; margin-top:8px; display:flex; align-items:center; gap:10px;">
+                        <img id="jcArtworkPreviewImg" src="" style="width:75px; height:75px; object-fit:cover; border-radius:8px; border:1px solid var(--border-color);">
+                        <small style="color:var(--text-muted);">Artwork ready. Machine operator can view and download full-resolution image from Job Cards table.</small>
+                    </div>
+                </div>
+
             </div>
             <button class="btn btn-blue" style="width:100%; margin-top:10px;" onclick="saveJobCard()">Save & Print Job Card</button><br><br>
             <button class="btn btn-gray" style="width:100%" onclick="closeModals()">Cancel</button>
@@ -1691,7 +1747,16 @@
         <div class="modal-box">
             <h3>Product Info</h3>
             <div class="form-group"><label>Name</label><input type="text" id="pName"></div>
-            <div class="form-group"><label>Barcode / SKU (Optional)</label><input type="text" id="pBarcode" placeholder="Scan or type barcode..."></div>
+            <div class="form-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">Barcode / SKU (Optional)</label>
+                    <button type="button" class="btn btn-outline" onclick="generateSingleProductBarcode()" style="padding:2px 8px; font-size:0.75em; border:1px solid #4f46e5; color:#4f46e5; background:var(--bg-body); cursor:pointer; font-weight:600;" title="Click to auto-generate unique Barcode / SKU">⚡ Auto Generate</button>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="pBarcode" placeholder="Scan or type barcode..." style="flex:1;">
+                    <button type="button" class="btn btn-blue" onclick="generateSingleProductBarcode()" style="padding:6px 12px; font-size:0.85em; background:#4f46e5; border:none; color:white; cursor:pointer;" title="Auto 1-Click Barcode / SKU">⚡ Auto</button>
+                </div>
+            </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group"><label>Category</label><select id="pCat"></select></div>
                 <div class="form-group"><label>Supplier</label><select id="pSupplier"></select></div>
@@ -1988,111 +2053,7 @@
 
 
     
-    <!-- 1. PUBLIC LIVE ORDER TRACKING SCREEN (STANDALONE FULLSCREEN FOR CUSTOMERS) -->
-    <div id="publicOrderTrackerScreen">
-        <div class="tracker-card">
-            <div class="tracker-header">
-                <h2 id="pt-shop-name" style="margin:0; font-size:1.6em; font-weight:900; letter-spacing:1px;">LAMINATION HUB</h2>
-                <p id="pt-shop-city" style="margin:4px 0 0; font-size:0.9em; opacity:0.9;">Live Order & Production Status</p>
-            </div>
-            
-            <div class="tracker-body">
-                <!-- Search Box (if accessed without ID or order not found) -->
-                <div id="pt-search-box" style="display:none; margin-bottom:20px; background:#0f172a; padding:15px; border-radius:10px;">
-                    <label style="font-size:0.85em; color:#94a3b8; display:block; margin-bottom:6px;">Look up your order status:</label>
-                    <div style="display:flex; gap:8px;">
-                        <input type="text" id="pt-search-input" placeholder="Enter Bill / Order # (e.g. 123456)" style="flex:1; padding:10px; border-radius:6px; border:1px solid #334155; background:#1e293b; color:white;">
-                        <button class="btn btn-blue" onclick="searchPublicTracker()">Search</button>
-                    </div>
-                </div>
 
-                <div id="pt-order-details">
-                    <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid #334155; padding-bottom:12px; margin-bottom:18px;">
-                        <div>
-                            <span style="font-size:0.8em; color:#94a3b8; text-transform:uppercase;">Order Number</span>
-                            <h3 id="pt-order-id" style="margin:2px 0 0; color:#f97316; font-size:1.3em;">#---</h3>
-                        </div>
-                        <div style="text-align:right;">
-                            <span style="font-size:0.8em; color:#94a3b8;">Order Placed</span>
-                            <div id="pt-order-date" style="font-size:0.9em; font-weight:600;">--</div>
-                        </div>
-                    </div>
-
-                    <div style="background:#0f172a; padding:12px 16px; border-radius:10px; margin-bottom:20px;">
-                        <div style="font-size:0.85em; color:#94a3b8;">Customer: <b id="pt-cust-name" style="color:#f8fafc;">--</b></div>
-                        <div style="font-size:0.95em; color:#f8fafc; font-weight:bold; margin-top:4px;" id="pt-item-name">Custom Order</div>
-                    </div>
-
-                    <!-- STEPPER -->
-                    <div class="tracker-stepper" id="pt-stepper">
-                        <!-- Injected dynamically based on whether it is a Job Card or Retail Order -->
-                    </div>
-
-                    <!-- STATUS HIGHLIGHT BANNER -->
-                    <div id="pt-status-banner" style="background:rgba(249,115,22,0.12); border:1px solid #f97316; border-radius:12px; padding:15px; text-align:center; margin-bottom:24px;">
-                        <div id="pt-status-title" style="font-size:1.15em; font-weight:bold; color:#f97316; margin-bottom:4px;">In Production 🖨️</div>
-                        <p id="pt-status-desc" style="margin:0; font-size:0.85em; color:#cbd5e1;">Your custom mobile skin / print is currently on the machine.</p>
-                    </div>
-
-                    <!-- FINANCIAL SUMMARY -->
-                    <div style="background:#0f172a; border-radius:10px; padding:15px; margin-bottom:20px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.9em;">
-                            <span style="color:#94a3b8;">Total Order Amount:</span>
-                            <span id="pt-total-amt" style="font-weight:bold;">₹0.00</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.9em;">
-                            <span style="color:#94a3b8;">Advance Paid:</span>
-                            <span id="pt-advance-amt" style="color:#10b981; font-weight:bold;">₹0.00</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px dashed #334155; font-size:1.05em;">
-                            <span style="color:#f87171; font-weight:bold;">Pending on Pickup:</span>
-                            <span id="pt-due-amt" style="color:#f87171; font-weight:bold;">₹0.00</span>
-                        </div>
-                        <div id="pt-upi-box" style="display:none; margin-top:12px; text-align:center; padding-top:10px; border-top:1px solid #334155;">
-                            <a id="pt-upi-link" href="#" class="btn btn-green" style="display:inline-block; padding:8px 16px; font-size:0.9em; text-decoration:none;">💸 Pay Pending via UPI</a>
-                        </div>
-                    </div>
-
-                    <!-- CONTACT & SHOP INFO -->
-                    <div style="display:flex; gap:10px;">
-                        <a id="pt-wa-btn" href="#" target="_blank" class="btn btn-green" style="flex:1; text-align:center; text-decoration:none; padding:10px; font-size:0.9em;">💬 WhatsApp Shop</a>
-                        <a id="pt-call-btn" href="#" class="btn btn-blue" style="flex:1; text-align:center; text-decoration:none; padding:10px; font-size:0.9em;">📞 Call Shop</a>
-                    </div>
-                </div>
-
-                <div style="text-align:center; margin-top:30px; font-size:0.8em; color:#64748b;">
-                    <p style="margin:0 0 8px;">Lamination Hub Order Tracking System</p>
-                    <button onclick="closePublicTracker()" style="background:none; border:none; color:#94a3b8; text-decoration:underline; cursor:pointer; font-size:0.9em;">🔐 Staff / Admin Login</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. IN-APP ORDER TRACKER & SHARE MODAL -->
-    <div id="orderTrackerModal" class="modal-bg">
-        <div class="modal-box" style="max-width:480px; text-align:center;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h3 style="margin:0;">🔗 Live Order Tracking Link</h3>
-                <button class="btn btn-gray" onclick="closeModals()" style="padding:4px 10px;">✕</button>
-            </div>
-            <p style="font-size:0.85em; color:var(--text-muted); margin-bottom:15px;">Share this private tracking link with the customer so they can track production status live.</p>
-
-            <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px; text-align:left;">
-                <div style="font-size:0.8em; color:var(--text-muted); margin-bottom:3px;">ORDER NUMBER:</div>
-                <div id="otm-order-id" style="font-size:1.1em; font-weight:bold; color:var(--primary); margin-bottom:8px;">#---</div>
-                <div style="font-size:0.8em; color:var(--text-muted); margin-bottom:3px;">TRACKING URL:</div>
-                <input type="text" id="otm-url-input" readonly style="width:100%; font-size:0.85em; font-family:monospace; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-card); color:var(--text-main);" onclick="this.select()">
-            </div>
-
-            <div id="otm-qrcode" style="display:flex; justify-content:center; margin:15px 0;"></div>
-
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-green" style="flex:1;" onclick="sendTrackingLinkWAFromModal()">📱 Share on WhatsApp</button>
-                <button class="btn btn-blue" style="flex:1;" onclick="copyTrackingUrl()">📋 Copy Link</button>
-            </div>
-            <button class="btn btn-gray" style="width:100%; margin-top:10px;" onclick="closeModals()">Close</button>
-        </div>
-    </div>
 
     <!-- 3. HELD / PARKED BILLS MODAL -->
     <div id="heldBillsModal" class="modal-bg">
@@ -2237,6 +2198,116 @@
                     </thead>
                     <tbody id="dueRemindersTableBody"></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+
+    
+    <!-- 1. ARTWORK / MOCKUP VIEWER MODAL -->
+    <div id="artworkViewerModal" class="modal-bg">
+        <div class="modal-box modal-box-large" style="max-width:650px; text-align:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+                <div style="text-align:left;">
+                    <h3 id="avm-title" style="margin:0; font-size:1.2em;">Job Card Artwork</h3>
+                    <small id="avm-meta" style="color:var(--text-muted);">Customer: -- | Device: --</small>
+                </div>
+                <button class="btn btn-gray" onclick="closeModals()" style="padding:4px 10px;">✕ Close</button>
+            </div>
+
+            <div style="background:#0f172a; padding:12px; border-radius:10px; margin-bottom:15px; display:flex; justify-content:center; align-items:center; min-height:250px;">
+                <img id="avm-img" src="" style="max-width:100%; max-height:55vh; object-fit:contain; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button class="btn btn-blue" id="avm-download-btn" onclick="downloadActiveArtwork()">📥 Download Artwork for Print</button>
+                <button class="btn btn-gray" onclick="closeModals()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. BARCODE PRICE STICKER LABEL SHEET GENERATOR MODAL -->
+    <div id="barcodeSheetModal" class="modal-bg">
+        <div class="modal-box modal-box-large" style="max-width:850px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+                <div>
+                    <h3 style="margin:0;">🏷️ Barcode Price Sticker Label Sheet Generator</h3>
+                    <small style="color:var(--text-muted);">Print sheets of barcode price tags on sticky paper or thermal rolls</small>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn btn-outline" onclick="autoGenerateAllBarcodes()" style="font-size:0.78em; padding:4px 8px; border:1px solid #4f46e5; color:#4f46e5; font-weight:700; cursor:pointer;" title="Auto-generate Barcode / SKU for all products">⚡ Auto Barcode / SKU (All)</button>
+                    <button class="btn btn-gray" onclick="closeModals()" style="padding:4px 10px;">✕ Close</button>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px; background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                <div class="form-group" style="margin:0;">
+                    <label style="font-weight:bold; font-size:0.85em;">Select Product</label>
+                    <select id="bsm-product-select" onchange="renderBarcodeSheetPreview()" style="width:100%;"></select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-weight:bold; font-size:0.85em;">Sheet / Roll Format</label>
+                    <select id="bsm-layout-select" onchange="renderBarcodeSheetPreview()" style="width:100%;">
+                        <option value="a4_24">A4 Sticky Sheet (24 Labels - 3x8 Grid)</option>
+                        <option value="a4_40">A4 Sticky Sheet (40 Labels - 4x10 Grid)</option>
+                        <option value="thermal_50x25">Thermal Roll (50mm x 25mm)</option>
+                        <option value="thermal_38x25">Thermal Roll (38mm x 25mm Mini)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-weight:bold; font-size:0.85em;">Number of Copies / Stickers</label>
+                    <input type="number" id="bsm-copies" value="24" min="1" max="200" oninput="renderBarcodeSheetPreview()" style="width:100%;">
+                </div>
+            </div>
+
+            <div style="display:flex; gap:12px; margin-bottom:12px; font-size:0.85em; flex-wrap:wrap;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="bsm-show-shop" checked onchange="renderBarcodeSheetPreview()"> Show Shop Name</label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="bsm-show-price" checked onchange="renderBarcodeSheetPreview()"> Show Price / MRP (₹)</label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="bsm-show-name" checked onchange="renderBarcodeSheetPreview()"> Show Product Name</label>
+            </div>
+
+            <!-- LIVE PREVIEW CONTAINER -->
+            <div style="max-height:360px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px; padding:10px; background:var(--bg-body);">
+                <div id="barcodeSheetPreviewContainer"></div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+                <span id="bsm-summary-text" style="font-size:0.85em; color:var(--text-muted);">Ready to print 24 labels</span>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-blue" onclick="executeBarcodeSheetPrint()">🖨️ Print Label Sheet</button>
+                    <button class="btn btn-gray" onclick="closeModals()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. PRO CASHIER HOTKEYS CHEAT SHEET MODAL -->
+    <div id="hotkeysModal" class="modal-bg">
+        <div class="modal-box" style="max-width:500px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+                <h3 style="margin:0;">⌨️ Pro Cashier Keyboard Shortcuts (Hotkeys)</h3>
+                <button class="btn btn-gray" onclick="closeModals()" style="padding:4px 10px;">✕</button>
+            </div>
+            <p style="font-size:0.85em; color:var(--text-muted); margin-bottom:15px;">Operate counter billing with lightning speed without touching the mouse.</p>
+
+            <table class="app-table" style="font-size:0.88em; margin:0;">
+                <thead>
+                    <tr><th>Shortcut Key</th><th>Action / Command</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><kbd style="background:var(--bg-body); padding:2px 6px; border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">F1</kbd></td><td>Focus Search & Scan Barcode</td></tr>
+                    <tr><td><kbd style="background:var(--bg-body); padding:2px 6px; border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">F2</kbd></td><td>Complete Sale in Cash & Print</td></tr>
+                    <tr><td><kbd style="background:var(--bg-body); padding:2px 6px; border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">F3</kbd></td><td>Complete Sale via UPI & Print</td></tr>
+                    <tr><td><kbd style="background:var(--bg-body); padding:2px 6px; border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">F4</kbd></td><td>Hold / Park Current Bill</td></tr>
+                    <tr><td><kbd style="background:var(--bg-body); padding:2px 6px; border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">F7</kbd></td><td>Open Parked Bills List</td></tr>
+                    <tr><td><kbd style="background:var(--bg-body); padding:2px 6px; border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">F8</kbd></td><td>Open Quick Bill Calculator</td></tr>
+                    <tr><td><kbd style="background:var(--bg-body); padding:2px 6px; border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">F9</kbd></td><td>Open Camera Barcode Scanner</td></tr>
+                    <tr><td><kbd style="background:var(--bg-body); padding:2px 6px; border:1px solid var(--border-color); border-radius:4px; font-weight:bold;">Esc</kbd></td><td>Close Active Modal / Reset</td></tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top:15px; text-align:right;">
+                <button class="btn btn-gray" onclick="closeModals()">Got It</button>
             </div>
         </div>
     </div>
@@ -2781,7 +2852,16 @@
                 updateGstInvoicePreview();
             }
 
+            if (document.getElementById('set-staff-hide-cost')) {
+                document.getElementById('set-staff-hide-cost').checked = settings.staffHideCost === true;
+                document.getElementById('set-staff-disallow-del').checked = settings.staffDisallowDel !== false;
+                document.getElementById('set-staff-hide-suppliers').checked = settings.staffHideSuppliers !== false;
+                document.getElementById('set-staff-disallow-price-edit').checked = settings.staffDisallowPriceEdit === true;
+                document.getElementById('set-staff-max-disc').value = settings.staffMaxDisc !== undefined ? settings.staffMaxDisc : 10;
+            }
+
             renderTaxDropdown(); renderStaffList();
+            applyStaffPermissions();
             
             const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers', 'nav-reseller-orders', 'nav-reports'];
             adminTabs.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
@@ -2789,7 +2869,6 @@
             updateHeldBillsBadge();
             renderPosCouponChips();
             renderCouponsList();
-            checkUrlTrackingHash();
             if (userRole === 'staff') switchTab('pos'); else refreshDisplays();
         }
 
@@ -2989,12 +3068,12 @@
             if (badge) badge.innerText = `Showing ${filteredInventory.length} of ${inventory.length} products`;
 
             document.getElementById('inventoryTableBody').innerHTML = filteredInventory.map(i => {
-                let btns = `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="printBarcodeLabel('${i.id}')">🖨️ Barcode</button>`;
+                let btns = `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="printBarcodeLabel('${i.id}')">🖨️ Barcode</button><button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em; margin:0 3px;" onclick="openBarcodeSheetModal('${i.id}')" title="Print Barcode Stickers">🏷️ Stickers</button>`;
                 if(userRole === 'admin') btns += `<button class="btn btn-gray" style="color:var(--primary); padding: 4px 8px; font-size:0.8em; margin:0 4px;" onclick="editProduct('${i.id}')">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('inv', '${i.id}')">Del</button>`;
                 return `<tr class="${i.stock <= 0 ? 'low-stock' : ''}">
                     <td><b>${i.name}</b><br><small style="color:var(--text-muted);">${i.brand||''} ${i.barcode ? '| ' + i.barcode : ''}</small></td>
                     <td>${i.category||'General'}</td><td>${i.supplier||'--'}</td>
-                    <td><small style="color:var(--text-muted);">Buy: ₹${i.purchasePrice||0}</small><br><b>Sell: ₹${i.price}</b></td>
+                    <td><small style="color:var(--text-muted);">Buy: <span class="cost-price-data">₹${i.purchasePrice||0}</span><span class="cost-price-masked" style="display:none; font-weight:bold; color:#94a3b8;">***</span></small><br><b>Sell: ₹${i.price}</b></td>
                     <td><b style="${i.stock <= 0 ? 'color:red;' : (i.stock <= 5 ? 'color:#d97706;' : '')}">${i.stock} ${i.unit||'pcs'}</b></td>
                     <td>${btns}</td>
                 </tr>`;
@@ -3104,19 +3183,21 @@
                         btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="openReadyNotifyModal('${s.id}')">📱 Notify</button>`;
                     }
                     btns += `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️ View</button>`;
-                    btns += `<button class="btn btn-dark" style="padding: 4px 8px; font-size:0.8em;" onclick="openOrderTracker('${s.id}')" title="Live Tracking">🔗 Track</button>`;
-                    btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="sendOrderTrackingWA('${s.id}')" title="Send Tracking Link via WhatsApp">📱 Link</button>`;
                     if(userRole === 'admin') {
                         btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em;" onclick="editSale('${s.id}')">✏️ Edit</button>`;
                         btns += `<button class="btn btn-danger" style="padding: 4px 8px; font-size:0.8em;" onclick="deleteSale('${s.id}')">🗑️ Del</button>`;
                     }
                     btns += `</div>`;
                     
+                    let artworkThumb = s.jobArtwork 
+                        ? `<img src="${s.jobArtwork}" class="jc-artwork-thumb" onclick="viewArtworkModal('${s.id}')" title="Click to view & download artwork" style="width:36px; height:36px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;">` 
+                        : `<span style="color:var(--text-muted); font-size:0.8em; font-style:italic;">None</span>`;
                     return `<tr>
                         <td><b>JC-${s.id.slice(-4)}</b></td>
                         <td>${s.jobExpDate ? new Date(s.jobExpDate).toLocaleDateString() : '--'}</td>
                         <td>${s.cust}<br><small>📱 ${s.phone || '--'}</small></td>
                         <td><b>${s.jobDevice}</b></td>
+                        <td align="center">${artworkThumb}</td>
                         <td><small>${s.jobNotes || '--'}</small></td>
                         <td><span style="background:var(--border-color); color:${statusColor}; padding:2px 6px; border-radius:4px; font-weight:bold;">${status}</span></td>
                         <td>₹${s.total.toFixed(2)}</td>
@@ -3160,8 +3241,6 @@
                     if (nextStatus) btns += `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em;" onclick="updateOrderStatus('${s.id}', '${nextStatus}')">Mark ${nextStatus}</button>`;
                     if (status === 'Ready') btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="openReadyNotifyModal('${s.id}')">📱 Notify</button>`;
                     btns += `<button class="btn btn-gray" style="padding: 4px 8px; font-size:0.8em;" onclick="viewPastBill('${s.id}')">👁️</button>`;
-                    btns += `<button class="btn btn-dark" style="padding: 4px 8px; font-size:0.8em;" onclick="openOrderTracker('${s.id}')" title="Live Tracking">🔗 Track</button>`;
-                    btns += `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em;" onclick="sendOrderTrackingWA('${s.id}')" title="Send Tracking Link via WhatsApp">📱 Link</button>`;
                     btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em;" onclick="requestGoogleReview('${s.id}')" title="Request Review">⭐</button>`;
                     btns += `</div>`;
                     
@@ -3285,6 +3364,7 @@
 
             filterCustomerDropdown();
             saveToStorage();
+            applyStaffPermissions();
         }
 
         // ----------------------------------------------------
@@ -3695,12 +3775,15 @@
             if(!device || total <= 0) return alert("Please enter device and total price.");
 
             let saleId = (Date.now()).toString().slice(-6);
+            let artUrl = (document.getElementById('jcArtworkUrl') ? document.getElementById('jcArtworkUrl').value.trim() : '');
+            let finalArtwork = tempJobArtwork || artUrl || '';
             let newJob = {
                 id: saleId,
                 isJobCard: true,
                 jobDevice: device,
                 jobExpDate: expDate,
                 jobNotes: notes,
+                jobArtwork: finalArtwork,
                 date: new Date().toLocaleString(),
                 cust: c.name,
                 phone: c.phone,
@@ -3723,7 +3806,7 @@
             sales.push(newJob);
             if(c) { c.spent += total; c.due = (c.due || 0) + due; c.points = (c.points || 0) + newJob.earnedPoints; }
 
-            saveToStorage(); refreshDisplays(); closeModals();
+            saveToStorage(); refreshDisplays(); closeModals(); clearJobArtwork();
             generateReceiptHTML(newJob);
             setTimeout(() => { executePrint(); }, 350);
         }
@@ -4002,6 +4085,20 @@
                 return `<tr><td style="color:red; cursor:pointer;" onclick="removeFromCart('${i.id}')">✕</td><td>${i.name} <div style="display:inline-flex; align-items:center; gap:5px; margin-left:8px; background:var(--bg-body); padding:2px 4px; border-radius:4px; border:1px solid var(--border-color);"><span style="cursor:pointer; padding:0 6px; font-weight:bold; user-select:none;" onclick="decreaseQty('${i.id}')">-</span><span style="font-size:0.9em; font-weight:bold; min-width:15px; text-align:center;">${i.qty}</span><span style="cursor:pointer; padding:0 6px; font-weight:bold; user-select:none;" onclick="increaseQty('${i.id}')">+</span></div></td><td align="right">₹${(i.price*i.qty).toFixed(2)}</td></tr>`;
             }).join('');
             let discInput = parseFloat(document.getElementById('posDiscount').value) || 0;
+            if (userRole === 'staff' && settings.staffMaxDisc !== undefined && settings.staffMaxDisc >= 0) {
+                let discType = document.getElementById('posDiscountType').value;
+                let discPct = discType === 'percent' ? discInput : (subtotal > 0 ? (discInput / subtotal) * 100 : 0);
+                if (discPct > settings.staffMaxDisc) {
+                    alert(`Staff discount limit is ${settings.staffMaxDisc}%. Capping discount to allowed limit.`);
+                    if (discType === 'percent') {
+                        discInput = settings.staffMaxDisc;
+                        document.getElementById('posDiscount').value = settings.staffMaxDisc;
+                    } else {
+                        discInput = (subtotal * settings.staffMaxDisc) / 100;
+                        document.getElementById('posDiscount').value = discInput.toFixed(2);
+                    }
+                }
+            }
             let discount = document.getElementById('posDiscountType').value === 'percent' ? (subtotal * (discInput / 100)) : discInput;
             let loyaltyUsed = Math.min(parseFloat(document.getElementById('posLoyalty').value) || 0, c ? c.points||0 : 0);
             let taxRate = parseFloat(document.getElementById('posTax').value) || settings.taxRate || 0;
@@ -4023,6 +4120,17 @@
             let c = customers.find(x => String(x.id) === String(cid));
             let saleId = getNextInvoiceNumber();
             let payMode = document.getElementById('posPayMode').value;
+            let splitCash = 0, splitUpi = 0;
+            if (payMode === 'Split') {
+                splitCash = parseFloat(document.getElementById('posSplitCash')?.value) || 0;
+                splitUpi = parseFloat(document.getElementById('posSplitUpi')?.value) || 0;
+                let paidNow = document.getElementById('posAdvance').value !== "" ? (parseFloat(document.getElementById('posAdvance').value) || 0) : total;
+                if (Math.abs((splitCash + splitUpi) - paidNow) > 1) {
+                    if (!confirm(`Split payment sum (₹${(splitCash + splitUpi).toFixed(2)}) does not match paid amount (₹${paidNow.toFixed(2)}). Continue anyway?`)) {
+                        return;
+                    }
+                }
+            }
             let isReseller = c && c.type === 'Reseller';
             
             let newSale = { 
@@ -4037,6 +4145,8 @@
                 cashier: currentStaffName, 
                 returned: false, 
                 payMode: payMode,
+                splitCash: payMode === 'Split' ? splitCash : 0,
+                splitUpi: payMode === 'Split' ? splitUpi : 0,
                 isResellerOrder: isReseller
             };
 
@@ -4055,7 +4165,17 @@
             else { sendWhatsApp(saleId); resetCart(); refreshDisplays(); }
         }
 
-        function resetCart() { cart = []; document.getElementById('posDiscount').value = ''; document.getElementById('posAdvance').value = ''; removeAppliedCoupon(); updateCart(); }
+        function resetCart() { 
+            cart = []; 
+            document.getElementById('posDiscount').value = ''; 
+            document.getElementById('posAdvance').value = ''; 
+            removeAppliedCoupon(); 
+            if (document.getElementById('posPayMode')) {
+                document.getElementById('posPayMode').value = 'Cash';
+                handlePayModeChange();
+            }
+            updateCart(); 
+        }
 
         // PRINT TEMPLATE
         function generateReceiptHTML(s) {
@@ -4111,6 +4231,7 @@
                         <p style="margin: 2px 0;">Date: ${printDate}</p>
                         <p style="margin: 2px 0;">Cust: ${s.cust}</p>
                         ${showStaff ? `<p style="margin: 2px 0;">Cashier: ${s.cashier || 'Admin'}</p>` : ''}
+                        ${s.payMode === 'Split' ? `<p style="margin: 2px 0; font-weight:bold;">Paid via: SPLIT (Cash ₹${(s.splitCash||0).toFixed(2)} + UPI ₹${(s.splitUpi||0).toFixed(2)})</p>` : `<p style="margin: 2px 0;">Paid via: ${s.payMode || 'Cash'}</p>`}
                     </div>
                     <div style="border-bottom: 1px dashed #000; margin-bottom: 5px; margin-top: 5px;"></div>
                     <table style="width: 100%; border-collapse: collapse; font-size: ${fontSize};">
@@ -4292,6 +4413,12 @@
                                 <div class="flex justify-between items-center"><span class="flex items-center gap-2">💵 CASH</span> <input type="checkbox" class="w-4 h-4" ${cashChecked}/></div>
                                 <div class="flex justify-between items-center"><span class="flex items-center gap-2">📱 UPI</span> <input type="checkbox" class="w-4 h-4" ${upiChecked}/></div>
                                 <div class="flex justify-between items-center"><span class="flex items-center gap-2">💳 CARD</span> <input type="checkbox" class="w-4 h-4" ${cardChecked}/></div>
+                                ${s.payMode === 'Split' ? `
+                                <div style="background:#fef3c7; border:1px solid #f59e0b; border-radius:4px; padding:4px 6px; margin-top:4px; font-size:10px; width:140px;">
+                                    <div style="font-weight:bold; color:#b45309;">SPLIT PAYMENT</div>
+                                    <div>💵 Cash: ₹${(s.splitCash || 0).toFixed(2)}</div>
+                                    <div>📱 UPI: ₹${(s.splitUpi || 0).toFixed(2)}</div>
+                                </div>` : ''}
                             </div>
                             ${termsBlock}
                         </div>
@@ -4371,7 +4498,8 @@
             if (discount > 0) { msg += `Subtotal: ₹${subTotal.toFixed(2)}\nDiscount: -₹${discount.toFixed(2)}\n`; }
             msg += `Advance Paid: ₹${advance.toFixed(2)}\n`;
             if (s.due > 0) { msg += `Pending Amount: ₹${s.due.toFixed(2)}\n`; }
-            msg += `Pay Mode: ${s.payMode || 'Cash'}\n*Grand Total: ₹${s.total.toFixed(2)}*\n${upiText}\nThank you for your business!${reviewText}${instaText}`;
+            let payModeText = s.payMode === 'Split' ? `Split (Cash ₹${(s.splitCash || 0).toFixed(2)} + UPI ₹${(s.splitUpi || 0).toFixed(2)})` : (s.payMode || 'Cash');
+            msg += `Pay Mode: ${payModeText}\n*Grand Total: ₹${s.total.toFixed(2)}*\n${upiText}\nThank you for your business!${reviewText}${instaText}`;
 
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
@@ -4594,6 +4722,13 @@
         }
 
         function deleteSale(id, skipConfirm = false) {
+            if (userRole === 'staff' && settings.staffDisallowDel !== false) {
+                let p = prompt("Admin Authorization Required: Enter Admin PIN/Password to delete this bill:");
+                if (p !== appPass) {
+                    alert("Permission Denied: Staff cannot delete bills without Admin authorization.");
+                    return false;
+                }
+            }
             if (!skipConfirm && !confirm("WARNING: This will completely delete the bill, return the items to your inventory stock, and reverse the customer's balances. Continue?")) return false;
             
             let sIndex = sales.findIndex(x => x.id === id);
@@ -4889,6 +5024,13 @@
         function closeModals() { editingProductId = null; editingCustomerId = null; editingSupplierId = null; activeLedgerSupId = null; document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none'); closeScanner(); }
         
         function deleteItem(t, id) { 
+            if (userRole === 'staff' && settings.staffDisallowDel !== false) {
+                let p = prompt("Admin Authorization Required: Enter Admin PIN/Password to delete:");
+                if (p !== appPass) {
+                    alert("Permission Denied: Staff cannot delete records without Admin authorization.");
+                    return;
+                }
+            }
             if(confirm("Delete item permanently?")) { 
                 deletedItems.push(id); 
                 if(t==='inv') inventory = inventory.filter(i=>String(i.id)!==String(id)); 
@@ -4931,7 +5073,15 @@
                 settings.autoIncludeReviewWa = document.getElementById('set-auto-review-wa').checked;
             }
 
-            logAudit('SETTINGS', 'Updated business profile & invoice customization settings');
+            if (document.getElementById('set-staff-hide-cost')) {
+                settings.staffHideCost = document.getElementById('set-staff-hide-cost').checked;
+                settings.staffDisallowDel = document.getElementById('set-staff-disallow-del').checked;
+                settings.staffHideSuppliers = document.getElementById('set-staff-hide-suppliers').checked;
+                settings.staffDisallowPriceEdit = document.getElementById('set-staff-disallow-price-edit').checked;
+                settings.staffMaxDisc = parseFloat(document.getElementById('set-staff-max-disc').value) || 0;
+            }
+
+            logAudit('SETTINGS', 'Updated business profile & staff permissions');
             saveToStorage(); alert("Settings saved successfully!"); initApp();
         }
         function exportData() { const b = new Blob([JSON.stringify({ pass: appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Backup.json'; a.click(); }
@@ -5921,175 +6071,7 @@
             { code: 'FESTIVE10', type: 'percent', val: 10, minOrder: 200, maxDisc: 100, active: true, timesUsed: 0 }
         ];
         let currentAppliedCoupon = null;
-        let activeTrackingOrderId = null;
-
-        // ----------------------------------------------------
-        // 1. CUSTOMER LIVE ORDER TRACKING LINK & STANDALONE PAGE
-        // ----------------------------------------------------
-        function getPublicTrackingUrl(orderId) {
-            let base = window.location.href.split('#')[0].split('?')[0];
-            return `${base}#track=${encodeURIComponent(orderId)}`;
-        }
-
-        function checkUrlTrackingHash() {
-            let hash = window.location.hash || '';
-            if (hash.startsWith('#track=')) {
-                let orderId = decodeURIComponent(hash.replace('#track=', '').trim());
-                openPublicTracker(orderId);
-            }
-        }
-        window.addEventListener('hashchange', checkUrlTrackingHash);
-
-        function openPublicTracker(orderId) {
-            let s = sales.find(x => x.id === orderId || x.id.endsWith(orderId) || String(x.id) === String(orderId));
-            
-            document.getElementById('pt-shop-name').innerText = (settings.name || 'LAMINATION HUB').toUpperCase();
-            document.getElementById('pt-shop-city').innerText = `${settings.city || 'Kurebhar'} | Ph: ${settings.phone || '8726195000'}`;
-
-            let screen = document.getElementById('publicOrderTrackerScreen');
-            screen.style.display = 'block';
-
-            if (!s) {
-                document.getElementById('pt-order-details').style.display = 'none';
-                document.getElementById('pt-search-box').style.display = 'block';
-                document.getElementById('pt-search-input').value = orderId;
-                return;
-            }
-
-            document.getElementById('pt-search-box').style.display = 'none';
-            document.getElementById('pt-order-details').style.display = 'block';
-
-            document.getElementById('pt-order-id').innerText = '#' + s.id;
-            document.getElementById('pt-order-date').innerText = (s.date || '').split(',')[0];
-            document.getElementById('pt-cust-name').innerText = s.cust || 'Customer';
-
-            let itemsStr = s.isJobCard ? (s.jobDevice || 'Custom Print Job') : (s.items || []).map(i => `${i.name} (x${i.qty})`).join(', ');
-            document.getElementById('pt-item-name').innerText = itemsStr;
-
-            let curStatus = s.orderStatus || (s.isJobCard ? 'Designing' : 'Pending');
-            let isJC = s.isJobCard === true;
-
-            // Stepper stages
-            let stages = isJC ? [
-                { id: 'Designing', label: 'Designing 🎨', desc: 'Our design team is crafting your custom skin / artwork mockups.' },
-                { id: 'Printing', label: 'Printing 🖨️', desc: 'Your skin is in production on our high-precision printing machines.' },
-                { id: 'Ready', label: 'Ready for Pickup 🎉', desc: 'Your order has passed quality check and is READY to be picked up!' },
-                { id: 'Delivered', label: 'Delivered 📦', desc: 'Order completed and delivered. Thank you for your business!' }
-            ] : [
-                { id: 'Pending', label: 'Order Placed ⏳', desc: 'We have received your order and are preparing the items.' },
-                { id: 'Ready', label: 'Ready for Pickup 🎁', desc: 'Your order is packed and READY for collection at our shop!' },
-                { id: 'Delivered', label: 'Delivered 📦', desc: 'Order completed and handed over. Enjoy your product!' }
-            ];
-
-            let activeIdx = stages.findIndex(st => st.id.toLowerCase() === curStatus.toLowerCase());
-            if (activeIdx === -1) activeIdx = 0;
-
-            let stepperHTML = stages.map((st, idx) => {
-                let cls = 'tracker-step';
-                if (idx < activeIdx) cls += ' completed';
-                else if (idx === activeIdx) cls += ' active';
-                return `
-                    <div class="${cls}">
-                        <div class="tracker-step-circle">${idx < activeIdx ? '✓' : idx + 1}</div>
-                        <div class="tracker-step-label">${st.label}</div>
-                    </div>
-                `;
-            }).join('');
-            document.getElementById('pt-stepper').innerHTML = stepperHTML;
-
-            // Banner text
-            let activeStageObj = stages[activeIdx] || stages[0];
-            document.getElementById('pt-status-title').innerText = activeStageObj.label;
-            document.getElementById('pt-status-desc').innerText = activeStageObj.desc;
-
-            // Financials
-            document.getElementById('pt-total-amt').innerText = '₹' + (s.total || 0).toFixed(2);
-            let adv = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
-            document.getElementById('pt-advance-amt').innerText = '₹' + adv.toFixed(2);
-            document.getElementById('pt-due-amt').innerText = '₹' + (s.due || 0).toFixed(2);
-
-            // UPI Box if due > 0
-            let upiBox = document.getElementById('pt-upi-box');
-            if (s.due > 0) {
-                let upiId = settings.upiId || "8726195000@ybl";
-                let upiPayString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(settings.name)}&am=${s.due}&cu=INR`;
-                document.getElementById('pt-upi-link').href = upiPayString;
-                upiBox.style.display = 'block';
-            } else {
-                upiBox.style.display = 'none';
-            }
-
-            // Contact buttons
-            let cleanPhone = (settings.phone || '8726195000').replace(/\D/g, '');
-            document.getElementById('pt-wa-btn').href = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent('Hello ' + settings.name + ', I am inquiring about my order #' + s.id)}`;
-            document.getElementById('pt-call-btn').href = `tel:${settings.phone || '8726195000'}`;
-        }
-
-        function closePublicTracker() {
-            document.getElementById('publicOrderTrackerScreen').style.display = 'none';
-            if (window.location.hash.startsWith('#track=')) {
-                history.replaceState(null, null, window.location.pathname);
-            }
-        }
-
-        function searchPublicTracker() {
-            let val = document.getElementById('pt-search-input').value.trim();
-            if (!val) return alert("Please enter an order or bill number.");
-            openPublicTracker(val);
-        }
-
-        function openOrderTracker(orderId) {
-            activeTrackingOrderId = orderId;
-            let url = getPublicTrackingUrl(orderId);
-            document.getElementById('otm-order-id').innerText = '#' + orderId;
-            document.getElementById('otm-url-input').value = url;
-
-            let qrContainer = document.getElementById('otm-qrcode');
-            qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: url,
-                width: 128,
-                height: 128,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.M
-            });
-
-            document.getElementById('orderTrackerModal').style.display = 'flex';
-        }
-
-        function copyTrackingUrl() {
-            let el = document.getElementById('otm-url-input');
-            el.select();
-            navigator.clipboard.writeText(el.value);
-            alert("Order tracking link copied to clipboard!");
-        }
-
-        function sendOrderTrackingWA(orderId) {
-            let s = sales.find(x => x.id === orderId);
-            if (!s) return alert("Order not found.");
-            let cleanPhone = (s.phone || '').replace(/\D/g, '');
-            if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
-            if (cleanPhone.length < 10) return alert("Customer phone number is missing or invalid.");
-
-            let url = getPublicTrackingUrl(orderId);
-            let status = s.orderStatus || (s.isJobCard ? 'Designing' : 'Pending');
-            let itemDesc = s.isJobCard ? s.jobDevice : (s.items ? s.items.map(i=>i.name).join(', ') : 'Order');
-
-            let msg = `Hello ${s.cust}! 🌟\n\n`;
-            msg += `Your order *#${s.id}* (${itemDesc}) is currently: *${status}*.\n\n`;
-            msg += `📲 *Track live production & readiness status anytime here:*\n${url}\n\n`;
-            if (s.due > 0) msg += `Pending Balance on pickup: *₹${s.due.toFixed(2)}*\n`;
-            msg += `Thank you for choosing *${settings.name.toUpperCase()}*! 🙏`;
-
-            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
-        function sendTrackingLinkWAFromModal() {
-            if (activeTrackingOrderId) sendOrderTrackingWA(activeTrackingOrderId);
-        }
-
-        // ----------------------------------------------------
+         // ----------------------------------------------------
         // 2. HOLD / PARK BILL (DRAFTS) SYSTEM
         // ----------------------------------------------------
         function holdCurrentBill() {
@@ -6494,6 +6476,374 @@
                         </div>
                     `;
                 }).join('');
+        }
+
+
+        // ==========================================================
+        // === 5 NEW FEATURES: SPLIT PAY, ARTWORK, BARCODE SHEET, ===
+        // ===            HOTKEYS & STAFF PERMISSIONS             ===
+        // ==========================================================
+
+        let tempJobArtwork = '';
+        let activeViewerArtwork = '';
+        let activeViewerFilename = '';
+
+        // ----------------------------------------------------
+        // 1. SPLIT PAYMENT (CASH + UPI IN SAME BILL)
+        // ----------------------------------------------------
+        function handlePayModeChange() {
+            let mode = document.getElementById('posPayMode')?.value;
+            let splitRow = document.getElementById('posSplitInputsRow');
+            if (!splitRow) return;
+
+            if (mode === 'Split') {
+                splitRow.style.display = 'block';
+                let total = parseFloat(document.getElementById('grandTotal').innerText.replace('₹','')) || 0;
+                let half = Math.round(total / 2);
+                document.getElementById('posSplitCash').value = half;
+                document.getElementById('posSplitUpi').value = Math.max(0, total - half);
+            } else {
+                splitRow.style.display = 'none';
+            }
+        }
+
+        function calcSplitUpiFromCash() {
+            let total = parseFloat(document.getElementById('grandTotal').innerText.replace('₹','')) || 0;
+            let cash = parseFloat(document.getElementById('posSplitCash').value) || 0;
+            document.getElementById('posSplitUpi').value = Math.max(0, total - cash);
+        }
+
+        function calcSplitCashFromUpi() {
+            let total = parseFloat(document.getElementById('grandTotal').innerText.replace('₹','')) || 0;
+            let upi = parseFloat(document.getElementById('posSplitUpi').value) || 0;
+            document.getElementById('posSplitCash').value = Math.max(0, total - upi);
+        }
+
+        // ----------------------------------------------------
+        // 2. ARTWORK / PHOTO ATTACHMENT ON JOB CARDS
+        // ----------------------------------------------------
+        function handleJobArtworkUpload(e) {
+            let file = e.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(evt) {
+                let img = new Image();
+                img.onload = function() {
+                    let canvas = document.createElement('canvas');
+                    let maxDim = 800; // high quality for printing
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; } }
+                    else { if (h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; } }
+                    canvas.width = w; canvas.height = h;
+                    let ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    tempJobArtwork = canvas.toDataURL('image/jpeg', 0.88);
+
+                    let box = document.getElementById('jcArtworkPreviewBox');
+                    let prev = document.getElementById('jcArtworkPreviewImg');
+                    if (prev && box) {
+                        prev.src = tempJobArtwork;
+                        box.style.display = 'flex';
+                    }
+                    document.getElementById('jcArtworkUrl').value = '';
+                };
+                img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateJobArtworkPreview() {
+            let url = document.getElementById('jcArtworkUrl')?.value.trim();
+            let box = document.getElementById('jcArtworkPreviewBox');
+            let prev = document.getElementById('jcArtworkPreviewImg');
+            if (url && box && prev) {
+                prev.src = url;
+                box.style.display = 'flex';
+                tempJobArtwork = url;
+            }
+        }
+
+        function clearJobArtwork() {
+            tempJobArtwork = '';
+            let box = document.getElementById('jcArtworkPreviewBox');
+            let prev = document.getElementById('jcArtworkPreviewImg');
+            let fileInput = document.getElementById('jcArtworkFile');
+            let urlInput = document.getElementById('jcArtworkUrl');
+            if (box) box.style.display = 'none';
+            if (prev) prev.src = '';
+            if (fileInput) fileInput.value = '';
+            if (urlInput) urlInput.value = '';
+        }
+
+        function viewArtworkModal(jobId) {
+            let s = sales.find(x => x.id === jobId);
+            if (!s || !s.jobArtwork) return alert("No design/artwork attached to this job card.");
+
+            activeViewerArtwork = s.jobArtwork;
+            activeViewerFilename = `${(s.cust||'Customer').replace(/[^a-zA-Z0-9]/g, '_')}_${(s.jobDevice||'Job').replace(/[^a-zA-Z0-9]/g, '_')}_Artwork.jpg`;
+
+            document.getElementById('avm-title').innerText = `Artwork: ${s.jobDevice || 'Custom Job'}`;
+            document.getElementById('avm-meta').innerText = `Customer: ${s.cust || '--'} | Order #: ${s.id}`;
+            document.getElementById('avm-img').src = s.jobArtwork;
+
+            document.getElementById('artworkViewerModal').style.display = 'flex';
+        }
+
+        function downloadActiveArtwork() {
+            if (!activeViewerArtwork) return;
+            let a = document.createElement('a');
+            a.href = activeViewerArtwork;
+            a.download = activeViewerFilename || 'Job_Artwork.jpg';
+            a.click();
+        }
+
+        // ----------------------------------------------------
+        // 3. BARCODE PRICE STICKER LABEL SHEET GENERATOR
+        // ----------------------------------------------------
+        function openBarcodeSheetModal(prodId = null) {
+            let sel = document.getElementById('bsm-product-select');
+            if (sel) {
+                sel.innerHTML = '<option value="all">📦 All Inventory Products</option>' + 
+                    inventory.map(p => `<option value="${p.id}">${p.name} (₹${p.price})</option>`).join('');
+                if (prodId) sel.value = prodId;
+            }
+            renderBarcodeSheetPreview();
+            document.getElementById('barcodeSheetModal').style.display = 'flex';
+        }
+
+        function renderBarcodeSheetPreview() {
+            let selProd = document.getElementById('bsm-product-select')?.value || 'all';
+            let layout = document.getElementById('bsm-layout-select')?.value || 'a4_24';
+            let copies = parseInt(document.getElementById('bsm-copies')?.value) || 24;
+            let showShop = document.getElementById('bsm-show-shop')?.checked !== false;
+            let showPrice = document.getElementById('bsm-show-price')?.checked !== false;
+            let showName = document.getElementById('bsm-show-name')?.checked !== false;
+
+            let targetItems = [];
+            if (selProd === 'all') {
+                targetItems = inventory.slice(0, copies);
+            } else {
+                let found = inventory.find(p => String(p.id) === String(selProd));
+                if (found) {
+                    for (let i = 0; i < copies; i++) targetItems.push(found);
+                }
+            }
+
+            if (targetItems.length === 0) targetItems = inventory.slice(0, 1);
+
+            let container = document.getElementById('barcodeSheetPreviewContainer');
+            if (!container) return;
+
+            let cols = layout === 'a4_40' ? 4 : (layout.startsWith('thermal') ? 1 : 3);
+            let gridCls = layout.startsWith('thermal') ? 'barcode-sheet-grid-thermal' : 'barcode-sheet-grid-a4';
+
+            container.innerHTML = `
+                <div style="display:grid; grid-template-columns: repeat(${cols}, 1fr); gap:6px;">
+                    ${targetItems.map((item, idx) => {
+                        let bVal = item.barcode || item.id;
+                        let shopTitle = showShop ? `<div style="font-size:8px; font-weight:bold; letter-spacing:0.5px; text-transform:uppercase;">${settings.name}</div>` : '';
+                        let nameTitle = showName ? `<div style="font-size:9px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">${item.name}</div>` : '';
+                        let priceTag = showPrice ? `<div style="font-size:11px; font-weight:bold; margin-top:1px;">MRP: ₹${item.price}</div>` : '';
+                        
+                        return `
+                            <div class="barcode-label-box" style="padding:4px;">
+                                ${shopTitle}
+                                ${nameTitle}
+                                <div style="font-family:monospace; font-size:12px; font-weight:bold; letter-spacing:2px; margin:2px 0;">||| | |||| | |||</div>
+                                <div style="font-size:8px; font-family:monospace;">${bVal}</div>
+                                ${priceTag}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            let summary = document.getElementById('bsm-summary-text');
+            if (summary) summary.innerText = `Generated preview of ${targetItems.length} labels (${layout})`;
+        }
+
+        function executeBarcodeSheetPrint() {
+            let preview = document.getElementById('barcodeSheetPreviewContainer');
+            if (!preview) return;
+
+            let layout = document.getElementById('bsm-layout-select')?.value || 'a4_24';
+            let pageCss = layout.startsWith('thermal') ? 
+                `@page { size: 50mm 25mm; margin: 0; } body { margin: 0; padding: 2px; }` : 
+                `@page { size: A4; margin: 8mm; } body { margin: 0; padding: 0; }`;
+
+            let printWin = window.open('', '_blank', 'width=800,height=600');
+            printWin.document.write(`
+                <html>
+                <head>
+                    <title>Barcode Price Labels</title>
+                    <style>
+                        ${pageCss}
+                        body { font-family: sans-serif; color: black; background: white; }
+                        .barcode-label-box {
+                            border: 1px dashed #94a3b8; padding: 4px; text-align: center;
+                            display: flex; flex-direction: column; justify-content: center; align-items: center;
+                            min-height: 80px; page-break-inside: avoid;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${preview.innerHTML}
+                    <script>
+                        setTimeout(() => { window.print(); window.close(); }, 400);
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWin.document.close();
+        }
+
+        // ----------------------------------------------------
+        // 4. PRO CASHIER HOTKEYS SYSTEM
+        // ----------------------------------------------------
+        function openHotkeysCheatSheetModal() {
+            document.getElementById('hotkeysModal').style.display = 'flex';
+        }
+
+        document.addEventListener('keydown', function(e) {
+            // Hotkeys should not trigger if user is actively writing in a textarea or text input UNLESS it's an F-key or Esc
+            let isTextInput = (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+
+            if (e.key === 'F1') {
+                e.preventDefault();
+                switchTab('pos');
+                let s = document.getElementById('posSearch');
+                if (s) { s.focus(); s.select(); }
+            } else if (e.key === 'F2') {
+                e.preventDefault();
+                if (cart.length > 0) {
+                    document.getElementById('posPayMode').value = 'Cash';
+                    handlePayModeChange();
+                    completeSale('print');
+                }
+            } else if (e.key === 'F3') {
+                e.preventDefault();
+                if (cart.length > 0) {
+                    document.getElementById('posPayMode').value = 'UPI';
+                    handlePayModeChange();
+                    completeSale('print');
+                }
+            } else if (e.key === 'F4') {
+                e.preventDefault();
+                holdCurrentBill();
+            } else if (e.key === 'F7') {
+                e.preventDefault();
+                openHeldBillsModal();
+            } else if (e.key === 'F8') {
+                e.preventDefault();
+                openQuickBill();
+            } else if (e.key === 'F9') {
+                e.preventDefault();
+                openCameraScanner();
+            } else if (e.key === 'Escape') {
+                // If a modal is currently open, close it
+                let openModal = document.querySelector('.modal-bg[style*="display: flex"], .modal-bg[style*="display: block"]');
+                if (openModal) {
+                    closeModals();
+                }
+            }
+        });
+
+        // ----------------------------------------------------
+        // 5. STAFF PERMISSION MATRIX ENFORCEMENT
+        // ----------------------------------------------------
+        function applyStaffPermissions() {
+            let isStaff = (userRole === 'staff');
+
+            // Hide/mask purchase costs if enabled
+            let hideCost = isStaff && (settings.staffHideCost !== false);
+
+            document.querySelectorAll('.cost-price-data').forEach(el => {
+                el.style.display = hideCost ? 'none' : 'inline';
+            });
+            document.querySelectorAll('.cost-price-masked').forEach(el => {
+                el.style.display = hideCost ? 'inline' : 'none';
+            });
+
+            // Disallow product purchase price input in product modal
+            let pPurPrice = document.getElementById('pPurchasePrice');
+            if (pPurPrice) {
+                if (hideCost) {
+                    pPurPrice.disabled = true;
+                    pPurPrice.value = '***';
+                } else {
+                    pPurPrice.disabled = false;
+                }
+            }
+
+            // Disallow direct price edit in cart if enabled
+            let disallowPriceEdit = isStaff && (settings.staffDisallowPriceEdit !== false);
+            document.querySelectorAll('.cart-price-edit').forEach(el => {
+                el.disabled = disallowPriceEdit;
+            });
+        }
+
+
+        // ----------------------------------------------------
+        // AUTO BARCODE / SKU (OPTIONAL) 1-CLICK GENERATOR
+        // ----------------------------------------------------
+        function getNextUniqueBarcode(existingSet) {
+            if (!existingSet) {
+                existingSet = new Set(inventory.map(p => (p.barcode || '').toString().trim().toUpperCase()).filter(Boolean));
+            }
+            // Standard 8-digit GS1/EAN format: 890 + 5-digit sequence (e.g. 89010001, 89010002...)
+            let seq = 10001;
+            let code = '890' + String(seq);
+            while (existingSet.has(code.toUpperCase())) {
+                seq++;
+                code = '890' + String(seq);
+            }
+            existingSet.add(code.toUpperCase());
+            return code;
+        }
+
+        function generateSingleProductBarcode() {
+            let code = getNextUniqueBarcode();
+            let input = document.getElementById('pBarcode');
+            if (input) {
+                input.value = code;
+                input.focus();
+                input.select();
+            }
+        }
+
+        function autoGenerateAllBarcodes() {
+            if (!inventory || inventory.length === 0) {
+                return alert("No products found in inventory. Please add or import products first.");
+            }
+
+            let missing = inventory.filter(p => !p.barcode || p.barcode.toString().trim() === '');
+            let existingSet = new Set(inventory.map(p => (p.barcode || '').toString().trim().toUpperCase()).filter(Boolean));
+            let targetList = [];
+
+            if (missing.length === 0) {
+                let regen = confirm(`All ${inventory.length} products already have a Barcode / SKU assigned!\n\nDo you want to re-generate new standard sequential Barcodes (89010001, 89010002...) for ALL products?`);
+                if (!regen) return;
+                targetList = inventory;
+                existingSet = new Set();
+            } else {
+                let ok = confirm(`⚡ 1-Click Auto Barcode / SKU Generator\n\nFound ${missing.length} of ${inventory.length} products without a Barcode / SKU.\n\nClick OK to auto-generate unique Barcodes / SKUs (e.g. 89010001, 89010002...) for all these ${missing.length} products with 1 click.\n(Existing barcodes on other products will be preserved).`);
+                if (!ok) return;
+                targetList = missing;
+            }
+
+            let updated = 0;
+            targetList.forEach(p => {
+                p.barcode = getNextUniqueBarcode(existingSet);
+                updated++;
+            });
+
+            saveToStorage();
+            refreshDisplays();
+            if (typeof renderBarcodeSheetPreview === 'function' && document.getElementById('barcodeSheetModal')?.style.display === 'flex') {
+                renderBarcodeSheetPreview();
+            }
+            logAudit('INVENTORY', `Auto-generated Barcode / SKU for ${updated} products in 1-click`);
+            alert(`✅ Success!\nAuto-generated unique Barcode / SKU for ${updated} product(s) successfully!`);
         }
 
     </script>
