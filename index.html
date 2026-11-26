@@ -2502,6 +2502,21 @@
         let settings = { name: 'Billing Hub', city: 'Kurebhar', address: '', gst: '', phone: '', email: '', instagram: '', profilePic: '', staffList: [], printerSize: 'A4', receiptLanguage: 'EN', taxRate: 0, taxMode: 'EXCLUSIVE', customTaxRates: [], upiId: '', printMethod: 'browser', darkMode: false, openingDrawerCash: 0 };
         let inventory = []; let sales = []; let expenses = []; let customers = [{id:1, name:'Walk-in', phone:'--', spent:0, due:0, points:0}];
         let suppliers = []; let quotations = []; let categories = ["General"]; let deletedItems = [];
+        let creditNotes = []; let auditLogs = []; let heldBills = [];
+        let coupons = [
+            { code: 'WELCOME50', type: 'flat', val: 50, minOrder: 250, maxDisc: 50, active: true, timesUsed: 0 },
+            { code: 'FLAT100', type: 'flat', val: 100, minOrder: 500, maxDisc: 100, active: true, timesUsed: 0 },
+            { code: 'FESTIVE10', type: 'percent', val: 10, minOrder: 200, maxDisc: 100, active: true, timesUsed: 0 }
+        ];
+        let currentAppliedCoupon = null;
+        let currentReportSubTab = 'tax';
+        let posShowImages = true;
+        let tempProductImg = '';
+        let activeCreditNoteId = null;
+        let notifySaleId = null;
+        let tempJobArtwork = '';
+        let activeViewerArtwork = '';
+        let activeViewerFilename = '';
         let cart = []; let custTrigger = "list"; let tempBase64Img = ""; let tempExpReceiptImg = ""; let editingProductId = null;
         let editingCustomerId = null; let editingSupplierId = null; let activeLedgerSupId = null;
         let html5QrcodeScanner = null; let salesChartInstance = null; let pieChartInstance = null;
@@ -2899,6 +2914,10 @@
                             localStorage.setItem('l_quote', JSON.stringify(quotations));
                             localStorage.setItem('l_cat', JSON.stringify(categories));
                             localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+                            if (c.creditNotes) localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
+                            if (c.auditLogs) localStorage.setItem('l_audit', JSON.stringify(auditLogs));
+                            if (c.heldBills) localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
+                            if (c.coupons) localStorage.setItem('l_coupons', JSON.stringify(coupons));
                             if (c.settings) localStorage.setItem('l_settings', JSON.stringify(settings));
                         } catch(e) {}
 
@@ -4892,7 +4911,7 @@
         function proceedToDeliveryPayment() { let id = document.getElementById('dpOrderId').value; let s = sales.find(x => x.id === id); if (s) { s.orderStatus = 'Delivered'; saveToStorage(); refreshDisplays(); } closeModals(); openBillPaymentModal(id); }
         function markDeliveredOnly() { let id = document.getElementById('dpOrderId').value; let s = sales.find(x => x.id === id); if (s) { s.orderStatus = 'Delivered'; saveToStorage(); refreshDisplays(); } closeModals(); }
 
-        let notifySaleId = null;
+        // notifySaleId initialized in DATA STATE at top
         function openReadyNotifyModal(id) {
             let s = sales.find(x => x.id === id); if (!s) return; notifySaleId = id;
             let itemStr = s.isJobCard ? s.jobDevice : `(#${s.id})`;
@@ -5351,12 +5370,7 @@
         // === 11 FEATURES JAVASCRIPT LOGIC & ENHANCEMENTS ===
         // ====================================================
 
-        let creditNotes = [];
-        let auditLogs = [];
-        let currentReportSubTab = 'tax';
-        let posShowImages = true;
-        let tempProductImg = '';
-        let activeCreditNoteId = null;
+        // State variables (creditNotes, auditLogs, currentReportSubTab, posShowImages, tempProductImg, activeCreditNoteId) initialized in DATA STATE at top
 
         // 1. GST INVOICE NUMBERING
         function getIndianFiscalYear() {
@@ -6317,13 +6331,7 @@
         // === 4 NEW FEATURES: TRACKING, HOLD, COUPONS, DUES ===
         // =======================================================
 
-        let heldBills = [];
-        let coupons = [
-            { code: 'WELCOME50', type: 'flat', val: 50, minOrder: 250, maxDisc: 50, active: true, timesUsed: 0 },
-            { code: 'FLAT100', type: 'flat', val: 100, minOrder: 500, maxDisc: 100, active: true, timesUsed: 0 },
-            { code: 'FESTIVE10', type: 'percent', val: 10, minOrder: 200, maxDisc: 100, active: true, timesUsed: 0 }
-        ];
-        let currentAppliedCoupon = null;
+        // State variables (heldBills, coupons, currentAppliedCoupon) initialized in DATA STATE at top
          // ----------------------------------------------------
         // 2. HOLD / PARK BILL (DRAFTS) SYSTEM
         // ----------------------------------------------------
@@ -6737,9 +6745,7 @@
         // ===            HOTKEYS & STAFF PERMISSIONS             ===
         // ==========================================================
 
-        let tempJobArtwork = '';
-        let activeViewerArtwork = '';
-        let activeViewerFilename = '';
+        // State variables (tempJobArtwork, activeViewerArtwork, activeViewerFilename) initialized in DATA STATE at top
 
         // ----------------------------------------------------
         // 1. SPLIT PAYMENT (CASH + UPI IN SAME BILL)
