@@ -304,6 +304,20 @@
         </div>
 
         <div class="main-content">
+            <!-- MOBILE PWA APP INSTALL BANNER -->
+            <div id="mobile-install-banner" style="display:none; background:linear-gradient(135deg, #4f46e5, #06b6d4); color:white; padding:10px 16px; border-radius:8px; margin: 10px 15px; justify-content:space-between; align-items:center; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.5em;">📲</span>
+                    <div>
+                        <strong style="font-size:0.95em;">Install Billing Hub App on Mobile</strong>
+                        <div style="font-size:0.8em; opacity:0.9;">Run full screen on your phone with instant Cloud Sync</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-green" onclick="installPWAApp()" style="padding:6px 14px; font-weight:bold; font-size:0.85em; background:white; color:#4f46e5; border:none; cursor:pointer;">Install App</button>
+                    <button onclick="dismissInstallBanner()" style="background:transparent; border:none; color:white; font-size:1.1em; cursor:pointer;">✕</button>
+                </div>
+            </div>
             <!-- 1. DASHBOARD VIEW -->
             <div id="dashboard-view" class="view-section active">
                 <div class="header">
@@ -1271,6 +1285,38 @@
                     <div id="settingsCouponsContainer" style="border:1px solid var(--border-color); border-radius:8px; padding:10px; max-height:160px; overflow-y:auto;"></div>
                 </div>
 
+
+                <!-- REAL-TIME CLOUD SYNC & MOBILE PAIRING -->
+                <div class="container" style="border: 2px solid #4f46e5; border-radius:12px; background:rgba(79,70,229,0.02); padding:18px; margin-top:15px; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                        <div>
+                            <h3 style="margin:0; color:#4f46e5;"><i class="fa fa-cloud"></i> Real-time Cloud Sync (PC .exe + Mobile App)</h3>
+                            <small style="color:var(--text-muted);">Share live inventory, billing, job cards & customer dues across PC and Mobile in real time.</small>
+                        </div>
+                        <span id="cloud-pill-status" style="background:#10b981; color:white; padding:4px 12px; border-radius:20px; font-size:0.8em; font-weight:bold;">🟢 Cloud Sync Active</span>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px; margin-top:12px;">
+                        <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                            <label style="font-weight:bold; font-size:0.85em; color:var(--text-muted); display:block; margin-bottom:6px;">SHOP CLOUD SYNC KEY:</label>
+                            <div style="display:flex; gap:8px;">
+                                <input type="text" id="inputShopSyncKey" value="lamination_hub_kurebhar" style="flex:1; font-family:monospace; font-weight:bold; padding:8px; border:1px solid var(--border-color); border-radius:6px;">
+                                <button class="btn btn-blue" onclick="saveCustomSyncKey()">Update Key</button>
+                            </div>
+                            <small style="color:var(--text-muted); display:block; margin-top:6px;">Both PC and Mobile devices using this key automatically share live data in real time.</small>
+                            <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                                <button class="btn btn-outline" onclick="copyPairingLink()" style="font-size:0.85em; padding:6px 12px; border:1px solid #4f46e5; color:#4f46e5; cursor:pointer;">📋 Copy Mobile Sync Link</button>
+                                <button class="btn btn-green" onclick="forceCloudRefresh()" style="font-size:0.85em; padding:6px 12px;">🔄 Force Sync Now</button>
+                            </div>
+                        </div>
+
+                        <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                            <label style="font-weight:bold; font-size:0.85em; color:var(--text-muted); display:block; margin-bottom:6px;">📱 SCAN TO PAIR MOBILE PHONE:</label>
+                            <div id="mobile-pair-qrcode" style="display:flex; justify-content:center; margin:8px 0;"></div>
+                            <small id="mobile-pair-url-text" style="font-size:0.75em; color:var(--text-muted); word-break:break-all;"></small>
+                        </div>
+                    </div>
+                </div>
 
                 <h3>💾 Data & Sync (Cloud + Local)</h3>
                     <div style="display: flex; gap: 15px; align-items: flex-end;">
@@ -2335,8 +2381,121 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore(); const auth = firebase.auth(); const provider = new firebase.auth.GoogleAuthProvider();
+
+        // ====================================================================
+        // UNIVERSAL DATE PARSING & COMPARISON ENGINE (Cross-Device & Cross-Locale)
+        // ====================================================================
+        function parseDateSafe(val) {
+            if (!val) return null;
+            if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+            if (typeof val === 'number') {
+                let d = new Date(val);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            let str = String(val).trim();
+            if (!str) return null;
+            if (/^\d{12,14}$/.test(str)) {
+                let d = new Date(parseInt(str, 10));
+                return isNaN(d.getTime()) ? null : d;
+            }
+            // ISO format YYYY-MM-DD
+            if (str.length >= 10 && str.charAt(4) === '-' && str.charAt(7) === '-') {
+                let dIso = new Date(str);
+                if (!isNaN(dIso.getTime())) return dIso;
+            }
+            let datePart = str.split(',')[0].trim().split(' ')[0].trim();
+            let timePart = str.includes(',') ? str.split(',')[1].trim() : (str.split(' ').length > 1 ? str.substring(str.indexOf(' ') + 1).trim() : '');
+            
+            let year = 0, month = 0, day = 0;
+            // YYYY-MM-DD
+            let mIso = datePart.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+            if (mIso) {
+                year = parseInt(mIso[1], 10);
+                month = parseInt(mIso[2], 10);
+                day = parseInt(mIso[3], 10);
+            } else {
+                // DD/MM/YYYY or MM/DD/YYYY
+                let m = datePart.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+                if (m) {
+                    let p1 = parseInt(m[1], 10), p2 = parseInt(m[2], 10), p3 = parseInt(m[3], 10);
+                    if (p3 < 100) p3 += 2000;
+                    year = p3;
+                    if (p1 > 12) {
+                        day = p1; month = p2;
+                    } else if (p2 > 12) {
+                        day = p2; month = p1;
+                    } else {
+                        // Standard in India / Lamination Hub: DD/MM/YYYY
+                        day = p1; month = p2;
+                    }
+                }
+            }
+
+            if (year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                let hours = 0, mins = 0, secs = 0;
+                if (timePart) {
+                    let isPm = /pm/i.test(timePart);
+                    let isAm = /am/i.test(timePart);
+                    let tClean = timePart.replace(/[^0-9:]/g, '');
+                    let tParts = tClean.split(':');
+                    if (tParts.length >= 2) {
+                        hours = parseInt(tParts[0], 10) || 0;
+                        mins = parseInt(tParts[1], 10) || 0;
+                        secs = parseInt(tParts[2], 10) || 0;
+                        if (isPm && hours < 12) hours += 12;
+                        if (isAm && hours === 12) hours = 0;
+                    }
+                }
+                return new Date(year, month - 1, day, hours, mins, secs);
+            }
+            let fallback = new Date(str);
+            return isNaN(fallback.getTime()) ? null : fallback;
+        }
+
+        function isSameDay(d1, d2) {
+            let date1 = parseDateSafe(d1);
+            let date2 = parseDateSafe(d2);
+            if (!date1 || !date2) return false;
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+        }
+
+        function isSameMonthYear(d1, monthIndex, yearNum) {
+            let date1 = parseDateSafe(d1);
+            if (!date1) return false;
+            return date1.getFullYear() === yearNum && date1.getMonth() === monthIndex;
+        }
+
+        function isSameYear(d1, yearNum) {
+            let date1 = parseDateSafe(d1);
+            if (!date1) return false;
+            return date1.getFullYear() === yearNum;
+        }
+
+        function getIsoDateString(val) {
+            let d = parseDateSafe(val);
+            if (!d) return '';
+            let y = d.getFullYear();
+            let m = String(d.getMonth() + 1).padStart(2, '0');
+            let day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        // SHARED CLOUD SYNC KEY FOR PC + MOBILE APP
+        let shopSyncKey = localStorage.getItem('shop_sync_key') || 'lamination_hub_kurebhar';
+        try {
+            const sp = new URLSearchParams(window.location.search).get('sync');
+            if (sp && sp.trim()) {
+                shopSyncKey = sp.trim();
+                localStorage.setItem('shop_sync_key', shopSyncKey);
+            }
+        } catch(e) {}
         
-        let currentUid = "local"; let docRef = null; let userRole = 'admin'; let currentStaffName = 'Admin';
+        let currentUid = "local"; 
+        let docRef = db.collection("shops").doc(shopSyncKey); 
+        let userRole = 'admin'; 
+        let currentStaffName = 'Admin';
 
         // DATA STATE
         let appPass = '1234';
@@ -2696,9 +2855,12 @@
         let unsubscribeSync = null;
         function startLiveSync() {
             return new Promise((resolve) => {
-                if (!docRef || window.location.protocol === 'file:') return resolve();
+                if (!docRef) return resolve();
                 if (unsubscribeSync) return resolve();
                 let isFirstFetch = true;
+                let syncText = document.getElementById('sync-text');
+                if (syncText) { syncText.innerText = `Connecting Cloud (${shopSyncKey})...`; syncText.style.color = "#ffc107"; }
+
                 unsubscribeSync = docRef.onSnapshot(doc => {
                     if (doc.exists) {
                         const c = doc.data();
@@ -2706,39 +2868,78 @@
                             let combined = [...localArr];
                             if(cloudArr && Array.isArray(cloudArr)) {
                                 cloudArr.forEach(cItem => {
-                                    let match = combined.findIndex(l => l.id === cItem.id);
+                                    let match = combined.findIndex(l => String(l.id) === String(cItem.id));
                                     if(match === -1) combined.push(cItem); else combined[match] = cItem;
                                 });
                             }
                             return combined;
                         };
-                        deletedItems = [...new Set([...deletedItems, ...(c.deletedItems || [])])];
-                        inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(x.id));
-                        sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(x.id));
-                        expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(x.id));
-                        customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(x.id));
-                        suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(x.id));
-                        quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(x.id));
+                        let cloudDeleted = (c.deletedItems || []).map(String);
+                        deletedItems = [...new Set([...deletedItems.map(String), ...cloudDeleted])];
+                        inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
+                        sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
+                        expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
+                        customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
+                        suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
+                        quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
                         if(c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
                         if(c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
                         if(c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
                         if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
                         (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
                         if(c.settings) settings = { ...settings, ...c.settings };
+
+                        // Keep local cache fresh across devices
+                        try {
+                            localStorage.setItem('l_inv', JSON.stringify(inventory));
+                            localStorage.setItem('l_sales', JSON.stringify(sales));
+                            localStorage.setItem('l_exp', JSON.stringify(expenses));
+                            localStorage.setItem('l_cust', JSON.stringify(customers));
+                            localStorage.setItem('l_sup', JSON.stringify(suppliers));
+                            localStorage.setItem('l_quote', JSON.stringify(quotations));
+                            localStorage.setItem('l_cat', JSON.stringify(categories));
+                            localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+                            if (c.settings) localStorage.setItem('l_settings', JSON.stringify(settings));
+                        } catch(e) {}
+
                         refreshDisplays();
-                        document.getElementById('sync-text').innerText = "Live Connected";
-                        document.getElementById('sync-text').style.color = "#28a745";
+                        let syncEl = document.getElementById('sync-text');
+                        if (syncEl) {
+                            syncEl.innerText = `Live Connected (${shopSyncKey})`;
+                            syncEl.style.color = "#28a745";
+                        }
                     }
                     if (isFirstFetch) { isFirstFetch = false; resolve(); }
-                }, () => resolve());
+                }, (err) => {
+                    let syncEl = document.getElementById('sync-text');
+                    if (syncEl) {
+                        syncEl.innerText = "Offline Cached Mode";
+                        syncEl.style.color = "#ffc107";
+                    }
+                    resolve();
+                });
             });
         }
 
+        // Automatic Cloud Sync on load
+        loadLocalData();
+        startLiveSync();
+
         auth.onAuthStateChanged(async user => {
             if (user) {
-                currentUid = user.uid; docRef = db.collection("shops").doc(currentUid);
-                loadLocalData(); await startLiveSync();
-                document.getElementById('login-status').innerText = "Secured. Enter PIN.";
+                currentUid = user.uid;
+                docRef = db.collection("shops").doc(shopSyncKey);
+                await startLiveSync();
+                document.getElementById('login-status').innerText = "Secured (Google Linked). Enter PIN.";
+            } else {
+                auth.signInAnonymously().then(c => {
+                    currentUid = c.user.uid;
+                    docRef = db.collection("shops").doc(shopSyncKey);
+                    startLiveSync();
+                }).catch(() => {
+                    docRef = db.collection("shops").doc(shopSyncKey);
+                    startLiveSync();
+                });
             }
         });
 
@@ -2746,7 +2947,8 @@
             if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://).");
             try {
                 const res = await auth.signInWithPopup(provider);
-                currentUid = res.user.uid; docRef = db.collection("shops").doc(currentUid);
+                currentUid = res.user.uid; 
+                docRef = db.collection("shops").doc(shopSyncKey);
                 loadLocalData(); await startLiveSync();
                 document.getElementById('login-status').innerText = "Secured. Enter PIN.";
             } catch (e) { alert("Login failed: " + e.message); }
@@ -2789,8 +2991,23 @@
             localStorage.setItem('l_cat', JSON.stringify(categories)); localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
             localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes)); localStorage.setItem('l_audit', JSON.stringify(auditLogs));
             localStorage.setItem('l_held_bills', JSON.stringify(heldBills)); localStorage.setItem('l_coupons', JSON.stringify(coupons));
-            if (currentUid !== "local" && docRef && window.location.protocol !== 'file:') {
-                try { await docRef.set({ appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons }); } catch(e){}
+            if (docRef) {
+                try {
+                    await docRef.set({
+                        appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons
+                    }, { merge: true });
+                    let syncEl = document.getElementById('sync-text');
+                    if (syncEl) {
+                        syncEl.innerText = `Live Connected (${shopSyncKey})`;
+                        syncEl.style.color = "#28a745";
+                    }
+                } catch(e) {
+                    let syncEl = document.getElementById('sync-text');
+                    if (syncEl) {
+                        syncEl.innerText = "Offline Cached";
+                        syncEl.style.color = "#ffc107";
+                    }
+                }
             }
         }
 
@@ -2860,7 +3077,7 @@
                 document.getElementById('set-staff-max-disc').value = settings.staffMaxDisc !== undefined ? settings.staffMaxDisc : 10;
             }
 
-            renderTaxDropdown(); renderStaffList();
+            renderTaxDropdown(); renderStaffList(); renderPairingQRCode();
             applyStaffPermissions();
             
             const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers', 'nav-reseller-orders', 'nav-reports'];
@@ -2977,10 +3194,10 @@
 
         function refreshDisplays() {
             updateDropdowns();
-            let today = new Date().toLocaleDateString();
+            let now = new Date();
             let activeSales = sales.filter(s => !s.returned);
-            let daySales = activeSales.filter(s => s.date && s.date.split(',')[0].trim() === today).reduce((a, b) => a + (b.total || 0), 0);
-            let dayExp = expenses.filter(e => e.date === today).reduce((a, b) => a + (b.amt || 0), 0);
+            let daySales = activeSales.filter(s => s.date && isSameDay(s.date, now)).reduce((a, b) => a + (b.total || 0), 0);
+            let dayExp = expenses.filter(e => e.date && isSameDay(e.date, now)).reduce((a, b) => a + (b.amt || 0), 0);
             window.currentDaySales = daySales; window.currentDayExp = dayExp;
 
             document.getElementById('dash-sales').innerText = "₹" + activeSales.reduce((a, b) => a + (b.total || 0), 0).toFixed(2);
@@ -2988,12 +3205,9 @@
             document.getElementById('today-expenses').innerText = "₹" + dayExp.toFixed(2);
             document.getElementById('dash-cust-count').innerText = customers.length;
 
-            let curMonth = new Date().getMonth(), curYear = new Date().getFullYear();
-            let mSales = 0, ySales = 0;
-            activeSales.forEach(s => {
-                let d = new Date(s.date);
-                if(!isNaN(d) && d.getFullYear() === curYear) { ySales += s.total; if(d.getMonth() === curMonth) mSales += s.total; }
-            });
+            let curMonth = now.getMonth(), curYear = now.getFullYear();
+            let mSales = activeSales.filter(s => s.date && isSameMonthYear(s.date, curMonth, curYear)).reduce((a, b) => a + (b.total || 0), 0);
+            let ySales = activeSales.filter(s => s.date && isSameYear(s.date, curYear)).reduce((a, b) => a + (b.total || 0), 0);
             document.getElementById('month-sales').innerText = "₹" + mSales.toFixed(2);
             document.getElementById('year-sales').innerText = "₹" + ySales.toFixed(2);
 
@@ -3141,28 +3355,67 @@
                 }).join('');
             }
 
-            // CUSTOMERS TABLE
+            // CUSTOMERS TABLE - LIVE DYNAMIC ORDER VALUE & DUE CALCULATION
             let cSearch = (document.getElementById('searchCustomersTable')?.value || '').toLowerCase();
             let cType = document.getElementById('filterCustomerTableType')?.value || 'All';
             let filteredCust = customers.filter(c => (c.name.toLowerCase().includes(cSearch) || (c.phone && c.phone.includes(cSearch))) && (cType === 'All' ? true : (c.type || 'Customer') === cType));
             
             document.getElementById('customerTableBody').innerHTML = filteredCust.map(c => {
                 let dates = `${c.dob ? '🎂 ' + c.dob : ''} ${c.anniversary ? '💍 ' + c.anniversary : ''}`.trim() || '--';
-                let btns = (c.due && c.due > 0) ? `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerPaymentModal('${c.id}')">₹ Pay Due</button>` : '';
+                
+                // Live match customer sales by ID, name, or phone
+                let cPhoneClean = (c.phone || '').replace(/\D/g, '');
+                let custSales = sales.filter(s => !s.returned && (
+                    (s.custId && String(s.custId) === String(c.id)) ||
+                    (s.cust && c.name && s.cust.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
+                    (cPhoneClean.length >= 10 && s.phone && s.phone.replace(/\D/g, '') === cPhoneClean)
+                ));
+                let liveSpent = custSales.reduce((sum, s) => sum + (s.total || 0), 0);
+                let liveDue = custSales.reduce((sum, s) => sum + (s.due || 0), 0);
+                c.spent = liveSpent;
+                c.due = liveDue;
+
+                let btns = (liveDue > 0) ? `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerPaymentModal('${c.id}')">₹ Pay Due</button>` : '';
                 if(userRole === 'admin' && String(c.id) !== '1') {
                     btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="editCustomer('${c.id}')">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('cust', '${c.id}')">Del</button>`;
                 }
                 let extraBtns = `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerProfile('${c.id}')" title="Purchase History">📜 History</button><button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="requestGoogleReview(null, '${c.id}')" title="Ask Review">⭐ Review</button>`;
-                return `<tr><td onclick="openCustomerProfile('${c.id}')" style="cursor:pointer; color:var(--primary);"><b><i class="fa fa-user-circle"></i> ${c.name}</b></td><td>${c.phone}</td><td><small>${dates}</small></td><td><b>${c.points||0}</b></td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${extraBtns}${btns}</td></tr>`;
+                
+                return `<tr>
+                    <td onclick="openCustomerProfile('${c.id}')" style="cursor:pointer; color:var(--primary);"><b><i class="fa fa-user-circle"></i> ${c.name}</b></td>
+                    <td>${c.phone || '--'}</td>
+                    <td><small>${dates}</small></td>
+                    <td><b>${c.points||0}</b></td>
+                    <td><b>₹${liveSpent.toFixed(2)}</b><br><small style="color:var(--text-muted); font-weight:600;">${custSales.length} order${custSales.length === 1 ? '' : 's'}</small></td>
+                    <td style="color:${liveDue > 0 ? 'red' : 'var(--success)'}; font-weight:bold;">₹${liveDue.toFixed(2)}</td>
+                    <td>${extraBtns}${btns}</td>
+                </tr>`;
             }).join('');
 
-            // RESELLERS DIRECTORY TABLE
+            // RESELLERS DIRECTORY TABLE - LIVE DYNAMIC ORDER VALUE & DUE CALCULATION
             let rSearch = (document.getElementById('searchResellersTable')?.value || '').toLowerCase();
-            document.getElementById('resellerTableBody').innerHTML = customers.filter(c => c.type === 'Reseller' && (c.name.toLowerCase().includes(rSearch) || c.phone.includes(rSearch))).map(c => {
-                let btns = (c.due && c.due > 0) ? `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerPaymentModal('${c.id}')">₹ Pay Due</button>` : '';
+            document.getElementById('resellerTableBody').innerHTML = customers.filter(c => c.type === 'Reseller' && (c.name.toLowerCase().includes(rSearch) || (c.phone && c.phone.includes(rSearch)))).map(c => {
+                let rPhoneClean = (c.phone || '').replace(/\D/g, '');
+                let rSales = sales.filter(s => !s.returned && (
+                    (s.custId && String(s.custId) === String(c.id)) ||
+                    (s.cust && c.name && s.cust.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
+                    (rPhoneClean.length >= 10 && s.phone && s.phone.replace(/\D/g, '') === rPhoneClean)
+                ));
+                let rSpent = rSales.reduce((sum, s) => sum + (s.total || 0), 0);
+                let rDue = rSales.reduce((sum, s) => sum + (s.due || 0), 0);
+                c.spent = rSpent;
+                c.due = rDue;
+
+                let btns = (rDue > 0) ? `<button class="btn btn-green" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerPaymentModal('${c.id}')">₹ Pay Due</button>` : '';
                 if(userRole === 'admin') btns += `<button class="btn btn-warning" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="editCustomer('${c.id}')">Edit</button><button class="btn btn-gray" style="color:red; padding: 4px 8px; font-size:0.8em;" onclick="deleteItem('cust', '${c.id}')">Del</button>`;
                 let extraBtns = `<button class="btn btn-blue" style="padding: 4px 8px; font-size:0.8em; margin-right:4px;" onclick="openCustomerProfile('${c.id}')" title="Purchase History">📜 History</button>`;
-                return `<tr><td onclick="openCustomerProfile('${c.id}')" style="cursor:pointer; color:var(--primary);"><b><i class="fa fa-handshake"></i> ${c.name}</b></td><td>${c.phone}</td><td>₹${c.spent}</td><td style="color:red; font-weight:bold;">₹${c.due||0}</td><td>${extraBtns}${btns}</td></tr>`;
+                return `<tr>
+                    <td onclick="openCustomerProfile('${c.id}')" style="cursor:pointer; color:var(--primary);"><b><i class="fa fa-handshake"></i> ${c.name}</b></td>
+                    <td>${c.phone || '--'}</td>
+                    <td><b>₹${rSpent.toFixed(2)}</b><br><small style="color:var(--text-muted); font-weight:600;">${rSales.length} order${rSales.length === 1 ? '' : 's'}</small></td>
+                    <td style="color:${rDue > 0 ? 'red' : 'var(--success)'}; font-weight:bold;">₹${rDue.toFixed(2)}</td>
+                    <td>${extraBtns}${btns}</td>
+                </tr>`;
             }).join('');
 
             // JOB CARDS
@@ -3371,17 +3624,17 @@
         // 5. DAILY PROFIT & BALANCES MODULE (FIXED & FULLY FUNCTIONAL)
         // ----------------------------------------------------
         function openProfitModal() {
-            let todayStr = new Date().toLocaleDateString();
-            document.getElementById('pm-date').innerText = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+            let now = new Date();
+            document.getElementById('pm-date').innerText = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
 
-            // Active sales for today
-            let todaySales = sales.filter(s => !s.returned && s.date && s.date.split(',')[0].trim() === todayStr);
+            // Active sales for today (universal date matching across devices)
+            let todaySales = sales.filter(s => !s.returned && s.date && isSameDay(s.date, now));
             
             // Total gross sales
             let totSales = todaySales.reduce((sum, s) => sum + (s.total || 0), 0);
 
             // Total expenses for today
-            let totExp = expenses.filter(e => e.date === todayStr).reduce((sum, e) => sum + (e.amt || 0), 0);
+            let totExp = expenses.filter(e => e.date && isSameDay(e.date, now)).reduce((sum, e) => sum + (e.amt || 0), 0);
 
             // Stock valuation at cost (buy price * current stock)
             let stockValuation = inventory.reduce((sum, i) => sum + ((parseFloat(i.purchasePrice) || 0) * (parseFloat(i.stock) || 0)), 0);
@@ -3414,7 +3667,7 @@
             });
 
             // Returns today
-            let returnedToday = sales.filter(s => s.returned && s.date && s.date.split(',')[0].trim() === todayStr);
+            let returnedToday = sales.filter(s => s.returned && s.date && isSameDay(s.date, now));
             let totReturns = returnedToday.reduce((sum, s) => sum + (s.total || 0), 0);
 
             // Net operating day profit (Sales - COGS - Expenses)
@@ -3777,14 +4030,16 @@
             let saleId = (Date.now()).toString().slice(-6);
             let artUrl = (document.getElementById('jcArtworkUrl') ? document.getElementById('jcArtworkUrl').value.trim() : '');
             let finalArtwork = tempJobArtwork || artUrl || '';
+            let nowJob = new Date();
             let newJob = {
                 id: saleId,
+                timestamp: nowJob.getTime(),
                 isJobCard: true,
                 jobDevice: device,
                 jobExpDate: expDate,
                 jobNotes: notes,
                 jobArtwork: finalArtwork,
-                date: new Date().toLocaleString(),
+                date: nowJob.toLocaleString(),
                 cust: c.name,
                 phone: c.phone,
                 total: total,
@@ -3823,17 +4078,16 @@
             
             let filteredSales = sales.filter(s => {
                 if (s.returned) return false;
-                let sDate = new Date(s.date).toISOString().slice(0, 10);
-                if (from && sDate < from) return false;
-                if (to && sDate > to) return false;
+                let sDate = getIsoDateString(s.date);
+                if (from && sDate && sDate < from) return false;
+                if (to && sDate && sDate > to) return false;
                 return true;
             });
 
             let filteredExpenses = expenses.filter(e => {
-                let parts = e.date.split('/');
-                let eDate = parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : e.date;
-                if (from && eDate < from) return false;
-                if (to && eDate > to) return false;
+                let eDate = getIsoDateString(e.date);
+                if (from && eDate && eDate < from) return false;
+                if (to && eDate && eDate > to) return false;
                 return true;
             });
 
@@ -3881,9 +4135,9 @@
             if(!sCtx || !pCtx) return;
             let dates = [], sData = [], eData = [];
             for(let i=6; i>=0; i--) {
-                let d = new Date(); d.setDate(d.getDate() - i); let dateStr = d.toLocaleDateString(); dates.push(d.toLocaleDateString('en-US', {weekday:'short'})); 
-                sData.push(sales.filter(s => s.date && s.date.split(',')[0] === dateStr && !s.returned).reduce((a,b)=>a+(b.total||0), 0));
-                eData.push(expenses.filter(e => e.date === dateStr).reduce((a,b)=>a+(b.amt||0), 0));
+                let d = new Date(); d.setDate(d.getDate() - i); dates.push(d.toLocaleDateString('en-US', {weekday:'short'})); 
+                sData.push(sales.filter(s => s.date && isSameDay(s.date, d) && !s.returned).reduce((a,b)=>a+(b.total||0), 0));
+                eData.push(expenses.filter(e => e.date && isSameDay(e.date, d)).reduce((a,b)=>a+(b.amt||0), 0));
             }
             if(salesChartInstance) salesChartInstance.destroy();
             salesChartInstance = new Chart(sCtx, { type: 'line', data: { labels: dates, datasets: [{ label: 'Sales (₹)', data: sData, borderColor: '#007bff', backgroundColor:'rgba(0,123,255,0.1)', fill:true, tension:0.3 }, { label: 'Expenses (₹)', data: eData, borderColor: '#dc3545', backgroundColor:'rgba(220,53,69,0.1)', fill:true, tension:0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
@@ -4133,9 +4387,11 @@
             }
             let isReseller = c && c.type === 'Reseller';
             
+            let nowSale = new Date();
             let newSale = { 
                 id: saleId, 
-                date: new Date().toLocaleString(), 
+                timestamp: nowSale.getTime(),
+                date: nowSale.toLocaleString(), 
                 cust: c ? c.name : 'Walk-in', 
                 custId: c ? c.id : null,
                 phone: c ? c.phone : '--', 
@@ -5581,13 +5837,13 @@
         function renderTopSellingProducts() {
             let period = document.getElementById('topSellingPeriod')?.value || '30days';
             let now = new Date();
-            let todayStr = now.toLocaleDateString();
             let activeSales = sales.filter(s => !s.returned);
 
             let filteredSales = activeSales.filter(s => {
                 if (!s.date) return false;
-                let sDate = new Date(s.date);
-                if (period === 'today') return s.date.split(',')[0].trim() === todayStr;
+                if (period === 'today') return isSameDay(s.date, now);
+                let sDate = parseDateSafe(s.date);
+                if (!sDate) return false;
                 if (period === '7days') return (now - sDate) <= (7 * 86400000);
                 if (period === '30days') return (now - sDate) <= (30 * 86400000);
                 if (period === 'thisMonth') return sDate.getMonth() === now.getMonth() && sDate.getFullYear() === now.getFullYear();
@@ -5773,17 +6029,14 @@
             }
 
             // Today vs Yesterday
-            let todayStr = now.toLocaleDateString();
             let yest = new Date(now.getTime() - 86400000);
-            let yestStr = yest.toLocaleDateString();
 
             let todaySales = 0, todayBills = 0;
             let yestSales = 0;
 
             activeSales.forEach(s => {
-                let dStr = s.date.split(',')[0].trim();
-                if (dStr === todayStr) { todaySales += s.total; todayBills++; }
-                else if (dStr === yestStr) { yestSales += s.total; }
+                if (isSameDay(s.date, now)) { todaySales += s.total; todayBills++; }
+                else if (isSameDay(s.date, yest)) { yestSales += s.total; }
             });
 
             document.getElementById('comp-today-sales').innerText = '₹' + todaySales.toFixed(2);
@@ -6844,6 +7097,87 @@
             }
             logAudit('INVENTORY', `Auto-generated Barcode / SKU for ${updated} products in 1-click`);
             alert(`✅ Success!\nAuto-generated unique Barcode / SKU for ${updated} product(s) successfully!`);
+        }
+
+
+        // ----------------------------------------------------
+        // MOBILE APP & REAL-TIME CLOUD SYNC PAIRING HELPERS
+        // ----------------------------------------------------
+        function saveCustomSyncKey() {
+            let key = document.getElementById('inputShopSyncKey').value.trim();
+            if (!key) return alert("Please enter a valid Shop Sync Key.");
+            if (confirm(`Change Cloud Sync Key to '${key}'?\n\nAll your devices (PC .exe & Mobile App) must use this same key to share live data.`)) {
+                shopSyncKey = key;
+                localStorage.setItem('shop_sync_key', shopSyncKey);
+                if (unsubscribeSync) { unsubscribeSync(); unsubscribeSync = null; }
+                docRef = db.collection("shops").doc(shopSyncKey);
+                startLiveSync();
+                renderPairingQRCode();
+                alert("Sync Key updated successfully! Scan the new QR code on your mobile phone to connect.");
+            }
+        }
+
+        function copyPairingLink() {
+            let host = window.location.origin;
+            if (host.startsWith('file:') || host.includes('127.0.0.1') || host.includes('localhost')) {
+                host = 'https://laminationhub.web.app';
+            }
+            let pairUrl = `${host}/?sync=${encodeURIComponent(shopSyncKey)}`;
+            navigator.clipboard.writeText(pairUrl);
+            alert("Mobile Pairing link copied to clipboard!\n\n" + pairUrl);
+        }
+
+        function renderPairingQRCode() {
+            let qrContainer = document.getElementById('mobile-pair-qrcode');
+            if (!qrContainer) return;
+            qrContainer.innerHTML = '';
+            let host = window.location.origin;
+            if (host.startsWith('file:') || host.includes('127.0.0.1') || host.includes('localhost')) {
+                host = 'https://laminationhub.web.app';
+            }
+            let pairUrl = `${host}/?sync=${encodeURIComponent(shopSyncKey)}`;
+            let textEl = document.getElementById('mobile-pair-url-text');
+            if (textEl) textEl.innerText = pairUrl;
+
+            new QRCode(qrContainer, {
+                text: pairUrl,
+                width: 140,
+                height: 140,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+
+        // PWA Install Prompt handling
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const banner = document.getElementById('mobile-install-banner');
+            if (banner) banner.style.display = 'flex';
+        });
+
+        function installPWAApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    deferredPrompt = null;
+                    dismissInstallBanner();
+                });
+            } else {
+                alert("To install on Mobile:\n\n1. Open this app in Chrome on your phone.\n2. Tap the 3 dots (⋮) menu in Chrome.\n3. Tap 'Install app' or 'Add to Home screen'.");
+            }
+        }
+
+        function dismissInstallBanner() {
+            const banner = document.getElementById('mobile-install-banner');
+            if (banner) banner.style.display = 'none';
+        }
+
+        // Service Worker registration
+        if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
 
     </script>
