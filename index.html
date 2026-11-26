@@ -2457,29 +2457,37 @@
                 let d = new Date(val);
                 return isNaN(d.getTime()) ? null : d;
             }
+            if (typeof val === 'object') {
+                if (val.timestamp) return parseDateSafe(val.timestamp);
+                if (val.isoDate) return parseDateSafe(val.isoDate);
+                if (val.date) return parseDateSafe(val.date);
+            }
             let str = String(val).trim();
             if (!str) return null;
-            if (/^\d{12,14}$/.test(str)) {
+            
+            // Numeric timestamp as string (e.g. "1732628400000")
+            if (/^\d{11,15}$/.test(str)) {
                 let d = new Date(parseInt(str, 10));
                 return isNaN(d.getTime()) ? null : d;
             }
-            // ISO format YYYY-MM-DD
-            if (str.length >= 10 && str.charAt(4) === '-' && str.charAt(7) === '-') {
-                let dIso = new Date(str);
-                if (!isNaN(dIso.getTime())) return dIso;
+            
+            // Native Date parse attempt first (handles ISO "2026-11-26T...", "Nov 26, 2026", "2026/11/26", etc.)
+            let direct = new Date(str);
+            if (!isNaN(direct.getTime()) && str.includes('-') && str.length >= 10 && str.charAt(4) === '-') {
+                return direct; // ISO format YYYY-MM-DD is always reliable
             }
+
+            // Extract date part (handles "26/11/2026, 7:03:00 pm" or "26-11-2026")
             let datePart = str.split(',')[0].trim().split(' ')[0].trim();
             let timePart = str.includes(',') ? str.split(',')[1].trim() : (str.split(' ').length > 1 ? str.substring(str.indexOf(' ') + 1).trim() : '');
-            
+
             let year = 0, month = 0, day = 0;
-            // YYYY-MM-DD
             let mIso = datePart.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
             if (mIso) {
                 year = parseInt(mIso[1], 10);
                 month = parseInt(mIso[2], 10);
                 day = parseInt(mIso[3], 10);
             } else {
-                // DD/MM/YYYY or MM/DD/YYYY
                 let m = datePart.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
                 if (m) {
                     let p1 = parseInt(m[1], 10), p2 = parseInt(m[2], 10), p3 = parseInt(m[3], 10);
@@ -2513,8 +2521,10 @@
                 }
                 return new Date(year, month - 1, day, hours, mins, secs);
             }
-            let fallback = new Date(str);
-            return isNaN(fallback.getTime()) ? null : fallback;
+
+            // Fallback to standard JS Date parser
+            if (!isNaN(direct.getTime())) return direct;
+            return null;
         }
 
         function isSameDay(d1, d2) {
@@ -2536,6 +2546,19 @@
             let date1 = parseDateSafe(d1);
             if (!date1) return false;
             return date1.getFullYear() === yearNum;
+        }
+
+        // Bulletproof Customer Sale Matcher
+        function isCustomerSaleMatch(s, c) {
+            if (!s || !c || s.returned) return false;
+            if (s.custId && c.id && String(s.custId) === String(c.id)) return true;
+            let sCust = (s.cust || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            let cName = (c.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            if (sCust && cName && sCust === cName) return true;
+            let sPhone10 = (s.phone || '').replace(/\D/g, '').slice(-10);
+            let cPhone10 = (c.phone || '').replace(/\D/g, '').slice(-10);
+            if (sPhone10.length === 10 && cPhone10.length === 10 && sPhone10 === cPhone10) return true;
+            return false;
         }
 
         function getIsoDateString(val) {
@@ -3072,6 +3095,7 @@
                             if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
                             (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
                             if(c.settings) settings = { ...settings, ...c.settings };
+                            if(c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
 
                             // Keep local cache fresh across devices
                             try {
@@ -3091,7 +3115,12 @@
                             } catch(e) {}
 
                             refreshDisplays();
+                            try { if(typeof updateCharts === 'function') updateCharts(); } catch(e){}
                             updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                            let curProfileId = document.getElementById('customerProfileModal')?.getAttribute('data-active-cust');
+                            if (curProfileId && document.getElementById('customerProfileModal')?.style.display === 'flex') {
+                                try { openCustomerProfile(curProfileId); } catch(e){}
+                            }
                         }
                         if (isFirstFetch) { isFirstFetch = false; resolve(); }
                     }, (err) => {
@@ -3119,9 +3148,9 @@
 
         // Listen for Firebase Auth changes as single source of truth
         auth.onAuthStateChanged(async user => {
+            docRef = db.collection("shops").doc(shopSyncKey);
             if (user) {
                 currentUid = user.uid;
-                docRef = db.collection("shops").doc(shopSyncKey);
                 await startLiveSync(true);
                 let loginStatus = document.getElementById('login-status');
                 if (loginStatus) loginStatus.innerText = `Secured (${user.email || 'Google Linked'}). Enter PIN.`;
@@ -3130,12 +3159,18 @@
                 updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
             } else {
                 currentUid = "local";
-                docRef = db.collection("shops").doc(shopSyncKey);
+                // Auto-connect real-time cloud sync on all devices immediately
+                startLiveSync(true);
+                // Attempt anonymous auth fallback in background if needed by Firestore security rules
+                if (auth.signInAnonymously) {
+                    auth.signInAnonymously().catch(err => {
+                        console.log("Anonymous auth fallback notice:", err.message);
+                    });
+                }
                 let loginStatus = document.getElementById('login-status');
-                if (loginStatus) loginStatus.innerText = "Local Mode. Sign in with Google to enable Live Sync.";
+                if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
                 let googleBtn = document.getElementById('googleLoginBtn');
                 if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
-                updateCloudStatusUI(false, "Google Sign-in Required");
             }
         });
 
@@ -3205,7 +3240,7 @@
             localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes)); localStorage.setItem('l_audit', JSON.stringify(auditLogs));
             localStorage.setItem('l_held_bills', JSON.stringify(heldBills)); localStorage.setItem('l_coupons', JSON.stringify(coupons));
             
-            if (docRef && auth.currentUser) {
+            if (docRef) {
                 try {
                     const cleanPayload = JSON.parse(JSON.stringify({
                         appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons
@@ -3218,7 +3253,7 @@
                     updateCloudStatusUI(false, "Offline Cached");
                 }
             } else {
-                updateCloudStatusUI(false, auth.currentUser ? "Offline Cached" : "Google Sign-in Required");
+                updateCloudStatusUI(false, "Offline Cached");
             }
         }
 
@@ -3447,18 +3482,18 @@
             updateDropdowns();
             let now = new Date();
             let activeSales = sales.filter(s => !s.returned);
-            let daySales = activeSales.filter(s => s.date && isSameDay(s.date, now)).reduce((a, b) => a + (b.total || 0), 0);
-            let dayExp = expenses.filter(e => e.date && isSameDay(e.date, now)).reduce((a, b) => a + (b.amt || 0), 0);
+            let daySales = activeSales.filter(s => isSameDay(s.timestamp || s.isoDate || s.date, now)).reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
+            let dayExp = expenses.filter(e => isSameDay(e.timestamp || e.isoDate || e.date, now)).reduce((a, b) => a + (parseFloat(e.amt) || 0), 0);
             window.currentDaySales = daySales; window.currentDayExp = dayExp;
 
-            document.getElementById('dash-sales').innerText = "₹" + activeSales.reduce((a, b) => a + (b.total || 0), 0).toFixed(2);
+            document.getElementById('dash-sales').innerText = "₹" + activeSales.reduce((a, b) => a + (parseFloat(b.total) || 0), 0).toFixed(2);
             document.getElementById('today-sales').innerText = "₹" + daySales.toFixed(2);
             document.getElementById('today-expenses').innerText = "₹" + dayExp.toFixed(2);
             document.getElementById('dash-cust-count').innerText = customers.length;
 
             let curMonth = now.getMonth(), curYear = now.getFullYear();
-            let mSales = activeSales.filter(s => s.date && isSameMonthYear(s.date, curMonth, curYear)).reduce((a, b) => a + (b.total || 0), 0);
-            let ySales = activeSales.filter(s => s.date && isSameYear(s.date, curYear)).reduce((a, b) => a + (b.total || 0), 0);
+            let mSales = activeSales.filter(s => isSameMonthYear(s.timestamp || s.isoDate || s.date, curMonth, curYear)).reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
+            let ySales = activeSales.filter(s => isSameYear(s.timestamp || s.isoDate || s.date, curYear)).reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
             document.getElementById('month-sales').innerText = "₹" + mSales.toFixed(2);
             document.getElementById('year-sales').innerText = "₹" + ySales.toFixed(2);
 
@@ -3614,15 +3649,12 @@
             document.getElementById('customerTableBody').innerHTML = filteredCust.map(c => {
                 let dates = `${c.dob ? '🎂 ' + c.dob : ''} ${c.anniversary ? '💍 ' + c.anniversary : ''}`.trim() || '--';
                 
-                // Live match customer sales by ID, name, or phone
-                let cPhoneClean = (c.phone || '').replace(/\D/g, '');
-                let custSales = sales.filter(s => !s.returned && (
-                    (s.custId && String(s.custId) === String(c.id)) ||
-                    (s.cust && c.name && s.cust.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
-                    (cPhoneClean.length >= 10 && s.phone && s.phone.replace(/\D/g, '') === cPhoneClean)
-                ));
-                let liveSpent = custSales.reduce((sum, s) => sum + (s.total || 0), 0);
-                let liveDue = custSales.reduce((sum, s) => sum + (s.due || 0), 0);
+                // Bulletproof live match customer sales
+                let custSales = sales.filter(s => isCustomerSaleMatch(s, c));
+                let computedSpent = custSales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+                let computedDue = custSales.reduce((sum, s) => sum + (parseFloat(s.due) || 0), 0);
+                let liveSpent = Math.max(computedSpent, parseFloat(c.spent) || 0);
+                let liveDue = Math.max(computedDue, parseFloat(c.due) || 0);
                 c.spent = liveSpent;
                 c.due = liveDue;
 
@@ -3646,14 +3678,11 @@
             // RESELLERS DIRECTORY TABLE - LIVE DYNAMIC ORDER VALUE & DUE CALCULATION
             let rSearch = (document.getElementById('searchResellersTable')?.value || '').toLowerCase();
             document.getElementById('resellerTableBody').innerHTML = customers.filter(c => c.type === 'Reseller' && (c.name.toLowerCase().includes(rSearch) || (c.phone && c.phone.includes(rSearch)))).map(c => {
-                let rPhoneClean = (c.phone || '').replace(/\D/g, '');
-                let rSales = sales.filter(s => !s.returned && (
-                    (s.custId && String(s.custId) === String(c.id)) ||
-                    (s.cust && c.name && s.cust.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
-                    (rPhoneClean.length >= 10 && s.phone && s.phone.replace(/\D/g, '') === rPhoneClean)
-                ));
-                let rSpent = rSales.reduce((sum, s) => sum + (s.total || 0), 0);
-                let rDue = rSales.reduce((sum, s) => sum + (s.due || 0), 0);
+                let rSales = sales.filter(s => isCustomerSaleMatch(s, c));
+                let computedSpent = rSales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+                let computedDue = rSales.reduce((sum, s) => sum + (parseFloat(s.due) || 0), 0);
+                let rSpent = Math.max(computedSpent, parseFloat(c.spent) || 0);
+                let rDue = Math.max(computedDue, parseFloat(c.due) || 0);
                 c.spent = rSpent;
                 c.due = rDue;
 
@@ -4285,14 +4314,16 @@
             let newJob = {
                 id: saleId,
                 timestamp: nowJob.getTime(),
+                isoDate: nowJob.toISOString(),
                 isJobCard: true,
                 jobDevice: device,
                 jobExpDate: expDate,
                 jobNotes: notes,
                 jobArtwork: finalArtwork,
                 date: nowJob.toLocaleString(),
-                cust: c.name,
-                phone: c.phone,
+                cust: c ? c.name : 'Customer',
+                custId: c ? c.id : null,
+                phone: c ? c.phone : '--',
                 total: total,
                 tax: 0,
                 taxMode: 'EXCLUSIVE',
@@ -4664,12 +4695,16 @@
             }
             sales.push(newSale);
             logAudit('BILL_CREATED', `Generated Bill #${saleId} for ₹${total.toFixed(2)} (${payMode}) to ${c ? c.name : 'Walk-in'}`);
-            if(c) { c.spent += total; c.due = (c.due || 0) + due; }
+            if(c) { c.spent = (parseFloat(c.spent) || 0) + total; c.due = (parseFloat(c.due) || 0) + due; }
             cart.forEach(ci => { let inv = inventory.find(x => String(x.id) === String(ci.id)); if(inv) inv.stock -= ci.qty; });
             
+            // Instantly save to local storage and sync to Cloud
+            saveToStorage();
+            refreshDisplays();
+
             generateReceiptHTML(newSale);
-            if(action === 'print') { setTimeout(() => { executePrint(); resetCart(); refreshDisplays(); }, 350); }
-            else { sendWhatsApp(saleId); resetCart(); refreshDisplays(); }
+            if(action === 'print') { setTimeout(() => { executePrint(); resetCart(); }, 350); }
+            else { sendWhatsApp(saleId); resetCart(); }
         }
 
         function resetCart() { 
@@ -5802,9 +5837,13 @@
             if (c.anniversary) meta += ` | 💍 ${c.anniversary}`;
             document.getElementById('cp-modal-meta').innerText = meta;
 
-            let custSales = sales.filter(s => s.cust === c.name || String(s.custId) === String(c.id));
+            document.getElementById('customerProfileModal').setAttribute('data-active-cust', c.id);
+            let custSales = sales.filter(s => isCustomerSaleMatch(s, c));
             let totalOrders = custSales.length;
-            let totalSpent = custSales.reduce((sum, s) => sum + (s.total || 0), 0);
+            let computedSpent = custSales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+            let totalSpent = Math.max(computedSpent, parseFloat(c.spent) || 0);
+            let computedDue = custSales.reduce((sum, s) => sum + (parseFloat(s.due) || 0), 0);
+            let totalDue = Math.max(computedDue, parseFloat(c.due) || 0);
 
             document.getElementById('cp-stat-orders').innerText = totalOrders;
             document.getElementById('cp-stat-spent').innerText = '₹' + totalSpent.toFixed(2);
