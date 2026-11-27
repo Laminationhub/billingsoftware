@@ -280,16 +280,9 @@
                 </div>
             </div>
             
-            <div id="cloud-sync-status" onclick="openCloudSyncDiagnosticsModal()" title="Click to view Cloud Sync Diagnostics & Connect" style="cursor:pointer; background:rgba(255,255,255,0.06); padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); margin-top:10px; transition:all 0.2s;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.75em; opacity:0.8;">Cloud Status:</span>
-                    <span id="sync-badge" style="font-size:0.7em; padding:2px 6px; border-radius:4px; background:#ffc107; color:#000; font-weight:bold;">Connecting</span>
-                </div>
-                <div id="sync-text" style="color: #ffc107; font-weight: bold; font-size:0.85em; margin-top:3px; word-break:break-all;">Connecting Cloud...</div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                    <small id="last-sync-time" style="color: #aaa; font-size: 0.72em;"></small>
-                    <span id="sync-action-hint" style="font-size:0.72em; color:#60a5fa; text-decoration:underline;">Click to Connect ⚡</span>
-                </div>
+            <div id="cloud-sync-status">
+                Cloud Status: <span id="sync-text" style="color: #ffc107; font-weight: bold;">Connecting...</span><br>
+                <small id="last-sync-time" style="color: #aaa; font-size: 0.8em;"></small>
             </div>
 
             <ul class="nav-links">
@@ -311,14 +304,6 @@
         </div>
 
         <div class="main-content">
-            <!-- MOBILE PWA APP INSTALL BANNER -->
-            <div id="mobile-install-banner" style="display:none; background:linear-gradient(135deg, #4f46e5, #06b6d4); color:white; padding:10px 16px; border-radius:8px; margin: 10px 15px; justify-content:space-between; align-items:center; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:1.5em;">📲</span>
-                    <div>
-                        <strong style="font-size:0.95em;">Install Billing Hub App on Mobile</strong>
-                        <div style="font-size:0.8em; opacity:0.9;">Run full screen on your phone with instant Cloud Sync</div>
-                    </div>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button class="btn btn-green" onclick="installPWAApp()" style="padding:6px 14px; font-weight:bold; font-size:0.85em; background:white; color:#4f46e5; border:none; cursor:pointer;">Install App</button>
@@ -1292,49 +1277,6 @@
                     <div id="settingsCouponsContainer" style="border:1px solid var(--border-color); border-radius:8px; padding:10px; max-height:160px; overflow-y:auto;"></div>
                 </div>
 
-
-                <!-- REAL-TIME CLOUD SYNC & MOBILE PAIRING -->
-                <div class="container" style="border: 2px solid #4f46e5; border-radius:12px; background:rgba(79,70,229,0.02); padding:18px; margin-top:15px; margin-bottom:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-                        <div>
-                            <h3 style="margin:0; color:#4f46e5;"><i class="fa fa-cloud"></i> Real-time Cloud Sync (PC .exe + Mobile App)</h3>
-                            <small style="color:var(--text-muted);">Share live inventory, billing, job cards & customer dues across PC and Mobile in real time.</small>
-                        </div>
-                        <span id="cloud-pill-status" style="background:#10b981; color:white; padding:4px 12px; border-radius:20px; font-size:0.8em; font-weight:bold;">🟢 Cloud Sync Active</span>
-                    </div>
-
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-body); padding:10px 14px; border-radius:8px; border:1px solid var(--border-color); margin-top:12px; flex-wrap:wrap; gap:10px;">
-                        <div>
-                            <strong style="font-size:0.9em; display:block;">Google Account Authentication:</strong>
-                            <span id="settings-google-status" style="font-size:0.85em; color:#ffc107;">Checking authentication...</span>
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn btn-google" id="settings-google-btn" onclick="handleGoogleLogin()" style="padding:6px 14px; font-size:0.85em; margin:0;">🔐 Sign in with Google</button>
-                            <button class="btn btn-outline" onclick="openCloudSyncDiagnosticsModal()" style="padding:6px 14px; font-size:0.85em;">🔍 Sync Diagnostics</button>
-                        </div>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px; margin-top:12px;">
-                        <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
-                            <label style="font-weight:bold; font-size:0.85em; color:var(--text-muted); display:block; margin-bottom:6px;">SHOP CLOUD SYNC KEY:</label>
-                            <div style="display:flex; gap:8px;">
-                                <input type="text" id="inputShopSyncKey" value="lamination_hub_kurebhar" style="flex:1; font-family:monospace; font-weight:bold; padding:8px; border:1px solid var(--border-color); border-radius:6px;">
-                                <button class="btn btn-blue" onclick="saveCustomSyncKey()">Update Key</button>
-                            </div>
-                            <small style="color:var(--text-muted); display:block; margin-top:6px;">Both PC and Mobile devices using this key automatically share live data in real time.</small>
-                            <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-                                <button class="btn btn-outline" onclick="copyPairingLink()" style="font-size:0.85em; padding:6px 12px; border:1px solid #4f46e5; color:#4f46e5; cursor:pointer;">📋 Copy Mobile Sync Link</button>
-                                <button class="btn btn-green" onclick="forceCloudRefresh()" style="font-size:0.85em; padding:6px 12px;">🔄 Force Sync Now</button>
-                            </div>
-                        </div>
-
-                        <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
-                            <label style="font-weight:bold; font-size:0.85em; color:var(--text-muted); display:block; margin-bottom:6px;">📱 SCAN TO PAIR MOBILE PHONE:</label>
-                            <div id="mobile-pair-qrcode" style="display:flex; justify-content:center; margin:8px 0;"></div>
-                            <small id="mobile-pair-url-text" style="font-size:0.75em; color:var(--text-muted); word-break:break-all;"></small>
-                        </div>
-                    </div>
-                </div>
 
                 <h3>💾 Data & Sync (Cloud + Local)</h3>
                     <div style="display: flex; gap: 15px; align-items: flex-end;">
@@ -2377,52 +2319,7 @@
     </div>
 
 
-    <!-- CLOUD SYNC STATUS & DIAGNOSTICS MODAL -->
-    <div id="cloudSyncModal" class="modal-bg" style="display:none; align-items:center; justify-content:center; z-index:99999;">
-        <div class="modal-box" style="max-width:520px; width:92%; border-radius:12px; padding:24px; background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-color); box-shadow:0 12px 30px rgba(0,0,0,0.4);">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
-                <h3 style="margin:0; font-size:1.2em; display:flex; align-items:center; gap:8px;">
-                    ☁️ Cloud Sync Status & Connect
-                </h3>
-                <button class="btn-close" onclick="closeModals()" style="font-size:1.3em; cursor:pointer; background:transparent; border:none; color:var(--text-main);">&times;</button>
-            </div>
-            
-            <div id="csm-status-card" style="padding:14px; border-radius:8px; margin-bottom:16px; border:1px solid #ffc107; background:rgba(255,193,7,0.1);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="font-size:0.95em;">Sync Status:</strong>
-                    <span id="csm-badge" style="font-weight:bold; font-size:0.85em; padding:3px 8px; border-radius:4px; background:#ffc107; color:#000;">Offline Cached</span>
-                </div>
-                <div id="csm-detail" style="font-size:0.85em; margin-top:8px; line-height:1.4; color:var(--text-main);">
-                    Checking cloud connection...
-                </div>
-            </div>
 
-            <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:16px; font-size:0.85em;">
-                <div style="margin-bottom:8px;">
-                    <strong>Google Account:</strong> <span id="csm-user-email" style="color:#60a5fa; font-weight:bold;">Not Signed In</span>
-                </div>
-                <div style="margin-bottom:8px;">
-                    <strong>Shop Sync Key:</strong> <code id="csm-shop-key" style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px;">lamination_hub_kurebhar</code>
-                </div>
-                <div>
-                    <strong>Last Sync:</strong> <span id="csm-last-sync" style="color:var(--text-muted);">Never</span>
-                </div>
-            </div>
-
-            <div id="csm-google-action-box" style="margin-bottom:16px; display:none;">
-                <button class="btn-google" onclick="handleGoogleLogin()" style="width:100%; padding:10px; font-weight:bold; justify-content:center; display:flex; align-items:center; gap:8px; margin:0;">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:18px; height:18px;">
-                    Sign in with Google to Connect Cloud
-                </button>
-                <small style="color:var(--text-muted); display:block; text-align:center; margin-top:6px;">Required once per browser to secure your shop's real-time cloud data.</small>
-            </div>
-
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button class="btn btn-outline" onclick="closeModals()" style="padding:8px 16px;">Close</button>
-                <button class="btn btn-green" onclick="reconnectCloudLive(true)" style="padding:8px 18px; font-weight:bold;">🔄 Reconnect Cloud Now</button>
-            </div>
-        </div>
-    </div>
 
     <div id="receipt-print-area"></div>
 
@@ -2570,18 +2467,8 @@
             return `${y}-${m}-${day}`;
         }
 
-        // SHARED CLOUD SYNC KEY FOR PC + MOBILE APP
-        let shopSyncKey = localStorage.getItem('shop_sync_key') || 'lamination_hub_kurebhar';
-        try {
-            const sp = new URLSearchParams(window.location.search).get('sync');
-            if (sp && sp.trim()) {
-                shopSyncKey = sp.trim();
-                localStorage.setItem('shop_sync_key', shopSyncKey);
-            }
-        } catch(e) {}
-        
         let currentUid = "local"; 
-        let docRef = db.collection("shops").doc(shopSyncKey); 
+        let docRef = null; 
         let userRole = 'admin'; 
         let currentStaffName = 'Admin';
 
@@ -2956,243 +2843,127 @@
         }
 
         let unsubscribeSync = null;
-        let lastCloudSyncError = '';
-        let lastCloudSyncTime = '';
-
-        function updateCloudStatusUI(connected, text) {
-            let syncEl = document.getElementById('sync-text');
-            let badge = document.getElementById('sync-badge');
-            let lastSyncEl = document.getElementById('last-sync-time');
-            let pillEl = document.getElementById('cloud-pill-status');
-            let hintEl = document.getElementById('sync-action-hint');
-            let setGoogleBtn = document.getElementById('settings-google-btn');
-            let setGoogleStatus = document.getElementById('settings-google-status');
-
-            let user = (typeof auth !== 'undefined' && auth) ? auth.currentUser : null;
-            let timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            if (connected) {
-                lastCloudSyncTime = timeStr;
-                if (syncEl) { syncEl.innerText = text || `Live Connected (${shopSyncKey})`; syncEl.style.color = "#28a745"; }
-                if (badge) { badge.innerText = "Live Connected"; badge.style.background = "#28a745"; badge.style.color = "#fff"; }
-                if (lastSyncEl) lastSyncEl.innerText = `Synced: ${timeStr}`;
-                if (pillEl) { pillEl.innerText = "🟢 Cloud Sync Active"; pillEl.style.background = "#10b981"; }
-                if (hintEl) { hintEl.innerText = "Connected 🟢"; hintEl.style.color = "#4ade80"; }
-            } else {
-                if (syncEl) { syncEl.innerText = text || "Offline Cached"; syncEl.style.color = "#ffc107"; }
-                if (badge) {
-                    badge.innerText = user ? "Offline" : "Login Needed";
-                    badge.style.background = user ? "#ffc107" : "#ef4444";
-                    badge.style.color = user ? "#000" : "#fff";
-                }
-                if (lastSyncEl && lastCloudSyncTime) lastSyncEl.innerText = `Last: ${lastCloudSyncTime}`;
-                if (pillEl) { pillEl.innerText = "🟡 Offline Cached Mode"; pillEl.style.background = "#f59e0b"; }
-                if (hintEl) { hintEl.innerText = "Click to Connect ⚡"; hintEl.style.color = "#60a5fa"; }
-            }
-
-            if (setGoogleStatus) {
-                setGoogleStatus.innerText = user ? `✅ Signed in (${user.email || 'Google User'})` : "❌ Not Signed in (Cloud Sync Offline)";
-                setGoogleStatus.style.color = user ? "#28a745" : "#ef4444";
-            }
-            if (setGoogleBtn) {
-                setGoogleBtn.style.display = user ? "none" : "inline-block";
-            }
-        }
-
-        function openCloudSyncDiagnosticsModal() {
-            let user = (typeof auth !== 'undefined' && auth) ? auth.currentUser : null;
-            let modal = document.getElementById('cloudSyncModal');
-            let badge = document.getElementById('csm-badge');
-            let detail = document.getElementById('csm-detail');
-            let email = document.getElementById('csm-user-email');
-            let key = document.getElementById('csm-shop-key');
-            let syncTime = document.getElementById('csm-last-sync');
-            let card = document.getElementById('csm-status-card');
-            let gBox = document.getElementById('csm-google-action-box');
-
-            if (email) email.innerText = user ? (user.email || user.uid) : "Not Signed In (Local Mode)";
-            if (key) key.innerText = shopSyncKey;
-            if (syncTime) syncTime.innerText = lastCloudSyncTime || "Never during this session";
-
-            if (user) {
-                if (gBox) gBox.style.display = 'none';
-                if (card) { card.style.borderColor = '#28a745'; card.style.background = 'rgba(40,167,69,0.1)'; }
-                if (badge) { badge.innerText = "Authorized"; badge.style.background = '#28a745'; badge.style.color = '#fff'; }
-                if (detail) detail.innerHTML = `Your Google account is signed in (${user.email || 'Google User'}). Real-time sync is listening to shop key: <strong>${shopSyncKey}</strong>.<br><small style="color:var(--text-muted); display:block; margin-top:6px;">All devices with this shop key share records automatically.</small>`;
-            } else {
-                if (gBox) gBox.style.display = 'block';
-                if (card) { card.style.borderColor = '#ef4444'; card.style.background = 'rgba(239,68,68,0.1)'; }
-                if (badge) { badge.innerText = "Sign-In Required"; badge.style.background = '#ef4444'; badge.style.color = '#fff'; }
-                let errNotice = lastCloudSyncError ? `<div style="color:#f87171; font-size:0.85em; margin-top:6px;">Notice: ${lastCloudSyncError}</div>` : '';
-                if (detail) detail.innerHTML = `Cloud Sync is currently in <strong>Offline Local Mode</strong> because this device is not authenticated with Google.<br>Please tap <strong>Sign in with Google</strong> below to connect.${errNotice}`;
-            }
-
-            if (modal) modal.style.display = 'flex';
-        }
-
-        async function reconnectCloudLive(showFeedback = false) {
-            if (unsubscribeSync) {
-                try { unsubscribeSync(); } catch(e){}
-                unsubscribeSync = null;
-            }
-            let user = (typeof auth !== 'undefined' && auth) ? auth.currentUser : null;
-            if (!user) {
-                if (showFeedback) openCloudSyncDiagnosticsModal();
-                return;
-            }
-            try {
-                let syncEl = document.getElementById('sync-text');
-                if (syncEl) { syncEl.innerText = `Connecting (${shopSyncKey})...`; syncEl.style.color = "#ffc107"; }
-                await startLiveSync(true);
-                await saveToStorage();
-                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                if (showFeedback) alert(`Cloud Reconnected Successfully! 🟢\n\nShop Key: ${shopSyncKey}\nUser: ${user.email || 'Google User'}`);
-                closeModals();
-            } catch(e) {
-                lastCloudSyncError = e.message || String(e);
-                updateCloudStatusUI(false, "Offline Cached");
-                if (showFeedback) alert("Could not connect to Cloud: " + (e.message || e));
-            }
-        }
-
-        function startLiveSync(force = false) {
+        function startLiveSync() {
             return new Promise((resolve) => {
-                if (!docRef) return resolve();
-                if (unsubscribeSync && !force) return resolve();
-                if (unsubscribeSync) {
-                    try { unsubscribeSync(); } catch(e){}
-                    unsubscribeSync = null;
-                }
+                if (!docRef || window.location.protocol === 'file:') return resolve();
+                if (unsubscribeSync) return resolve();
                 let isFirstFetch = true;
                 let syncText = document.getElementById('sync-text');
-                if (syncText) { syncText.innerText = `Connecting Cloud (${shopSyncKey})...`; syncText.style.color = "#ffc107"; }
+                if (syncText) { syncText.innerText = "Connecting Cloud..."; syncText.style.color = "#ffc107"; }
 
-                try {
-                    unsubscribeSync = docRef.onSnapshot(doc => {
-                        if (doc.exists) {
-                            const c = doc.data();
-                            const mergeArrays = (localArr, cloudArr) => {
-                                let combined = [...localArr];
-                                if(cloudArr && Array.isArray(cloudArr)) {
-                                    cloudArr.forEach(cItem => {
-                                        let match = combined.findIndex(l => String(l.id) === String(cItem.id));
-                                        if(match === -1) combined.push(cItem); else combined[match] = cItem;
-                                    });
-                                }
-                                return combined;
-                            };
-                            let cloudDeleted = (c.deletedItems || []).map(String);
-                            deletedItems = [...new Set([...deletedItems.map(String), ...cloudDeleted])];
-                            inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
-                            sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
-                            expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
-                            customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
-                            suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
-                            quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
-                            if(c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
-                            if(c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
-                            if(c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
-                            if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
-                            (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
-                            if(c.settings) settings = { ...settings, ...c.settings };
-                            if(c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
-
-                            // Keep local cache fresh across devices
-                            try {
-                                localStorage.setItem('l_inv', JSON.stringify(inventory));
-                                localStorage.setItem('l_sales', JSON.stringify(sales));
-                                localStorage.setItem('l_exp', JSON.stringify(expenses));
-                                localStorage.setItem('l_cust', JSON.stringify(customers));
-                                localStorage.setItem('l_sup', JSON.stringify(suppliers));
-                                localStorage.setItem('l_quote', JSON.stringify(quotations));
-                                localStorage.setItem('l_cat', JSON.stringify(categories));
-                                localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
-                                if (c.creditNotes) localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
-                                if (c.auditLogs) localStorage.setItem('l_audit', JSON.stringify(auditLogs));
-                                if (c.heldBills) localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
-                                if (c.coupons) localStorage.setItem('l_coupons', JSON.stringify(coupons));
-                                if (c.settings) localStorage.setItem('l_settings', JSON.stringify(settings));
-                            } catch(e) {}
-
-                            refreshDisplays();
-                            try { if(typeof updateCharts === 'function') updateCharts(); } catch(e){}
-                            updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                            let curProfileId = document.getElementById('customerProfileModal')?.getAttribute('data-active-cust');
-                            if (curProfileId && document.getElementById('customerProfileModal')?.style.display === 'flex') {
-                                try { openCustomerProfile(curProfileId); } catch(e){}
+                unsubscribeSync = docRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        const c = doc.data();
+                        const mergeArrays = (localArr, cloudArr) => {
+                            let combined = [...localArr];
+                            if(cloudArr && Array.isArray(cloudArr)) {
+                                cloudArr.forEach(cItem => {
+                                    let match = combined.findIndex(l => String(l.id) === String(cItem.id));
+                                    if(match === -1) combined.push(cItem); else combined[match] = cItem;
+                                });
                             }
+                            return combined;
+                        };
+                        deletedItems = [...new Set([...deletedItems.map(String), ...(c.deletedItems || []).map(String)])];
+                        inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
+                        sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
+                        expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
+                        customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
+                        suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
+                        quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
+                        if(c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
+                        if(c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
+                        if(c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
+                        if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
+                        (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
+                        if(c.settings) settings = { ...settings, ...c.settings };
+                        if(c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
+                        
+                        try {
+                            localStorage.setItem('l_inv', JSON.stringify(inventory));
+                            localStorage.setItem('l_sales', JSON.stringify(sales));
+                            localStorage.setItem('l_exp', JSON.stringify(expenses));
+                            localStorage.setItem('l_cust', JSON.stringify(customers));
+                            localStorage.setItem('l_sup', JSON.stringify(suppliers));
+                            localStorage.setItem('l_quote', JSON.stringify(quotations));
+                            localStorage.setItem('l_cat', JSON.stringify(categories));
+                            localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+                            if (c.creditNotes) localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
+                            if (c.auditLogs) localStorage.setItem('l_audit', JSON.stringify(auditLogs));
+                            if (c.heldBills) localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
+                            if (c.coupons) localStorage.setItem('l_coupons', JSON.stringify(coupons));
+                            if (c.settings) localStorage.setItem('l_settings', JSON.stringify(settings));
+                        } catch(e) {}
+
+                        refreshDisplays();
+                        try { if(typeof updateCharts === 'function') updateCharts(); } catch(e){}
+                        let syncEl = document.getElementById('sync-text');
+                        if (syncEl) {
+                            syncEl.innerText = "Live Connected";
+                            syncEl.style.color = "#28a745";
                         }
-                        if (isFirstFetch) { isFirstFetch = false; resolve(); }
-                    }, (err) => {
-                        console.warn("Firestore snapshot error:", err);
-                        lastCloudSyncError = err ? (err.message || String(err)) : "Offline";
-                        if (unsubscribeSync) {
-                            try { unsubscribeSync(); } catch(e){}
-                            unsubscribeSync = null;
+                        let lst = document.getElementById('last-sync-time');
+                        if (lst) lst.innerText = "Last sync: " + new Date().toLocaleTimeString();
+                        let curProfileId = document.getElementById('customerProfileModal')?.getAttribute('data-active-cust');
+                        if (curProfileId && document.getElementById('customerProfileModal')?.style.display === 'flex') {
+                            try { openCustomerProfile(curProfileId); } catch(e){}
                         }
-                        updateCloudStatusUI(false, auth.currentUser ? "Offline Cached" : "Google Sign-in Required");
-                        resolve();
-                    });
-                } catch(e) {
-                    console.warn("startLiveSync attach error:", e);
-                    lastCloudSyncError = e.message || String(e);
-                    if (unsubscribeSync) { try { unsubscribeSync(); } catch(err){} unsubscribeSync = null; }
-                    updateCloudStatusUI(false, "Offline Cached");
+                    }
+                    if (isFirstFetch) { isFirstFetch = false; resolve(); }
+                }, () => {
+                    let syncEl = document.getElementById('sync-text');
+                    if (syncEl) {
+                        syncEl.innerText = "Offline Cached";
+                        syncEl.style.color = "#ffc107";
+                    }
                     resolve();
-                }
+                });
             });
         }
 
-        // Initialize local cache on script startup
-        loadLocalData();
-
-        // Listen for Firebase Auth changes as single source of truth
         auth.onAuthStateChanged(async user => {
-            docRef = db.collection("shops").doc(shopSyncKey);
             if (user) {
                 currentUid = user.uid;
-                await startLiveSync(true);
-                let loginStatus = document.getElementById('login-status');
-                if (loginStatus) loginStatus.innerText = `Secured (${user.email || 'Google Linked'}). Enter PIN.`;
-                let googleBtn = document.getElementById('googleLoginBtn');
-                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${user.email || 'Google Linked'}`;
-                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                docRef = db.collection("shops").doc(currentUid);
+                loadLocalData();
+                await startLiveSync();
+                let ls = document.getElementById('login-status');
+                if (ls) ls.innerText = "Secured. Enter PIN.";
+                let gb = document.getElementById('googleLoginBtn');
+                if (gb) gb.innerHTML = `✅ Signed in: ${user.email || 'Google Linked'}`;
+                let syncEl = document.getElementById('sync-text');
+                if (syncEl) {
+                    syncEl.innerText = "Live Connected";
+                    syncEl.style.color = "#28a745";
+                }
             } else {
                 currentUid = "local";
-                // Auto-connect real-time cloud sync on all devices immediately
-                startLiveSync(true);
-                // Attempt anonymous auth fallback in background if needed by Firestore security rules
-                if (auth.signInAnonymously) {
-                    auth.signInAnonymously().catch(err => {
-                        console.log("Anonymous auth fallback notice:", err.message);
-                    });
+                docRef = null;
+                if (unsubscribeSync) { try { unsubscribeSync(); } catch(e){} unsubscribeSync = null; }
+                let ls = document.getElementById('login-status');
+                if (ls) ls.innerText = "Sign in or use Local Mode";
+                let gb = document.getElementById('googleLoginBtn');
+                if (gb) gb.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
+                let syncEl = document.getElementById('sync-text');
+                if (syncEl) {
+                    syncEl.innerText = "Local Mode";
+                    syncEl.style.color = "#ffc107";
                 }
-                let loginStatus = document.getElementById('login-status');
-                if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
-                let googleBtn = document.getElementById('googleLoginBtn');
-                if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
             }
         });
 
         async function handleGoogleLogin() {
-            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://). Please use your online site (https://laminationhub.github.io/billingsoftware/) or a web server.");
+            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://).");
             try {
-                let googleBtn = document.getElementById('googleLoginBtn');
-                if (googleBtn) googleBtn.innerText = "Opening Google Sign-in...";
                 const res = await auth.signInWithPopup(provider);
-                currentUid = res.user.uid; 
-                docRef = db.collection("shops").doc(shopSyncKey);
+                currentUid = res.user.uid;
+                docRef = db.collection("shops").doc(currentUid);
                 loadLocalData();
-                await startLiveSync(true);
-                let loginStatus = document.getElementById('login-status');
-                if (loginStatus) loginStatus.innerText = `Secured (${res.user.email || 'Google Linked'}). Enter PIN.`;
-                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${res.user.email || 'Google Linked'}`;
-                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                alert(`Google Sign-In Connected! 🟢\nAccount: ${res.user.email || 'Google User'}\nLive Cloud Sync is now active!`);
-                closeModals();
+                await startLiveSync();
+                let ls = document.getElementById('login-status');
+                if (ls) ls.innerText = "Secured. Enter PIN.";
             } catch (e) {
-                alert("Google Sign-In was not completed: " + e.message);
-                updateCloudStatusUI(false, "Offline Cached");
+                alert("Login failed: " + e.message);
             }
         }
 
@@ -3201,35 +2972,27 @@
             const pass = document.getElementById('passInput').value;
             if (currentUid === "local") loadLocalData();
 
-            let matchedStaff = (settings.staffList || []).find(s => s.pin === pass);
-
+            let matchedStaff = (settings.staffList || []).find(s => s.pass === pass);
             if (pass === appPass) {
-                userRole = 'admin'; currentStaffName = 'Admin';
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'flex';
+                userRole = 'admin';
+                currentStaffName = 'Admin';
+                document.getElementById('auth-overlay').style.display = 'none';
+                applyTheme();
                 initApp();
-                if (!auth.currentUser) {
-                    updateCloudStatusUI(false, "Google Sign-in Required");
-                }
+                refreshDisplays();
+                if (typeof applyStaffPermissions === 'function') applyStaffPermissions();
             } else if (matchedStaff) {
-                userRole = 'staff'; currentStaffName = matchedStaff.name;
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'flex';
+                userRole = matchedStaff.role || 'staff';
+                currentStaffName = matchedStaff.name;
+                document.getElementById('auth-overlay').style.display = 'none';
+                applyTheme();
                 initApp();
-                if (!auth.currentUser) {
-                    updateCloudStatusUI(false, "Google Sign-in Required");
-                }
+                refreshDisplays();
+                if (typeof applyStaffPermissions === 'function') applyStaffPermissions();
             } else {
                 alert("Incorrect PIN!");
             }
         }
-
-        function lockScreen() {
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('main-app').style.display = 'none';
-            document.getElementById('passInput').value = '';
-        }
-        function signOut() { auth.signOut().then(() => location.reload()); }
 
         async function saveToStorage() {
             localStorage.setItem('l_pass', appPass); localStorage.setItem('l_settings', JSON.stringify(settings));
@@ -3239,35 +3002,32 @@
             localStorage.setItem('l_cat', JSON.stringify(categories)); localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
             localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes)); localStorage.setItem('l_audit', JSON.stringify(auditLogs));
             localStorage.setItem('l_held_bills', JSON.stringify(heldBills)); localStorage.setItem('l_coupons', JSON.stringify(coupons));
-            
-            if (docRef) {
+            if (currentUid !== "local" && docRef && window.location.protocol !== 'file:') {
                 try {
-                    const cleanPayload = JSON.parse(JSON.stringify({
+                    await docRef.set({
                         appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons
-                    }));
-                    await docRef.set(cleanPayload, { merge: true });
-                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                    }, { merge: true });
+                    let syncEl = document.getElementById('sync-text');
+                    if (syncEl) {
+                        syncEl.innerText = "Live Connected";
+                        syncEl.style.color = "#28a745";
+                    }
+                    let lst = document.getElementById('last-sync-time');
+                    if (lst) lst.innerText = "Last sync: " + new Date().toLocaleTimeString();
                 } catch(e) {
-                    console.warn("Firestore save error:", e);
-                    lastCloudSyncError = e.message || String(e);
-                    updateCloudStatusUI(false, "Offline Cached");
+                    console.error("Cloud Save Failed:", e);
+                    let syncEl = document.getElementById('sync-text');
+                    if (syncEl) {
+                        syncEl.innerText = "Offline Cached";
+                        syncEl.style.color = "#ffc107";
+                    }
                 }
-            } else {
-                updateCloudStatusUI(false, "Offline Cached");
             }
         }
 
         async function forceCloudRefresh() {
-            if(!docRef) return;
+            if(!docRef) return alert("Google Login required for cloud sync.");
             try {
-                if (!auth.currentUser) {
-                    if (confirm("Live Cloud Sync requires Google Sign-in to authorize access.\n\nWould you like to Sign in with Google now?")) {
-                        await handleGoogleLogin();
-                        return;
-                    }
-                }
-                if (unsubscribeSync) { try { unsubscribeSync(); } catch(e){} unsubscribeSync = null; }
-                await startLiveSync(true);
                 const doc = await docRef.get();
                 if (doc.exists) {
                     const d = doc.data();
@@ -3287,18 +3047,11 @@
                     if (d.coupons) coupons = d.coupons;
                     saveToStorage();
                     refreshDisplays();
-                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                    alert("Cloud Sync Successful! All records are up to date.");
+                    alert("Synced!");
                     initApp();
-                } else {
-                    alert(`Connected to Cloud! Document for key '${shopSyncKey}' is empty. Pushing current data now...`);
-                    await saveToStorage();
                 }
             } catch(e) {
-                console.error("Manual sync failed:", e);
-                lastCloudSyncError = e.message || String(e);
-                updateCloudStatusUI(false, "Offline Cached");
-                alert("Cloud Sync Failed: " + (e.message || e));
+                alert("Sync failed: " + (e.message || e));
             }
         }
 
@@ -7376,86 +7129,6 @@
             alert(`✅ Success!\nAuto-generated unique Barcode / SKU for ${updated} product(s) successfully!`);
         }
 
-
-        // ----------------------------------------------------
-        // MOBILE APP & REAL-TIME CLOUD SYNC PAIRING HELPERS
-        // ----------------------------------------------------
-        function saveCustomSyncKey() {
-            let key = document.getElementById('inputShopSyncKey').value.trim();
-            if (!key) return alert("Please enter a valid Shop Sync Key.");
-            if (confirm(`Change Cloud Sync Key to '${key}'?\n\nAll your devices (PC .exe & Mobile App) must use this same key to share live data.`)) {
-                shopSyncKey = key;
-                localStorage.setItem('shop_sync_key', shopSyncKey);
-                if (unsubscribeSync) { unsubscribeSync(); unsubscribeSync = null; }
-                docRef = db.collection("shops").doc(shopSyncKey);
-                startLiveSync();
-                renderPairingQRCode();
-                alert("Sync Key updated successfully! Scan the new QR code on your mobile phone to connect.");
-            }
-        }
-
-        function copyPairingLink() {
-            let host = window.location.origin;
-            if (host.startsWith('file:') || host.includes('127.0.0.1') || host.includes('localhost')) {
-                host = 'https://laminationhub.web.app';
-            }
-            let pairUrl = `${host}/?sync=${encodeURIComponent(shopSyncKey)}`;
-            navigator.clipboard.writeText(pairUrl);
-            alert("Mobile Pairing link copied to clipboard!\n\n" + pairUrl);
-        }
-
-        function renderPairingQRCode() {
-            let qrContainer = document.getElementById('mobile-pair-qrcode');
-            if (!qrContainer) return;
-            qrContainer.innerHTML = '';
-            let host = window.location.origin;
-            if (host.startsWith('file:') || host.includes('127.0.0.1') || host.includes('localhost')) {
-                host = 'https://laminationhub.web.app';
-            }
-            let pairUrl = `${host}/?sync=${encodeURIComponent(shopSyncKey)}`;
-            let textEl = document.getElementById('mobile-pair-url-text');
-            if (textEl) textEl.innerText = pairUrl;
-
-            new QRCode(qrContainer, {
-                text: pairUrl,
-                width: 140,
-                height: 140,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
-        }
-
-        // PWA Install Prompt handling
-        let deferredPrompt = null;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            const banner = document.getElementById('mobile-install-banner');
-            if (banner) banner.style.display = 'flex';
-        });
-
-        function installPWAApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(() => {
-                    deferredPrompt = null;
-                    dismissInstallBanner();
-                });
-            } else {
-                alert("To install on Mobile:\n\n1. Open this app in Chrome on your phone.\n2. Tap the 3 dots (⋮) menu in Chrome.\n3. Tap 'Install app' or 'Add to Home screen'.");
-            }
-        }
-
-        function dismissInstallBanner() {
-            const banner = document.getElementById('mobile-install-banner');
-            if (banner) banner.style.display = 'none';
-        }
-
-        // Service Worker registration
-        if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
-            navigator.serviceWorker.register('./sw.js').catch(() => {});
-        }
 
     </script>
 </body>
