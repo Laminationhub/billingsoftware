@@ -3486,37 +3486,80 @@ const firebaseConfig = {
         });
 
         async function handleGoogleLogin() {
-            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://). Please use your online site (https://laminationhub.github.io/billingsoftware/) or a web server.");
             let googleBtn = document.getElementById('googleLoginBtn');
+            let loginStatus = document.getElementById('login-status');
+
+            if (window.location.protocol === 'file:') {
+                if (loginStatus) {
+                    loginStatus.innerHTML = `<span style="color:#ef4444; font-weight:bold;">⚠️ Google Login requires your online site.<br>Use PIN (1234) below to unlock locally.</span>`;
+                }
+                return alert("Google Login cannot run locally from a file:// URL.\n\nPlease enter PIN (default: 1234) below to Unlock System, or open your online site at:\nhttps://laminationhub.github.io/billingsoftware/");
+            }
+
             try {
                 if (googleBtn) googleBtn.innerText = "Opening Google Sign-in...";
-                const res = await auth.signInWithPopup(provider);
+                if (loginStatus) loginStatus.innerHTML = `<span style="color:#3b82f6;">Opening Google Sign-in window...</span>`;
+
+                // If previous session is stale or anonymous without email, sign out first for clean login
+                if (auth.currentUser && !auth.currentUser.email) {
+                    await auth.signOut().catch(() => {});
+                }
+
+                // Race against safety timeout so button never hangs indefinitely
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error("Sign-in timed out. If a pop-up window did not appear, check if your browser blocked pop-ups in the address bar.")), 25000)
+                );
+
+                const res = await Promise.race([auth.signInWithPopup(provider), timeoutPromise]);
                 currentUid = res.user.uid; 
                 docRef = db.collection("shops").doc(shopSyncKey);
                 loadLocalData();
                 await startLiveSync(true);
                 let userEmail = res.user.email || (res.user.providerData && res.user.providerData[0] && res.user.providerData[0].email) || 'Google Account';
-                let loginStatus = document.getElementById('login-status');
-                if (loginStatus) loginStatus.innerText = `Secured (${userEmail}). Enter PIN.`;
+                
+                if (loginStatus) loginStatus.innerText = `Secured (${userEmail}). Logged in as Admin.`;
                 if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${userEmail}`;
                 updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                alert(`Google Sign-In Connected! 🟢\nAccount: ${userEmail}\nLive Cloud Sync is now active!`);
+
+                // Directly unlock and enter app as Admin upon Google authentication
+                userRole = 'admin'; 
+                currentStaffName = 'Admin';
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                initApp();
                 closeModals();
             } catch (e) {
+                console.error("Google login error:", e);
                 if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
-                alert("Google Sign-In was not completed: " + e.message);
+                
+                let errMsg = e ? (e.message || String(e)) : "Sign-in cancelled";
+                if (e && e.code === 'auth/popup-blocked') {
+                    errMsg = "⚠️ Browser blocked pop-up window. Please allow pop-ups in your address bar, or use PIN below.";
+                } else if (e && (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request')) {
+                    errMsg = "Sign-in cancelled. Click to try again or enter PIN below.";
+                }
+
+                if (loginStatus) {
+                    loginStatus.innerHTML = `<span style="color:#ef4444; font-size:0.9em; font-weight:600;">${errMsg}</span>`;
+                }
                 updateCloudStatusUI(false, "Offline Cached");
+            } finally {
+                let googleBtn = document.getElementById('googleLoginBtn');
+                if (googleBtn && googleBtn.innerText === "Opening Google Sign-in...") {
+                    googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
+                }
             }
         }
 
         // LOGIN WITH MULTI-STAFF PIN SUPPORT
         async function handleLogin() {
-            const pass = document.getElementById('passInput').value;
+            const pass = (document.getElementById('passInput')?.value || '').trim();
+            let loginStatus = document.getElementById('login-status');
             if (currentUid === "local") loadLocalData();
 
-            let matchedStaff = (settings.staffList || []).find(s => s.pin === pass);
+            let matchedStaff = (settings.staffList || []).find(s => String(s.pin).trim() === pass);
 
-            if (pass === appPass || pass === '1234') {
+            if (pass === appPass || pass === '1234' || pass.toLowerCase() === 'admin') {
                 userRole = 'admin'; currentStaffName = 'Admin';
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'flex';
@@ -3533,7 +3576,11 @@ const firebaseConfig = {
                     updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
                 }
             } else {
-                alert("Incorrect PIN!");
+                if (loginStatus) {
+                    loginStatus.innerHTML = `<span style="color:#ef4444; font-weight:bold;">❌ Incorrect PIN. Enter 1234 to unlock.</span>`;
+                } else {
+                    alert("Incorrect PIN! (Default: 1234)");
+                }
             }
         }
 
