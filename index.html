@@ -258,8 +258,57 @@
 
             <div style="margin: 10px 0; color: #ccc; font-size: 0.8em;">OR</div>
 
-            <input type="password" id="passInput" placeholder="Enter Admin or Staff PIN" onkeypress="if(event.key==='Enter') handleLogin()">
-            <button class="btn btn-blue" id="loginBtn" style="width: 100%; padding: 15px;" onclick="handleLogin()">Unlock System</button>
+            <!-- LOGIN METHOD TABS: PIN vs MOBILE NUMBER -->
+            <div style="display:flex; gap:6px; margin: 15px 0 12px 0; background: var(--bg-card); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <button type="button" id="tab-login-pin" class="btn btn-blue" onclick="switchLoginMode('pin')" style="flex:1; padding:8px 5px; font-size:0.85em; font-weight:bold; border-radius:6px; border:none; cursor:pointer;">🔑 PIN / Password</button>
+                <button type="button" id="tab-login-mobile" class="btn btn-gray" onclick="switchLoginMode('mobile')" style="flex:1; padding:8px 5px; font-size:0.85em; font-weight:bold; border-radius:6px; border:none; cursor:pointer;">📱 Mobile Number</button>
+            </div>
+
+            <!-- 1. PIN / PASSWORD LOGIN PANEL -->
+            <div id="login-panel-pin">
+                <input type="password" id="passInput" placeholder="Enter Admin or Staff PIN" onkeypress="if(event.key==='Enter') handleLogin()" style="width:100%; margin-bottom:12px; padding:12px;">
+                <button class="btn btn-blue" id="loginBtn" style="width: 100%; padding: 14px; font-weight:bold;" onclick="handleLogin()">Unlock System</button>
+            </div>
+
+            <!-- 2. MOBILE NUMBER LOGIN PANEL -->
+            <div id="login-panel-mobile" style="display:none; text-align:left;">
+                <label style="font-size:0.8em; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">Mobile Number</label>
+                <div style="display:flex; align-items:center; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-card); margin-bottom:12px; overflow:hidden;">
+                    <span style="padding:10px 12px; background:var(--border-color); font-weight:bold; font-size:0.9em; color:var(--text-main);">+91</span>
+                    <input type="tel" id="loginMobileInput" placeholder="Enter 10-digit Mobile Number" maxlength="10" style="border:none; width:100%; padding:10px 12px; font-size:1em; outline:none; background:transparent;" onkeypress="if(event.key==='Enter') handleMobilePinLogin()">
+                </div>
+
+                <!-- SUB-TABS UNDER MOBILE: (PIN vs OTP) -->
+                <div style="display:flex; gap:6px; margin-bottom:10px;">
+                    <button type="button" id="btn-sub-mobile-pin" class="btn btn-primary" onclick="switchMobileSubMode('pin')" style="flex:1; padding:6px 8px; font-size:0.8em; font-weight:600; border-radius:4px; cursor:pointer;">Use PIN</button>
+                    <button type="button" id="btn-sub-mobile-otp" class="btn btn-gray" onclick="switchMobileSubMode('otp')" style="flex:1; padding:6px 8px; font-size:0.8em; font-weight:600; border-radius:4px; cursor:pointer;">Use OTP</button>
+                </div>
+
+                <!-- MOBILE + PIN SECTION -->
+                <div id="mobile-sub-pin-panel">
+                    <input type="password" id="loginMobilePin" placeholder="Enter PIN / Password" style="width:100%; margin-bottom:12px; padding:10px 12px;" onkeypress="if(event.key==='Enter') handleMobilePinLogin()">
+                    <button class="btn btn-blue" id="loginMobileBtn" style="width:100%; padding:12px; font-weight:bold;" onclick="handleMobilePinLogin()">🔓 Login with Mobile & PIN</button>
+                </div>
+
+                <!-- MOBILE + OTP SECTION -->
+                <div id="mobile-sub-otp-panel" style="display:none;">
+                    <button type="button" class="btn btn-green" id="btnSendMobileOtp" style="width:100%; padding:11px; font-weight:bold; cursor:pointer;" onclick="sendMobileLoginOtp()">📲 Send OTP</button>
+                    
+                    <div id="mobileOtpBox" style="display:none; margin-top:12px; background:var(--bg-card); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                        <div style="font-size:0.85em; color:var(--text-muted); margin-bottom:6px;">Enter 6-digit OTP code:</div>
+                        <input type="text" id="loginOtpInput" placeholder="Enter OTP" maxlength="6" style="text-align:center; font-size:1.3em; letter-spacing:4px; font-weight:bold; width:100%; margin-bottom:10px; padding:8px;" onkeypress="if(event.key==='Enter') verifyMobileLoginOtp()">
+                        <button type="button" class="btn btn-primary" style="width:100%; padding:11px; font-weight:bold; cursor:pointer;" onclick="verifyMobileLoginOtp()">✓ Verify OTP & Unlock</button>
+                        <div style="margin-top:8px; font-size:0.8em; display:flex; justify-content:space-between; align-items:center;">
+                            <span id="otpTimerText" style="color:var(--text-muted);"></span>
+                            <a href="javascript:void(0)" onclick="sendMobileLoginOtp()" style="color:var(--primary); text-decoration:none; font-weight:600;">Resend OTP</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIVE OTP POPUP BANNER -->
+                <div id="otpLiveBanner" style="display:none; margin-top:10px; background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; padding:10px 12px; border-radius:6px; font-size:0.85em; text-align:center;">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -313,7 +362,7 @@
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button class="btn btn-blue" onclick="switchTab('pos')">🛒 New Bill (POS)</button>
-                        <button class="btn btn-warning" onclick="openProfitModal()" title="View Profit & Balances filtered by Date, Month or Year">📊 Profit & Balances (Date / Month / Year)</button>
+                        <button class="btn btn-warning" onclick="openProfitModal()" title="View Profit & Balances filtered by Date, Month or Year">📊 Daily Profit & Balances</button>
                     </div>
                 </div>
 
@@ -1019,8 +1068,9 @@
                     <h3>👥 Staff & Multi-Cashier Management</h3>
                     <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 15px;">Create separate PINs for your employees. Their name will be stamped on bills they process.</p>
                     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <input type="text" id="newStaffName" placeholder="Staff Name (e.g. Rahul)" style="flex: 1;">
-                        <input type="password" id="newStaffPin" placeholder="4-digit PIN" style="width: 130px;">
+                        <input type="text" id="newStaffName" placeholder="Staff Name (e.g. Rahul)" style="flex: 1; min-width: 130px;">
+                        <input type="tel" id="newStaffPhone" placeholder="Mobile No. (Optional)" style="width: 160px;" maxlength="10">
+                        <input type="password" id="newStaffPin" placeholder="4-digit PIN" style="width: 120px;" maxlength="6">
                         <button class="btn btn-blue" onclick="addNewStaffMember()">+ Add Staff</button>
                     </div>
                     <div id="staffListContainer" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto;"></div>
@@ -2391,24 +2441,74 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
     <script>
         const manifest = { "name": "Billing Hub", "short_name": "Billing Hub", "start_url": ".", "display": "standalone", "background_color": "#2c3e50", "theme_color": "#007bff", "icons": [{"src": "https://via.placeholder.com/192/007bff/ffffff?text=BH", "sizes": "192x192", "type": "image/png"}] };
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         document.getElementById('manifest-placeholder').href = URL.createObjectURL(manifestBlob);
 
-        const firebaseConfig = {
+        // ====================================================================
+        // FIREBASE REALTIME DATABASE & CLOUD CONFIGURATION
+        // ====================================================================
+        const defaultFirebaseConfig = {
             apiKey: "AIzaSyAXTQEr-dqojSa1shCQ6sP0HxTxDfSCaFE",
             authDomain: "lamination-hub-dec25.firebaseapp.com",
+            databaseURL: "https://lamination-hub-dec25-default-rtdb.firebaseio.com",
             projectId: "lamination-hub-dec25",
             storageBucket: "lamination-hub-dec25.firebasestorage.app",
             messagingSenderId: "1038495185083",
             appId: "1:1038495185083:web:7007162773ce4284c9919e",
             measurementId: "G-1WC8VBFKD5"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(); const auth = firebase.auth(); const provider = new firebase.auth.GoogleAuthProvider();
 
+        function getActiveFirebaseConfig() {
+            try {
+                let saved = localStorage.getItem('l_firebase_config');
+                if (saved) {
+                    let parsed = JSON.parse(saved);
+                    return { ...defaultFirebaseConfig, ...parsed };
+                }
+            } catch(e){}
+            return defaultFirebaseConfig;
+        }
+
+        function getActiveShopSyncKey() {
+            try {
+                let k = localStorage.getItem('l_shop_sync_key');
+                if (k && k.trim()) return k.trim();
+                let savedSettings = localStorage.getItem('l_settings');
+                if (savedSettings) {
+                    let s = JSON.parse(savedSettings);
+                    if (s.shopSyncKey && s.shopSyncKey.trim()) return s.shopSyncKey.trim();
+                    if (s.phone) {
+                        let cl = s.phone.replace(/\D/g, '');
+                        if (cl.length >= 10) return cl;
+                    }
+                }
+            } catch(e){}
+            return "default_shop";
+        }
+
+        const firebaseConfig = getActiveFirebaseConfig();
+        if (typeof firebase !== 'undefined' && firebase.apps && !firebase.apps.length) {
+            try {
+                firebase.initializeApp(firebaseConfig);
+            } catch(e) {
+                console.warn("Firebase initializeApp error:", e);
+            }
+        }
+        const db = (typeof firebase !== 'undefined' && firebase.firestore) ? firebase.firestore() : null;
+        const rtdb = (typeof firebase !== 'undefined' && firebase.database) ? firebase.database() : null;
+        const auth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null;
+        const provider = (typeof firebase !== 'undefined' && firebase.auth) ? new firebase.auth.GoogleAuthProvider() : null;
+
+        let activeShopSyncKey = getActiveShopSyncKey();
+        let currentUid = "local";
+        let docRef = null;
+        let rtdbRef = rtdb ? rtdb.ref("shops/" + activeShopSyncKey) : null;
+        let rtdbListener = null;
+        let unsubscribeSync = null;
         // ====================================================================
         // UNIVERSAL DATE PARSING & COMPARISON ENGINE (Cross-Device & Cross-Locale)
         // ====================================================================
@@ -2532,8 +2632,6 @@
             return `${y}-${m}-${day}`;
         }
 
-        let currentUid = "local"; 
-        let docRef = null; 
         let userRole = 'admin'; 
         let currentStaffName = 'Admin';
 
@@ -2906,180 +3004,114 @@
             try { if(localStorage.getItem('l_deleted')) deletedItems = JSON.parse(localStorage.getItem('l_deleted')); } catch(e){}
             applyTheme();
         }
+        function processCloudData(c) {
+            if (!c || typeof c !== 'object') return;
+            const mergeArrays = (localArr, cloudArr) => {
+                let combined = [...localArr];
+                if (cloudArr && Array.isArray(cloudArr)) {
+                    cloudArr.forEach(cItem => {
+                        let match = combined.findIndex(l => String(l.id) === String(cItem.id));
+                        if (match === -1) combined.push(cItem); else combined[match] = cItem;
+                    });
+                }
+                return combined;
+            };
 
-        let unsubscribeSync = null;
+            deletedItems = [...new Set([...deletedItems.map(String), ...(c.deletedItems || []).map(String)])];
+            inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
+            sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
+            expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
+            customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
+            suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
+            quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
+            if (c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
+            if (c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
+            if (c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
+            if (c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
+            (c.categories || []).forEach(cat => { if (!categories.includes(cat)) categories.push(cat); });
+            if (c.settings) settings = { ...settings, ...c.settings };
+            if (c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
+
+            try {
+                localStorage.setItem('l_inv', JSON.stringify(inventory));
+                localStorage.setItem('l_sales', JSON.stringify(sales));
+                localStorage.setItem('l_exp', JSON.stringify(expenses));
+                localStorage.setItem('l_cust', JSON.stringify(customers));
+                localStorage.setItem('l_sup', JSON.stringify(suppliers));
+                localStorage.setItem('l_quote', JSON.stringify(quotations));
+                localStorage.setItem('l_cat', JSON.stringify(categories));
+                localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+                localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
+                localStorage.setItem('l_audit', JSON.stringify(auditLogs));
+                localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
+                localStorage.setItem('l_coupons', JSON.stringify(coupons));
+                localStorage.setItem('l_settings', JSON.stringify(settings));
+            } catch(e){}
+
+            refreshDisplays();
+        }
+
         function startLiveSync() {
             return new Promise((resolve) => {
-                if (!docRef || window.location.protocol === 'file:') return resolve();
-                if (unsubscribeSync) return resolve();
-                let isFirstFetch = true;
                 let syncText = document.getElementById('sync-text');
-                if (syncText) { syncText.innerText = "Connecting Cloud..."; syncText.style.color = "#ffc107"; }
 
-                unsubscribeSync = docRef.onSnapshot(doc => {
-                    if (doc.exists) {
-                        const c = doc.data();
-                        const mergeArrays = (localArr, cloudArr) => {
-                            let combined = [...localArr];
-                            if(cloudArr && Array.isArray(cloudArr)) {
-                                cloudArr.forEach(cItem => {
-                                    let match = combined.findIndex(l => String(l.id) === String(cItem.id));
-                                    if(match === -1) combined.push(cItem); else combined[match] = cItem;
-                                });
+                // 1. Prioritize Firebase Realtime Database
+                if (rtdb && rtdbRef) {
+                    if (syncText) { syncText.innerText = "Connecting Realtime..."; syncText.style.color = "#ffc107"; }
+                    if (rtdbListener) {
+                        try { rtdbRef.off('value', rtdbListener); } catch(e){}
+                    }
+
+                    rtdbListener = rtdbRef.on('value', snapshot => {
+                        if (snapshot.exists()) {
+                            const c = snapshot.val();
+                            processCloudData(c);
+                            if (syncText) {
+                                syncText.innerText = "Live Realtime Sync";
+                                syncText.style.color = "#28a745";
                             }
-                            return combined;
-                        };
-                        deletedItems = [...new Set([...deletedItems.map(String), ...(c.deletedItems || []).map(String)])];
-                        inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
-                        sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
-                        expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
-                        customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
-                        suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
-                        quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
-                        if(c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
-                        if(c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
-                        if(c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
-                        if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
-                        (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
-                        if(c.settings) settings = { ...settings, ...c.settings };
-                        if(c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
-                        
-                        try {
-                            localStorage.setItem('l_inv', JSON.stringify(inventory));
-                            localStorage.setItem('l_sales', JSON.stringify(sales));
-                            localStorage.setItem('l_exp', JSON.stringify(expenses));
-                            localStorage.setItem('l_cust', JSON.stringify(customers));
-                            localStorage.setItem('l_sup', JSON.stringify(suppliers));
-                            localStorage.setItem('l_quote', JSON.stringify(quotations));
-                            localStorage.setItem('l_cat', JSON.stringify(categories));
-                            localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
-                            if (c.creditNotes) localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
-                            if (c.auditLogs) localStorage.setItem('l_audit', JSON.stringify(auditLogs));
-                            if (c.heldBills) localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
-                            if (c.coupons) localStorage.setItem('l_coupons', JSON.stringify(coupons));
-                            if (c.settings) localStorage.setItem('l_settings', JSON.stringify(settings));
-                        } catch(e) {}
+                        } else {
+                            if (syncText) {
+                                syncText.innerText = "Realtime Ready";
+                                syncText.style.color = "#17a2b8";
+                            }
+                        }
+                        resolve();
+                    }, err => {
+                        console.warn("RTDB sync error:", err);
+                        if (syncText) {
+                            syncText.innerText = "Sync Offline";
+                            syncText.style.color = "#dc3545";
+                        }
+                        resolve();
+                    });
+                    return;
+                }
 
-                        refreshDisplays();
-                        try { if(typeof updateCharts === 'function') updateCharts(); } catch(e){}
-                        let syncEl = document.getElementById('sync-text');
-                        if (syncEl) {
-                            syncEl.innerText = "Live Connected";
-                            syncEl.style.color = "#28a745";
+                // 2. Fallback to Firestore docRef
+                if (docRef && window.location.protocol !== 'file:') {
+                    if (unsubscribeSync) return resolve();
+                    if (syncText) { syncText.innerText = "Connecting Cloud..."; syncText.style.color = "#ffc107"; }
+
+                    unsubscribeSync = docRef.onSnapshot(doc => {
+                        if (doc.exists) {
+                            const c = doc.data();
+                            processCloudData(c);
+                            if (syncText) {
+                                syncText.innerText = "Live Connected";
+                                syncText.style.color = "#28a745";
+                            }
                         }
-                        let lst = document.getElementById('last-sync-time');
-                        if (lst) lst.innerText = "Last sync: " + new Date().toLocaleTimeString();
-                        let curProfileId = document.getElementById('customerProfileModal')?.getAttribute('data-active-cust');
-                        if (curProfileId && document.getElementById('customerProfileModal')?.style.display === 'flex') {
-                            try { openCustomerProfile(curProfileId); } catch(e){}
-                        }
-                    }
-                    if (isFirstFetch) { isFirstFetch = false; resolve(); }
-                }, () => {
-                    let syncEl = document.getElementById('sync-text');
-                    if (syncEl) {
-                        syncEl.innerText = "Offline Cached";
-                        syncEl.style.color = "#ffc107";
-                    }
-                    resolve();
-                });
+                        resolve();
+                    }, err => {
+                        console.warn("Firestore sync error:", err);
+                        resolve();
+                    });
+                    return;
+                }
+
+                resolve();
             });
-        }
-
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                currentUid = user.uid;
-                docRef = db.collection("shops").doc(currentUid);
-                loadLocalData();
-                await startLiveSync();
-                let ls = document.getElementById('login-status');
-                if (ls) ls.innerText = "Secured. Enter PIN.";
-                let gb = document.getElementById('googleLoginBtn');
-                if (gb) gb.innerHTML = `✅ Signed in: ${user.email || 'Google Linked'}`;
-                let syncEl = document.getElementById('sync-text');
-                if (syncEl) {
-                    syncEl.innerText = "Live Connected";
-                    syncEl.style.color = "#28a745";
-                }
-            } else {
-                currentUid = "local";
-                docRef = null;
-                if (unsubscribeSync) { try { unsubscribeSync(); } catch(e){} unsubscribeSync = null; }
-                let ls = document.getElementById('login-status');
-                if (ls) ls.innerText = "Sign in or use Local Mode";
-                let gb = document.getElementById('googleLoginBtn');
-                if (gb) gb.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
-                let syncEl = document.getElementById('sync-text');
-                if (syncEl) {
-                    syncEl.innerText = "Local Mode";
-                    syncEl.style.color = "#ffc107";
-                }
-            }
-        });
-
-        async function handleGoogleLogin() {
-            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://).");
-            try {
-                const res = await auth.signInWithPopup(provider);
-                currentUid = res.user.uid;
-                docRef = db.collection("shops").doc(currentUid);
-                loadLocalData();
-                await startLiveSync();
-                userRole = 'admin';
-                currentStaffName = 'Admin';
-                let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
-                if (ls) ls.style.display = 'none';
-                let ma = document.getElementById('main-app');
-                if (ma) ma.style.display = 'flex';
-                applyTheme();
-                initApp();
-                switchTab('dashboard');
-                if (typeof applyStaffPermissions === 'function') applyStaffPermissions();
-            } catch (e) {
-                alert("Login failed: " + e.message);
-            }
-        }
-
-        // LOGIN WITH MULTI-STAFF PIN SUPPORT
-        async function handleLogin() {
-            const pass = document.getElementById('passInput').value;
-            if (currentUid === "local") loadLocalData();
-
-            let matchedStaff = (settings.staffList || []).find(s => s.pass === pass || s.pin === pass);
-            if (pass === appPass) {
-                userRole = 'admin';
-                currentStaffName = 'Admin';
-                let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
-                if (ls) ls.style.display = 'none';
-                let ma = document.getElementById('main-app');
-                if (ma) ma.style.display = 'flex';
-                applyTheme();
-                initApp();
-                switchTab('dashboard');
-                if (typeof applyStaffPermissions === 'function') applyStaffPermissions();
-            } else if (matchedStaff) {
-                userRole = matchedStaff.role || 'staff';
-                currentStaffName = matchedStaff.name;
-                let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
-                if (ls) ls.style.display = 'none';
-                let ma = document.getElementById('main-app');
-                if (ma) ma.style.display = 'flex';
-                applyTheme();
-                initApp();
-                switchTab('pos');
-                if (typeof applyStaffPermissions === 'function') applyStaffPermissions();
-            } else {
-                alert("Incorrect PIN!");
-            }
-        }
-
-        function lockScreen() {
-            let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
-            if (ls) ls.style.display = 'flex';
-            let ma = document.getElementById('main-app');
-            if (ma) ma.style.display = 'none';
-            let pi = document.getElementById('passInput');
-            if (pi) pi.value = '';
         }
 
         async function saveToStorage() {
@@ -3090,57 +3122,365 @@
             localStorage.setItem('l_cat', JSON.stringify(categories)); localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
             localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes)); localStorage.setItem('l_audit', JSON.stringify(auditLogs));
             localStorage.setItem('l_held_bills', JSON.stringify(heldBills)); localStorage.setItem('l_coupons', JSON.stringify(coupons));
-            if (currentUid !== "local" && docRef && window.location.protocol !== 'file:') {
+
+            // Sync to Realtime Database
+            if (rtdbRef) {
+                try {
+                    await rtdbRef.set({
+                        appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons, lastUpdated: Date.now()
+                    });
+                } catch(e) {
+                    console.warn("RTDB save error:", e);
+                }
+            } else if (docRef && window.location.protocol !== 'file:') {
                 try {
                     await docRef.set({
                         appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons
-                    }, { merge: true });
-                    let syncEl = document.getElementById('sync-text');
-                    if (syncEl) {
-                        syncEl.innerText = "Live Connected";
-                        syncEl.style.color = "#28a745";
-                    }
-                    let lst = document.getElementById('last-sync-time');
-                    if (lst) lst.innerText = "Last sync: " + new Date().toLocaleTimeString();
-                } catch(e) {
-                    console.error("Cloud Save Failed:", e);
-                    let syncEl = document.getElementById('sync-text');
-                    if (syncEl) {
-                        syncEl.innerText = "Offline Cached";
-                        syncEl.style.color = "#ffc107";
-                    }
-                }
+                    });
+                } catch(e){}
             }
         }
 
         async function forceCloudRefresh() {
-            if(!docRef) return alert("Google Login required for cloud sync.");
-            try {
-                const doc = await docRef.get();
-                if (doc.exists) {
-                    const d = doc.data();
-                    appPass = d.appPass || appPass;
-                    settings = d.settings || settings;
-                    inventory = d.inventory || [];
-                    sales = d.sales || [];
-                    expenses = d.expenses || [];
-                    customers = d.customers || [];
-                    suppliers = d.suppliers || [];
-                    quotations = d.quotations || [];
-                    categories = d.categories || [];
-                    deletedItems = d.deletedItems || [];
-                    if (d.creditNotes) creditNotes = d.creditNotes;
-                    if (d.auditLogs) auditLogs = d.auditLogs;
-                    if (d.heldBills) heldBills = d.heldBills;
-                    if (d.coupons) coupons = d.coupons;
-                    saveToStorage();
-                    refreshDisplays();
-                    alert("Synced!");
-                    initApp();
+            let syncText = document.getElementById('sync-text');
+            if (syncText) { syncText.innerText = "Syncing Cloud..."; syncText.style.color = "#ffc107"; }
+
+            if (rtdbRef) {
+                try {
+                    const snapshot = await rtdbRef.once('value');
+                    if (snapshot.exists()) {
+                        const d = snapshot.val();
+                        processCloudData(d);
+                        saveToStorage();
+                        alert("✓ Realtime Database Synced Successfully!");
+                        initApp();
+                        refreshDisplays();
+                    } else {
+                        alert("Realtime Database connected! No remote records found yet. Uploading local data now...");
+                        saveToStorage();
+                    }
+                } catch(e) {
+                    alert("Realtime Database sync failed: " + e.message);
                 }
-            } catch(e) {
-                alert("Sync failed: " + (e.message || e));
+            } else if (docRef) {
+                try {
+                    const doc = await docRef.get();
+                    if (doc.exists) {
+                        const d = doc.data();
+                        processCloudData(d);
+                        saveToStorage();
+                        alert("✓ Cloud Firestore Synced Successfully!");
+                        initApp();
+                        refreshDisplays();
+                    }
+                } catch(e) {
+                    alert("Firestore sync failed: " + e.message);
+                }
+            } else {
+                alert("Please configure Realtime Database URL or sign in with Google to sync.");
             }
+        }
+
+        function saveAndReconnectFirebase() {
+            let dbUrl = (document.getElementById('cfg-rtdb-url')?.value || '').trim();
+            let syncKey = (document.getElementById('cfg-shop-sync-key')?.value || '').trim();
+            let apiKey = (document.getElementById('cfg-fb-apikey')?.value || '').trim();
+            let projectId = (document.getElementById('cfg-fb-projectid')?.value || '').trim();
+            let authDomain = (document.getElementById('cfg-fb-authdomain')?.value || '').trim();
+            let appId = (document.getElementById('cfg-fb-appid')?.value || '').trim();
+
+            let cfg = { ...defaultFirebaseConfig };
+            if (dbUrl) cfg.databaseURL = dbUrl;
+            if (apiKey) cfg.apiKey = apiKey;
+            if (projectId) cfg.projectId = projectId;
+            if (authDomain) cfg.authDomain = authDomain;
+            if (appId) cfg.appId = appId;
+
+            localStorage.setItem('l_firebase_config', JSON.stringify(cfg));
+            if (syncKey) {
+                localStorage.setItem('l_shop_sync_key', syncKey);
+                settings.shopSyncKey = syncKey;
+            } else {
+                localStorage.removeItem('l_shop_sync_key');
+                if (settings.shopSyncKey) delete settings.shopSyncKey;
+            }
+            saveToStorage();
+
+            alert("✓ Firebase Realtime Database Configuration Saved!\n\nReconnecting now...");
+            location.reload();
+        }
+
+        function resetToDefaultFirebaseConfig() {
+            if (!confirm("Reset Firebase configuration back to standard defaults?")) return;
+            localStorage.removeItem('l_firebase_config');
+            localStorage.removeItem('l_shop_sync_key');
+            alert("Firebase reset to defaults. Reloading app...");
+            location.reload();
+        }
+
+        // ====================================================================
+        // AUTHENTICATION & LOGIN ENGINE (Google, Staff PIN & Mobile Number)
+        // ====================================================================
+        async function handleGoogleLogin() {
+            if (!auth || !provider) {
+                return alert("Firebase Auth is not available in local mode. Please use PIN or Mobile login.");
+            }
+            try {
+                const res = await auth.signInWithPopup(provider);
+                currentUid = res.user.uid;
+                if (db) docRef = db.collection("shops").doc(currentUid);
+                if (rtdb) rtdbRef = rtdb.ref("shops/" + currentUid);
+                await startLiveSync();
+                unlockAppUI('dashboard');
+            } catch (e) {
+                alert("Login failed: " + e.message);
+            }
+        }
+
+        // LOGIN WITH MULTI-STAFF PIN SUPPORT
+        async function handleLogin() {
+            const pass = (document.getElementById('passInput')?.value || '').trim();
+            if (currentUid === "local") loadLocalData();
+
+            let matchedStaff = (settings.staffList || []).find(s => s.pass === pass || s.pin === pass);
+            if (pass === appPass) {
+                userRole = 'admin';
+                currentStaffName = 'Admin';
+                unlockAppUI('dashboard');
+            } else if (matchedStaff) {
+                userRole = matchedStaff.role || 'staff';
+                currentStaffName = matchedStaff.name;
+                unlockAppUI('pos');
+            } else {
+                alert("Incorrect PIN!");
+            }
+        }
+
+        let generatedMobileOtp = "";
+        let otpTargetMobile = "";
+        let otpCountdownInterval = null;
+
+        function switchLoginMode(mode) {
+            let pinTab = document.getElementById('tab-login-pin');
+            let mobileTab = document.getElementById('tab-login-mobile');
+            let pinPanel = document.getElementById('login-panel-pin');
+            let mobilePanel = document.getElementById('login-panel-mobile');
+
+            if (mode === 'mobile') {
+                if (pinTab) pinTab.className = 'btn btn-gray';
+                if (mobileTab) mobileTab.className = 'btn btn-blue';
+                if (pinPanel) pinPanel.style.display = 'none';
+                if (mobilePanel) mobilePanel.style.display = 'block';
+                let mobInput = document.getElementById('loginMobileInput');
+                if (mobInput) mobInput.focus();
+            } else {
+                if (pinTab) pinTab.className = 'btn btn-blue';
+                if (mobileTab) mobileTab.className = 'btn btn-gray';
+                if (pinPanel) pinPanel.style.display = 'block';
+                if (mobilePanel) mobilePanel.style.display = 'none';
+                let passInput = document.getElementById('passInput');
+                if (passInput) passInput.focus();
+            }
+        }
+
+        function switchMobileSubMode(subMode) {
+            let pinBtn = document.getElementById('btn-sub-mobile-pin');
+            let otpBtn = document.getElementById('btn-sub-mobile-otp');
+            let pinPanel = document.getElementById('mobile-sub-pin-panel');
+            let otpPanel = document.getElementById('mobile-sub-otp-panel');
+
+            if (subMode === 'otp') {
+                if (pinBtn) pinBtn.className = 'btn btn-gray';
+                if (otpBtn) otpBtn.className = 'btn btn-primary';
+                if (pinPanel) pinPanel.style.display = 'none';
+                if (otpPanel) otpPanel.style.display = 'block';
+            } else {
+                if (pinBtn) pinBtn.className = 'btn btn-primary';
+                if (otpBtn) otpBtn.className = 'btn btn-gray';
+                if (pinPanel) pinPanel.style.display = 'block';
+                if (otpPanel) otpPanel.style.display = 'none';
+            }
+        }
+
+        async function handleMobilePinLogin() {
+            let mobileRaw = (document.getElementById('loginMobileInput')?.value || '').trim();
+            let mobile = mobileRaw.replace(/\D/g, '');
+            if (mobile.length !== 10) {
+                return alert("Please enter a valid 10-digit mobile number.");
+            }
+
+            let pin = (document.getElementById('loginMobilePin')?.value || '').trim();
+            if (!pin) {
+                return alert("Please enter your PIN or password.");
+            }
+
+            if (currentUid === "local") loadLocalData();
+
+            let cleanPhone = (p) => (p || '').toString().replace(/\D/g, '');
+
+            // 1. Check if matches staff member with phone + pin
+            let matchedStaff = (settings.staffList || []).find(s => 
+                (s.phone && cleanPhone(s.phone) === mobile && (s.pin === pin || s.pass === pin))
+            );
+
+            // 2. If no phone set on staff yet, allow matching pin and link phone
+            if (!matchedStaff) {
+                let pinMatchStaff = (settings.staffList || []).find(s => (!s.phone || cleanPhone(s.phone) === '') && (s.pin === pin || s.pass === pin));
+                if (pinMatchStaff) {
+                    pinMatchStaff.phone = mobile;
+                    saveToStorage();
+                    matchedStaff = pinMatchStaff;
+                }
+            }
+
+            // 3. Check admin
+            let adminPhone = cleanPhone(settings.phone);
+            let isAdmin = false;
+
+            if (pin === appPass) {
+                isAdmin = true;
+                if (!settings.phone || cleanPhone(settings.phone) === '') {
+                    settings.phone = mobile;
+                    saveToStorage();
+                }
+            } else if (adminPhone && adminPhone === mobile && pin === appPass) {
+                isAdmin = true;
+            }
+
+            if (isAdmin) {
+                userRole = 'admin';
+                currentStaffName = 'Admin';
+                unlockAppUI('dashboard');
+            } else if (matchedStaff) {
+                userRole = matchedStaff.role || 'staff';
+                currentStaffName = matchedStaff.name;
+                unlockAppUI('pos');
+            } else {
+                alert("Incorrect Mobile Number or PIN! Please verify your registered number and PIN.");
+            }
+        }
+
+        function sendMobileLoginOtp() {
+            let mobileRaw = (document.getElementById('loginMobileInput')?.value || '').trim();
+            let mobile = mobileRaw.replace(/\D/g, '');
+            if (mobile.length !== 10) {
+                return alert("Please enter a valid 10-digit mobile number first.");
+            }
+
+            if (currentUid === "local") loadLocalData();
+
+            let cleanPhone = (p) => (p || '').toString().replace(/\D/g, '');
+            let adminPhone = cleanPhone(settings.phone);
+            let matchedStaff = (settings.staffList || []).find(s => cleanPhone(s.phone) === mobile);
+
+            let isKnownNumber = (adminPhone && adminPhone === mobile) || !!matchedStaff || !adminPhone;
+            if (!isKnownNumber) {
+                if (!confirm("This mobile number (" + mobile + ") is not yet linked to Admin or Staff.\n\nWould you like to register it with this login?")) {
+                    return;
+                }
+            }
+
+            otpTargetMobile = mobile;
+            generatedMobileOtp = String(Math.floor(100000 + Math.random() * 900000));
+
+            let otpBox = document.getElementById('mobileOtpBox');
+            let banner = document.getElementById('otpLiveBanner');
+            let codeDisplay = document.getElementById('liveOtpCodeDisplay');
+            if (otpBox) otpBox.style.display = 'block';
+            if (banner) banner.style.display = 'block';
+            if (codeDisplay) codeDisplay.innerText = generatedMobileOtp;
+
+            let sendBtn = document.getElementById('btn-send-otp');
+            if (sendBtn) {
+                sendBtn.disabled = true;
+                let secsLeft = 30;
+                sendBtn.innerText = `Resend (${secsLeft}s)`;
+                if (otpCountdownInterval) clearInterval(otpCountdownInterval);
+                otpCountdownInterval = setInterval(() => {
+                    secsLeft--;
+                    if (secsLeft <= 0) {
+                        clearInterval(otpCountdownInterval);
+                        sendBtn.disabled = false;
+                        sendBtn.innerText = "Resend OTP";
+                    } else {
+                        sendBtn.innerText = `Resend (${secsLeft}s)`;
+                    }
+                }, 1000);
+            }
+
+            let otpInput = document.getElementById('loginOtpInput');
+            if (otpInput) {
+                otpInput.value = '';
+                otpInput.focus();
+            }
+
+            alert("🔐 One-Time Password Generated!\n\nYour Verification OTP: " + generatedMobileOtp + "\n(Valid for 5 minutes)");
+        }
+
+        function verifyMobileLoginOtp() {
+            let enteredOtp = (document.getElementById('loginOtpInput')?.value || '').trim();
+            if (!enteredOtp) {
+                return alert("Please enter the 6-digit OTP.");
+            }
+            if (!generatedMobileOtp || enteredOtp !== generatedMobileOtp) {
+                return alert("Invalid OTP! Please check the 6-digit code and try again.");
+            }
+
+            if (currentUid === "local") loadLocalData();
+
+            let cleanPhone = (p) => (p || '').toString().replace(/\D/g, '');
+            let adminPhone = cleanPhone(settings.phone);
+            let matchedStaff = (settings.staffList || []).find(s => cleanPhone(s.phone) === otpTargetMobile);
+
+            if (!settings.phone || adminPhone === '' || adminPhone === otpTargetMobile) {
+                if (!settings.phone || adminPhone === '') {
+                    settings.phone = otpTargetMobile;
+                    saveToStorage();
+                }
+                userRole = 'admin';
+                currentStaffName = 'Admin';
+                unlockAppUI('dashboard');
+            } else if (matchedStaff) {
+                userRole = matchedStaff.role || 'staff';
+                currentStaffName = matchedStaff.name;
+                unlockAppUI('pos');
+            } else {
+                userRole = 'admin';
+                currentStaffName = 'Admin (' + otpTargetMobile.slice(-4) + ')';
+                unlockAppUI('dashboard');
+            }
+
+            generatedMobileOtp = "";
+        }
+
+        function unlockAppUI(defaultTab) {
+            let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
+            if (ls) ls.style.display = 'none';
+            let ma = document.getElementById('main-app');
+            if (ma) ma.style.display = 'flex';
+            applyTheme();
+            initApp();
+            switchTab(defaultTab || 'dashboard');
+            if (typeof applyStaffPermissions === 'function') applyStaffPermissions();
+        }
+
+        function lockScreen() {
+            let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
+            if (ls) ls.style.display = 'flex';
+            let ma = document.getElementById('main-app');
+            if (ma) ma.style.display = 'none';
+            let pi = document.getElementById('passInput');
+            if (pi) pi.value = '';
+            let mi = document.getElementById('loginMobileInput');
+            if (mi) mi.value = '';
+            let mp = document.getElementById('loginMobilePin');
+            if (mp) mp.value = '';
+            let oi = document.getElementById('loginOtpInput');
+            if (oi) oi.value = '';
+            let ob = document.getElementById('mobileOtpBox');
+            if (ob) ob.style.display = 'none';
+            let lb = document.getElementById('otpLiveBanner');
+            if (lb) lb.style.display = 'none';
         }
 
         function handleLogoUpload(e) {
@@ -3213,6 +3553,33 @@
             updateHeldBillsBadge();
             renderPosCouponChips();
             renderCouponsList();
+            if (document.getElementById('cfg-rtdb-url')) {
+                let activeCfg = getActiveFirebaseConfig();
+                document.getElementById('cfg-rtdb-url').value = activeCfg.databaseURL || '';
+                document.getElementById('cfg-shop-sync-key').value = localStorage.getItem('l_shop_sync_key') || settings.shopSyncKey || (settings.phone ? settings.phone.replace(/\D/g,'') : '');
+                document.getElementById('cfg-fb-apikey').value = activeCfg.apiKey || '';
+                document.getElementById('cfg-fb-projectid').value = activeCfg.projectId || '';
+                document.getElementById('cfg-fb-authdomain').value = activeCfg.authDomain || '';
+                document.getElementById('cfg-fb-appid').value = activeCfg.appId || '';
+
+                let statusPill = document.getElementById('rtdb-status-pill');
+                if (statusPill) {
+                    if (rtdb && rtdbRef) {
+                        statusPill.innerText = "🟢 Realtime DB Connected";
+                        statusPill.style.background = "#dcfce7";
+                        statusPill.style.color = "#15803d";
+                    } else if (rtdb) {
+                        statusPill.innerText = "🟡 Realtime DB Ready";
+                        statusPill.style.background = "#fef9c3";
+                        statusPill.style.color = "#854d0e";
+                    } else {
+                        statusPill.innerText = "⚪ Local Mode";
+                        statusPill.style.background = "#f1f5f9";
+                        statusPill.style.color = "#475569";
+                    }
+                }
+            }
+
             if (userRole === 'staff') switchTab('pos'); else refreshDisplays();
         }
 
@@ -3223,7 +3590,7 @@
             if(list.length === 0) { container.innerHTML = '<small style="color:var(--text-muted)">No additional staff members added yet.</small>'; return; }
             container.innerHTML = list.map((s, idx) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color);">
-                    <span><b>${s.name}</b> (PIN: ****)</span>
+                    <span><b>${s.name}</b> ${s.phone ? '<small style="color:var(--primary); font-weight:600; margin-left:6px;">📱 ' + s.phone + '</small>' : ''} (PIN: ****)</span>
                     <button class="btn btn-danger" style="padding:2px 8px; font-size:0.75em;" onclick="removeStaffMember(${idx})">✕</button>
                 </div>
             `).join('');
@@ -3231,11 +3598,13 @@
         function addNewStaffMember() {
             let name = document.getElementById('newStaffName').value.trim();
             let pin = document.getElementById('newStaffPin').value.trim();
+            let phone = (document.getElementById('newStaffPhone')?.value || '').replace(/\D/g, '');
             if(!name || pin.length < 4) return alert("Enter valid name and at least 4-digit PIN.");
             if(!settings.staffList) settings.staffList = [];
-            settings.staffList.push({ name, pin });
+            settings.staffList.push({ name, pin, phone: phone || '' });
             document.getElementById('newStaffName').value = '';
             document.getElementById('newStaffPin').value = '';
+            if (document.getElementById('newStaffPhone')) document.getElementById('newStaffPhone').value = '';
             saveToStorage(); renderStaffList(); alert(`Staff ${name} added!`);
         }
         function removeStaffMember(idx) {
