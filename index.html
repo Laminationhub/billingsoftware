@@ -249,21 +249,17 @@
             <h1 style="color:var(--primary); margin-bottom:0; font-size: 3.5em;">BH</h1>
             <h2 style="margin-bottom: 5px;">Billing Hub</h2>
             <p style="color:#888; font-size:0.85em; margin-top:0;">Powered By Lamination Hub</p>
-            <p style="color:var(--text-muted); margin-bottom: 16px; margin-top: 10px;" id="login-status">Enter PIN to Unlock System</p>
+            <p style="color:#666; margin-bottom: 20px; margin-top: 15px;" id="login-status">Sign in or use Local Mode</p>
             
-            <input type="password" id="passInput" placeholder="Enter PIN (Default: 1234)" autofocus onkeypress="if(event.key==='Enter') handleLogin()" style="margin-bottom: 10px; font-size:1.15em; text-align:center; letter-spacing:3px;">
-            <button class="btn btn-blue" id="loginBtn" style="width: 100%; padding: 14px; font-size:1.05em; font-weight:bold; margin-bottom:12px;" onclick="handleLogin()">🔓 Unlock System</button>
-
-            <div style="margin: 8px 0; color: #888; font-size: 0.78em; display:flex; align-items:center; justify-content:center; gap:8px;">
-                <span style="height:1px; flex:1; background:var(--border-color, #444);"></span>
-                <span>OR (OPTIONAL)</span>
-                <span style="height:1px; flex:1; background:var(--border-color, #444);"></span>
-            </div>
-
-            <button class="btn-google" id="googleLoginBtn" onclick="handleGoogleLogin()" style="font-size:0.88em; padding:8px 12px; opacity:0.85;">
+            <button class="btn-google" id="googleLoginBtn" onclick="handleGoogleLogin()">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-                Sign in with Google (Optional)
+                Sign in with Google
             </button>
+
+            <div style="margin: 10px 0; color: #ccc; font-size: 0.8em;">OR</div>
+
+            <input type="password" id="passInput" placeholder="Enter Admin or Staff PIN" onkeypress="if(event.key==='Enter') handleLogin()">
+            <button class="btn btn-blue" id="loginBtn" style="width: 100%; padding: 15px;" onclick="handleLogin()">Unlock System</button>
         </div>
     </div>
 
@@ -3452,109 +3448,57 @@ const firebaseConfig = {
         // Listen for Firebase Auth changes as single source of truth
         auth.onAuthStateChanged(async user => {
             docRef = db.collection("shops").doc(shopSyncKey);
-            if (user && !user.isAnonymous) {
+            if (user) {
                 currentUid = user.uid;
-                // Automatically unlock and enter app upon Google authentication
-                let loginScreen = document.getElementById('login-screen');
-                if (loginScreen && loginScreen.style.display !== 'none') {
-                    userRole = 'admin';
-                    currentStaffName = user.displayName || (user.email ? user.email.split('@')[0] : 'Admin');
-                    loginScreen.style.display = 'none';
-                    document.getElementById('main-app').style.display = 'flex';
-                    initApp();
-                }
                 await startLiveSync(true);
+                let loginStatus = document.getElementById('login-status');
+                if (loginStatus) loginStatus.innerText = `Secured (${user.email || 'Google Linked'}). Enter PIN.`;
                 let googleBtn = document.getElementById('googleLoginBtn');
-                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${user.email || 'Google Account'}`;
+                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${user.email || 'Google Linked'}`;
                 updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
             } else {
-                currentUid = user ? user.uid : "local";
+                currentUid = "local";
                 // Auto-connect real-time cloud sync on all devices immediately
                 startLiveSync(true);
-                // Attempt anonymous auth fallback in background if needed
-                if (!user && auth.signInAnonymously) {
+                // Attempt anonymous auth fallback in background if needed by Firestore security rules
+                if (auth.signInAnonymously) {
                     auth.signInAnonymously().catch(err => {
-                        console.log("Anonymous auth notice:", err.message);
+                        console.log("Anonymous auth fallback notice:", err.message);
                     });
                 }
                 let loginStatus = document.getElementById('login-status');
                 if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
                 let googleBtn = document.getElementById('googleLoginBtn');
-                if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google (Optional)`;
+                if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
             }
         });
 
-        // Handle redirect result for browsers that block popups (e.g. mobile)
-        if (auth.getRedirectResult) {
-            auth.getRedirectResult().then(res => {
-                if (res && res.user) {
-                    console.log("Redirect login successful:", res.user.email);
-                    currentUid = res.user.uid;
-                    let loginScreen = document.getElementById('login-screen');
-                    if (loginScreen && loginScreen.style.display !== 'none') {
-                        userRole = 'admin';
-                        currentStaffName = res.user.displayName || (res.user.email ? res.user.email.split('@')[0] : 'Admin');
-                        loginScreen.style.display = 'none';
-                        document.getElementById('main-app').style.display = 'flex';
-                        initApp();
-                    }
-                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                }
-            }).catch(err => {
-                console.warn("Redirect result notice:", err);
-            });
-        }
-
         async function handleGoogleLogin() {
-            if (window.location.protocol === 'file:') {
-                alert("ℹ️ Google Sign-In requires an online website or web server (OAuth security prevents Google login on local file:// files).\n\nTo use the software on your PC right now, type PIN: 1234 and click 'Unlock System'!\n\nYour Cloud Sync is already active using your shop key ('" + shopSyncKey + "').");
-                return;
-            }
-
-            let btn1 = document.getElementById('googleLoginBtn');
-            let btn2 = document.getElementById('settings-google-btn');
-            const setButtonsLoading = (loading) => {
-                if (btn1) btn1.innerText = loading ? "Opening Google Sign-in..." : "Sign in with Google (Optional)";
-                if (btn2) btn2.innerText = loading ? "Connecting..." : "🔐 Sign in with Google";
-            };
-
-            setButtonsLoading(true);
+            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://). Please use your online site (https://laminationhub.github.io/billingsoftware/) or a web server.");
+            let googleBtn = document.getElementById('googleLoginBtn');
             try {
+                if (googleBtn) googleBtn.innerText = "Opening Google Sign-in...";
                 const res = await auth.signInWithPopup(provider);
-                if (res && res.user) {
-                    currentUid = res.user.uid; 
-                    docRef = db.collection("shops").doc(shopSyncKey);
-                    userRole = 'admin';
-                    currentStaffName = res.user.displayName || (res.user.email ? res.user.email.split('@')[0] : 'Admin');
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('main-app').style.display = 'flex';
-                    initApp();
-                    await startLiveSync(true);
-                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                    closeModals();
-                }
+                currentUid = res.user.uid; 
+                docRef = db.collection("shops").doc(shopSyncKey);
+                loadLocalData();
+                await startLiveSync(true);
+                let loginStatus = document.getElementById('login-status');
+                if (loginStatus) loginStatus.innerText = `Secured (${res.user.email || 'Google Linked'}). Enter PIN.`;
+                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${res.user.email || 'Google Linked'}`;
+                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                alert(`Google Sign-In Connected! 🟢\nAccount: ${res.user.email || 'Google User'}\nLive Cloud Sync is now active!`);
+                closeModals();
             } catch (e) {
-                console.warn("Google Sign-In attempt:", e);
-                if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
-                    if (confirm("Sign-in popup was blocked by your browser.\n\nWould you like to redirect to the Google Sign-in page instead?")) {
-                        await auth.signInWithRedirect(provider);
-                        return;
-                    }
-                } else {
-                    alert(`Google Sign-In: ${e.message || e}\n\nYou can also unlock directly using PIN (Default: 1234).`);
-                }
-            } finally {
-                setButtonsLoading(false);
-                if (auth.currentUser && !auth.currentUser.isAnonymous) {
-                    if (btn1) btn1.innerHTML = `✅ Signed in: ${auth.currentUser.email}`;
-                    if (btn2) btn2.style.display = 'none';
-                }
+                if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
+                alert("Google Sign-In was not completed: " + e.message);
+                updateCloudStatusUI(false, "Offline Cached");
             }
         }
 
         // LOGIN WITH MULTI-STAFF PIN SUPPORT
         async function handleLogin() {
-            const pass = document.getElementById('passInput').value.trim();
+            const pass = document.getElementById('passInput').value;
             if (currentUid === "local") loadLocalData();
 
             let matchedStaff = (settings.staffList || []).find(s => s.pin === pass);
@@ -3564,19 +3508,19 @@ const firebaseConfig = {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'flex';
                 initApp();
-                if (docRef) {
-                    startLiveSync(true);
+                if (!auth.currentUser) {
+                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
                 }
             } else if (matchedStaff) {
                 userRole = 'staff'; currentStaffName = matchedStaff.name;
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'flex';
                 initApp();
-                if (docRef) {
-                    startLiveSync(true);
+                if (!auth.currentUser) {
+                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
                 }
             } else {
-                alert("Incorrect PIN! (Default Admin PIN: 1234)");
+                alert("Incorrect PIN!");
             }
         }
 
