@@ -2960,8 +2960,16 @@
                 docRef = db.collection("shops").doc(currentUid);
                 loadLocalData();
                 await startLiveSync();
-                let ls = document.getElementById('login-status');
-                if (ls) ls.innerText = "Secured. Enter PIN.";
+                userRole = 'admin';
+                currentStaffName = 'Admin';
+                let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
+                if (ls) ls.style.display = 'none';
+                let ma = document.getElementById('main-app');
+                if (ma) ma.style.display = 'flex';
+                applyTheme();
+                initApp();
+                refreshDisplays();
+                if (typeof applyStaffPermissions === 'function') applyStaffPermissions();
             } catch (e) {
                 alert("Login failed: " + e.message);
             }
@@ -2972,11 +2980,14 @@
             const pass = document.getElementById('passInput').value;
             if (currentUid === "local") loadLocalData();
 
-            let matchedStaff = (settings.staffList || []).find(s => s.pass === pass);
+            let matchedStaff = (settings.staffList || []).find(s => s.pass === pass || s.pin === pass);
             if (pass === appPass) {
                 userRole = 'admin';
                 currentStaffName = 'Admin';
-                document.getElementById('auth-overlay').style.display = 'none';
+                let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
+                if (ls) ls.style.display = 'none';
+                let ma = document.getElementById('main-app');
+                if (ma) ma.style.display = 'flex';
                 applyTheme();
                 initApp();
                 refreshDisplays();
@@ -2984,7 +2995,10 @@
             } else if (matchedStaff) {
                 userRole = matchedStaff.role || 'staff';
                 currentStaffName = matchedStaff.name;
-                document.getElementById('auth-overlay').style.display = 'none';
+                let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
+                if (ls) ls.style.display = 'none';
+                let ma = document.getElementById('main-app');
+                if (ma) ma.style.display = 'flex';
                 applyTheme();
                 initApp();
                 refreshDisplays();
@@ -2992,6 +3006,15 @@
             } else {
                 alert("Incorrect PIN!");
             }
+        }
+
+        function lockScreen() {
+            let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
+            if (ls) ls.style.display = 'flex';
+            let ma = document.getElementById('main-app');
+            if (ma) ma.style.display = 'none';
+            let pi = document.getElementById('passInput');
+            if (pi) pi.value = '';
         }
 
         async function saveToStorage() {
@@ -3116,7 +3139,7 @@
                 document.getElementById('set-staff-max-disc').value = settings.staffMaxDisc !== undefined ? settings.staffMaxDisc : 10;
             }
 
-            renderTaxDropdown(); renderStaffList(); renderPairingQRCode();
+            renderTaxDropdown(); renderStaffList();
             applyStaffPermissions();
             
             const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers', 'nav-reseller-orders', 'nav-reports'];
