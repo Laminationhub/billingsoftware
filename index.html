@@ -3477,28 +3477,57 @@ const firebaseConfig = {
             }
         });
 
+        // Handle redirect result for browsers that block popups (e.g. mobile)
+        if (auth.getRedirectResult) {
+            auth.getRedirectResult().then(res => {
+                if (res && res.user) {
+                    console.log("Redirect login successful:", res.user.email);
+                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                }
+            }).catch(err => {
+                console.warn("Redirect result notice:", err);
+            });
+        }
+
         async function handleGoogleLogin() {
-            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally on file://. Please unlock directly using your PIN (default: 1234). Real-time Cloud Sync is already active using your shop key!");
-            let googleBtn = document.getElementById('googleLoginBtn');
+            if (window.location.protocol === 'file:') {
+                alert("ℹ️ Google Sign-In is only supported on web servers / online websites (OAuth security prevents Google login on local file:// files).\n\nGood news: Your Cloud Sync is ALREADY ACTIVE and syncing directly to Firebase with your shop key ('" + shopSyncKey + "') without Google login!");
+                return;
+            }
+
+            let btn1 = document.getElementById('googleLoginBtn');
+            let btn2 = document.getElementById('settings-google-btn');
+            const setButtonsLoading = (loading) => {
+                if (btn1) btn1.innerText = loading ? "Opening Google Sign-in..." : "Sign in with Google (Optional)";
+                if (btn2) btn2.innerText = loading ? "Connecting..." : "🔐 Sign in with Google";
+            };
+
+            setButtonsLoading(true);
             try {
-                if (googleBtn) googleBtn.innerText = "Opening Google Sign-in...";
                 const res = await auth.signInWithPopup(provider);
-                currentUid = res.user.uid; 
-                docRef = db.collection("shops").doc(shopSyncKey);
-                loadLocalData();
-                await startLiveSync(true);
-                let loginStatus = document.getElementById('login-status');
-                if (loginStatus) loginStatus.innerText = `Secured (${res.user.email || 'Google Linked'}). Enter PIN.`;
-                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${res.user.email || 'Google Linked'}`;
-                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                alert(`Google Sign-In Connected! 🟢\nAccount: ${res.user.email || 'Google User'}\nLive Cloud Sync is active!`);
-                closeModals();
+                if (res && res.user) {
+                    currentUid = res.user.uid; 
+                    docRef = db.collection("shops").doc(shopSyncKey);
+                    await startLiveSync(true);
+                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                    alert(`✅ Google Account Linked Successfully!\n\nEmail: ${res.user.email}\nCloud Sync is active for shop: ${shopSyncKey}`);
+                    closeModals();
+                }
             } catch (e) {
-                console.warn("Google Sign-In note:", e);
-                alert("Google Sign-In notice: " + (e.message || e) + "\n\nYou can unlock the billing software directly using your PIN (Default: 1234).");
+                console.warn("Google Sign-In attempt:", e);
+                if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
+                    if (confirm("Sign-in popup was blocked by your browser.\n\nWould you like to redirect to the Google Sign-in page instead?")) {
+                        auth.signInWithRedirect(provider);
+                        return;
+                    }
+                } else {
+                    alert(`Google Sign-In Notice: ${e.message || e}\n\nNote: Cloud Sync works automatically via your Shop Sync Key even without Google Sign-In!`);
+                }
             } finally {
-                if (googleBtn && !auth.currentUser) {
-                    googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google (Optional)`;
+                setButtonsLoading(false);
+                if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                    if (btn1) btn1.innerHTML = `✅ Signed in: ${auth.currentUser.email}`;
+                    if (btn2) btn2.style.display = 'none';
                 }
             }
         }
