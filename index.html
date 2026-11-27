@@ -258,57 +258,8 @@
 
             <div style="margin: 10px 0; color: #ccc; font-size: 0.8em;">OR</div>
 
-            <!-- LOGIN METHOD TABS: PIN vs MOBILE NUMBER -->
-            <div style="display:flex; gap:6px; margin: 15px 0 12px 0; background: var(--bg-card); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color);">
-                <button type="button" id="tab-login-pin" class="btn btn-blue" onclick="switchLoginMode('pin')" style="flex:1; padding:8px 5px; font-size:0.85em; font-weight:bold; border-radius:6px; border:none; cursor:pointer;">🔑 PIN / Password</button>
-                <button type="button" id="tab-login-mobile" class="btn btn-gray" onclick="switchLoginMode('mobile')" style="flex:1; padding:8px 5px; font-size:0.85em; font-weight:bold; border-radius:6px; border:none; cursor:pointer;">📱 Mobile Number</button>
-            </div>
-
-            <!-- 1. PIN / PASSWORD LOGIN PANEL -->
-            <div id="login-panel-pin">
-                <input type="password" id="passInput" placeholder="Enter Admin or Staff PIN" onkeypress="if(event.key==='Enter') handleLogin()" style="width:100%; margin-bottom:12px; padding:12px;">
-                <button class="btn btn-blue" id="loginBtn" style="width: 100%; padding: 14px; font-weight:bold;" onclick="handleLogin()">Unlock System</button>
-            </div>
-
-            <!-- 2. MOBILE NUMBER LOGIN PANEL -->
-            <div id="login-panel-mobile" style="display:none; text-align:left;">
-                <label style="font-size:0.8em; font-weight:bold; color:var(--text-muted); display:block; margin-bottom:5px;">Mobile Number</label>
-                <div style="display:flex; align-items:center; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-card); margin-bottom:12px; overflow:hidden;">
-                    <span style="padding:10px 12px; background:var(--border-color); font-weight:bold; font-size:0.9em; color:var(--text-main);">+91</span>
-                    <input type="tel" id="loginMobileInput" placeholder="Enter 10-digit Mobile Number" maxlength="10" style="border:none; width:100%; padding:10px 12px; font-size:1em; outline:none; background:transparent;" onkeypress="if(event.key==='Enter') handleMobilePinLogin()">
-                </div>
-
-                <!-- SUB-TABS UNDER MOBILE: (PIN vs OTP) -->
-                <div style="display:flex; gap:6px; margin-bottom:10px;">
-                    <button type="button" id="btn-sub-mobile-pin" class="btn btn-primary" onclick="switchMobileSubMode('pin')" style="flex:1; padding:6px 8px; font-size:0.8em; font-weight:600; border-radius:4px; cursor:pointer;">Use PIN</button>
-                    <button type="button" id="btn-sub-mobile-otp" class="btn btn-gray" onclick="switchMobileSubMode('otp')" style="flex:1; padding:6px 8px; font-size:0.8em; font-weight:600; border-radius:4px; cursor:pointer;">Use OTP</button>
-                </div>
-
-                <!-- MOBILE + PIN SECTION -->
-                <div id="mobile-sub-pin-panel">
-                    <input type="password" id="loginMobilePin" placeholder="Enter PIN / Password" style="width:100%; margin-bottom:12px; padding:10px 12px;" onkeypress="if(event.key==='Enter') handleMobilePinLogin()">
-                    <button class="btn btn-blue" id="loginMobileBtn" style="width:100%; padding:12px; font-weight:bold;" onclick="handleMobilePinLogin()">🔓 Login with Mobile & PIN</button>
-                </div>
-
-                <!-- MOBILE + OTP SECTION -->
-                <div id="mobile-sub-otp-panel" style="display:none;">
-                    <button type="button" class="btn btn-green" id="btnSendMobileOtp" style="width:100%; padding:11px; font-weight:bold; cursor:pointer;" onclick="sendMobileLoginOtp()">📲 Send OTP</button>
-                    
-                    <div id="mobileOtpBox" style="display:none; margin-top:12px; background:var(--bg-card); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
-                        <div style="font-size:0.85em; color:var(--text-muted); margin-bottom:6px;">Enter 6-digit OTP code:</div>
-                        <input type="text" id="loginOtpInput" placeholder="Enter OTP" maxlength="6" style="text-align:center; font-size:1.3em; letter-spacing:4px; font-weight:bold; width:100%; margin-bottom:10px; padding:8px;" onkeypress="if(event.key==='Enter') verifyMobileLoginOtp()">
-                        <button type="button" class="btn btn-primary" style="width:100%; padding:11px; font-weight:bold; cursor:pointer;" onclick="verifyMobileLoginOtp()">✓ Verify OTP & Unlock</button>
-                        <div style="margin-top:8px; font-size:0.8em; display:flex; justify-content:space-between; align-items:center;">
-                            <span id="otpTimerText" style="color:var(--text-muted);"></span>
-                            <a href="javascript:void(0)" onclick="sendMobileLoginOtp()" style="color:var(--primary); text-decoration:none; font-weight:600;">Resend OTP</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- LIVE OTP POPUP BANNER -->
-                <div id="otpLiveBanner" style="display:none; margin-top:10px; background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; padding:10px 12px; border-radius:6px; font-size:0.85em; text-align:center;">
-                </div>
-            </div>
+            <input type="password" id="passInput" placeholder="Enter Admin or Staff PIN" onkeypress="if(event.key==='Enter') handleLogin()">
+            <button class="btn btn-blue" id="loginBtn" style="width: 100%; padding: 15px;" onclick="handleLogin()">Unlock System</button>
         </div>
     </div>
 
@@ -329,9 +280,16 @@
                 </div>
             </div>
             
-            <div id="cloud-sync-status">
-                Cloud Status: <span id="sync-text" style="color: #ffc107; font-weight: bold;">Connecting...</span><br>
-                <small id="last-sync-time" style="color: #aaa; font-size: 0.8em;"></small>
+            <div id="cloud-sync-status" onclick="openCloudSyncDiagnosticsModal()" title="Click to view Cloud Sync Diagnostics & Connect" style="cursor:pointer; background:rgba(255,255,255,0.06); padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); margin-top:10px; transition:all 0.2s;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:0.75em; opacity:0.8;">Cloud Status:</span>
+                    <span id="sync-badge" style="font-size:0.7em; padding:2px 6px; border-radius:4px; background:#ffc107; color:#000; font-weight:bold;">Connecting</span>
+                </div>
+                <div id="sync-text" style="color: #ffc107; font-weight: bold; font-size:0.85em; margin-top:3px; word-break:break-all;">Connecting Cloud...</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <small id="last-sync-time" style="color: #aaa; font-size: 0.72em;"></small>
+                    <span id="sync-action-hint" style="font-size:0.72em; color:#60a5fa; text-decoration:underline;">Click to Connect ⚡</span>
+                </div>
             </div>
 
             <ul class="nav-links">
@@ -353,6 +311,20 @@
         </div>
 
         <div class="main-content">
+            <!-- MOBILE PWA APP INSTALL BANNER -->
+            <div id="mobile-install-banner" style="display:none; background:linear-gradient(135deg, #4f46e5, #06b6d4); color:white; padding:10px 16px; border-radius:8px; margin: 10px 15px; justify-content:space-between; align-items:center; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.5em;">📲</span>
+                    <div>
+                        <strong style="font-size:0.95em;">Install Billing Hub App on Mobile</strong>
+                        <div style="font-size:0.8em; opacity:0.9;">Run full screen on your phone with instant Cloud Sync</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-green" onclick="installPWAApp()" style="padding:6px 14px; font-weight:bold; font-size:0.85em; background:white; color:#4f46e5; border:none; cursor:pointer;">Install App</button>
+                    <button onclick="dismissInstallBanner()" style="background:transparent; border:none; color:white; font-size:1.1em; cursor:pointer;">✕</button>
+                </div>
+            </div>
             <!-- 1. DASHBOARD VIEW -->
             <div id="dashboard-view" class="view-section active">
                 <div class="header">
@@ -362,7 +334,7 @@
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button class="btn btn-blue" onclick="switchTab('pos')">🛒 New Bill (POS)</button>
-                        <button class="btn btn-warning" onclick="openProfitModal()" title="View Profit & Balances filtered by Date, Month or Year">📊 Daily Profit & Balances</button>
+                        <button class="btn btn-warning" onclick="openProfitModal()">📊 Daily Profit & Balances</button>
                     </div>
                 </div>
 
@@ -389,8 +361,8 @@
                 
                 <h3 style="margin-bottom:12px; color:var(--text-muted);">Periodic Reports</h3>
                 <div class="metrics-grid">
-                    <div class="metric-card" style="border-left-color: #17a2b8; cursor:pointer;" onclick="openProfitModal('monthly')" title="Click to view full Monthly Sales & Profit Breakdown"><div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin:0;">This Month Sales</h3><small style="color:var(--primary); font-weight:bold; font-size:0.75em;">📊 Details ➔</small></div><p class="value" id="month-sales">₹0</p></div>
-                    <div class="metric-card" style="border-left-color: #6610f2; cursor:pointer;" onclick="openProfitModal('yearly')" title="Click to view full Yearly Sales & Profit Breakdown"><div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="margin:0;">This Year Sales</h3><small style="color:var(--primary); font-weight:bold; font-size:0.75em;">📊 Details ➔</small></div><p class="value" id="year-sales">₹0</p></div>
+                    <div class="metric-card" style="border-left-color: #17a2b8;"><h3>This Month Sales</h3><p class="value" id="month-sales">₹0</p></div>
+                    <div class="metric-card" style="border-left-color: #6610f2;"><h3>This Year Sales</h3><p class="value" id="year-sales">₹0</p></div>
                 </div>
                 
                 <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:25px;">
@@ -1068,9 +1040,8 @@
                     <h3>👥 Staff & Multi-Cashier Management</h3>
                     <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 15px;">Create separate PINs for your employees. Their name will be stamped on bills they process.</p>
                     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <input type="text" id="newStaffName" placeholder="Staff Name (e.g. Rahul)" style="flex: 1; min-width: 130px;">
-                        <input type="tel" id="newStaffPhone" placeholder="Mobile No. (Optional)" style="width: 160px;" maxlength="10">
-                        <input type="password" id="newStaffPin" placeholder="4-digit PIN" style="width: 120px;" maxlength="6">
+                        <input type="text" id="newStaffName" placeholder="Staff Name (e.g. Rahul)" style="flex: 1;">
+                        <input type="password" id="newStaffPin" placeholder="4-digit PIN" style="width: 130px;">
                         <button class="btn btn-blue" onclick="addNewStaffMember()">+ Add Staff</button>
                     </div>
                     <div id="staffListContainer" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto;"></div>
@@ -1322,6 +1293,50 @@
                 </div>
 
 
+                <!-- REAL-TIME CLOUD SYNC & MOBILE PAIRING -->
+                <div class="container" style="border: 2px solid #4f46e5; border-radius:12px; background:rgba(79,70,229,0.02); padding:18px; margin-top:15px; margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                        <div>
+                            <h3 style="margin:0; color:#4f46e5;"><i class="fa fa-cloud"></i> Real-time Cloud Sync (PC .exe + Mobile App)</h3>
+                            <small style="color:var(--text-muted);">Share live inventory, billing, job cards & customer dues across PC and Mobile in real time.</small>
+                        </div>
+                        <span id="cloud-pill-status" style="background:#10b981; color:white; padding:4px 12px; border-radius:20px; font-size:0.8em; font-weight:bold;">🟢 Cloud Sync Active</span>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-body); padding:10px 14px; border-radius:8px; border:1px solid var(--border-color); margin-top:12px; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <strong style="font-size:0.9em; display:block;">Google Account Authentication:</strong>
+                            <span id="settings-google-status" style="font-size:0.85em; color:#ffc107;">Checking authentication...</span>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn btn-google" id="settings-google-btn" onclick="handleGoogleLogin()" style="padding:6px 14px; font-size:0.85em; margin:0;">🔐 Sign in with Google</button>
+                            <button class="btn btn-outline" onclick="openCloudSyncDiagnosticsModal()" style="padding:6px 14px; font-size:0.85em;">🔍 Sync Diagnostics</button>
+                            <button class="btn btn-warning" onclick="openFirebaseConfigModal()" style="padding:6px 14px; font-size:0.85em; font-weight:bold;">🔥 Change Firebase Account</button>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px; margin-top:12px;">
+                        <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                            <label style="font-weight:bold; font-size:0.85em; color:var(--text-muted); display:block; margin-bottom:6px;">SHOP CLOUD SYNC KEY:</label>
+                            <div style="display:flex; gap:8px;">
+                                <input type="text" id="inputShopSyncKey" value="lamination_hub_kurebhar" style="flex:1; font-family:monospace; font-weight:bold; padding:8px; border:1px solid var(--border-color); border-radius:6px;">
+                                <button class="btn btn-blue" onclick="saveCustomSyncKey()">Update Key</button>
+                            </div>
+                            <small style="color:var(--text-muted); display:block; margin-top:6px;">Both PC and Mobile devices using this key automatically share live data in real time.</small>
+                            <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                                <button class="btn btn-outline" onclick="copyPairingLink()" style="font-size:0.85em; padding:6px 12px; border:1px solid #4f46e5; color:#4f46e5; cursor:pointer;">📋 Copy Mobile Sync Link</button>
+                                <button class="btn btn-green" onclick="forceCloudRefresh()" style="font-size:0.85em; padding:6px 12px;">🔄 Force Sync Now</button>
+                            </div>
+                        </div>
+
+                        <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color); text-align:center;">
+                            <label style="font-weight:bold; font-size:0.85em; color:var(--text-muted); display:block; margin-bottom:6px;">📱 SCAN TO PAIR MOBILE PHONE:</label>
+                            <div id="mobile-pair-qrcode" style="display:flex; justify-content:center; margin:8px 0;"></div>
+                            <small id="mobile-pair-url-text" style="font-size:0.75em; color:var(--text-muted); word-break:break-all;"></small>
+                        </div>
+                    </div>
+                </div>
+
                 <h3>💾 Data & Sync (Cloud + Local)</h3>
                     <div style="display: flex; gap: 15px; align-items: flex-end;">
                         <div class="form-group" style="flex:1; margin:0;"><label>Admin Password</label><input type="password" id="new-pass"></div>
@@ -1523,111 +1538,41 @@
         </div>
     </div>
 
-    <!-- ENHANCED PROFIT & BALANCES MODAL (DATE-WISE, MONTHLY & YEARLY SALES FILTER) -->
+    <!-- ENHANCED DAILY PROFIT & BALANCES MODAL -->
     <div id="profitModal" class="modal-bg">
-        <div class="modal-box modal-box-large" style="background: var(--bg-body); padding: 25px; max-width: 860px; width: 95%;">
+        <div class="modal-box modal-box-large" style="background: var(--bg-body); padding: 25px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <h2 style="margin: 0;">📊 Profit & Balances Analysis</h2>
-                </div>
+                <h2 style="margin: 0;">📊 Daily Profit & Balances</h2>
                 <span style="color:#999; cursor:pointer; font-size:1.5em; line-height:1;" onclick="closeModals()">✕</span>
             </div>
+            <p style="color:var(--text-muted); font-size:0.9em; margin-bottom: 15px;">Date: <strong id="pm-date"></strong></p>
 
-            <!-- INTERACTIVE FILTER BAR: DATE-WISE, MONTHLY, YEARLY, CUSTOM RANGE -->
-            <div style="background: var(--bg-card); padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 16px;">
-                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; align-items:center;">
-                    <span style="font-weight:bold; font-size:0.85em; color:var(--text-muted); margin-right:5px;">Filter Sales:</span>
-                    <button type="button" class="btn btn-warning pm-filter-pill" id="pm-pill-daily" onclick="switchProfitFilterTab('daily')" style="padding:6px 14px; font-size:0.85em; font-weight:bold; border-radius:20px; cursor:pointer;">📅 Date-wise (Daily)</button>
-                    <button type="button" class="btn btn-gray pm-filter-pill" id="pm-pill-monthly" onclick="switchProfitFilterTab('monthly')" style="padding:6px 14px; font-size:0.85em; font-weight:bold; border-radius:20px; cursor:pointer;">🗓️ Monthly Sales</button>
-                    <button type="button" class="btn btn-gray pm-filter-pill" id="pm-pill-yearly" onclick="switchProfitFilterTab('yearly')" style="padding:6px 14px; font-size:0.85em; font-weight:bold; border-radius:20px; cursor:pointer;">📆 Yearly Sales</button>
-                    <button type="button" class="btn btn-gray pm-filter-pill" id="pm-pill-custom" onclick="switchProfitFilterTab('custom')" style="padding:6px 14px; font-size:0.85em; font-weight:bold; border-radius:20px; cursor:pointer;">⏳ Custom Range</button>
-                </div>
-
-                <!-- 1. DATE-WISE PICKER -->
-                <div id="pm-ctrl-daily" class="pm-filter-panel" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <label style="font-size:0.85em; font-weight:bold; color:var(--text-muted);">Pick Date:</label>
-                        <input type="date" id="pm-input-date" onchange="applyProfitFilter()" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main); font-weight:bold;">
-                    </div>
-                    <button type="button" class="btn btn-blue" onclick="quickSetProfitDate('today')" style="padding:5px 12px; font-size:0.8em; font-weight:600;">📅 Today</button>
-                    <button type="button" class="btn btn-gray" onclick="quickSetProfitDate('yesterday')" style="padding:5px 12px; font-size:0.8em; font-weight:600;">⏪ Yesterday</button>
-                </div>
-
-                <!-- 2. MONTHLY PICKER -->
-                <div id="pm-ctrl-monthly" class="pm-filter-panel" style="display:none; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <label style="font-size:0.85em; font-weight:bold; color:var(--text-muted);">Pick Month:</label>
-                        <input type="month" id="pm-input-month" onchange="applyProfitFilter()" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main); font-weight:bold;">
-                    </div>
-                    <button type="button" class="btn btn-blue" onclick="quickSetProfitMonth('this_month')" style="padding:5px 12px; font-size:0.8em; font-weight:600;">🗓️ This Month</button>
-                    <button type="button" class="btn btn-gray" onclick="quickSetProfitMonth('last_month')" style="padding:5px 12px; font-size:0.8em; font-weight:600;">⏪ Last Month</button>
-                </div>
-
-                <!-- 3. YEARLY PICKER -->
-                <div id="pm-ctrl-yearly" class="pm-filter-panel" style="display:none; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <label style="font-size:0.85em; font-weight:bold; color:var(--text-muted);">Pick Year:</label>
-                        <select id="pm-input-year" onchange="applyProfitFilter()" style="padding:6px 12px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main); font-weight:bold;">
-                        </select>
-                    </div>
-                    <button type="button" class="btn btn-blue" onclick="quickSetProfitYear('this_year')" style="padding:5px 12px; font-size:0.8em; font-weight:600;">📆 This Year</button>
-                    <button type="button" class="btn btn-gray" onclick="quickSetProfitYear('last_year')" style="padding:5px 12px; font-size:0.8em; font-weight:600;">⏪ Last Year</button>
-                </div>
-
-                <!-- 4. CUSTOM RANGE PICKER -->
-                <div id="pm-ctrl-custom" class="pm-filter-panel" style="display:none; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <label style="font-size:0.85em; font-weight:bold; color:var(--text-muted);">From:</label>
-                        <input type="date" id="pm-input-from" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main);">
-                        <label style="font-size:0.85em; font-weight:bold; color:var(--text-muted);">To:</label>
-                        <input type="date" id="pm-input-to" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main);">
-                        <button type="button" class="btn btn-green" onclick="applyProfitFilter()" style="padding:6px 14px; font-size:0.85em; font-weight:bold;">🔍 Apply</button>
-                    </div>
-                    <button type="button" class="btn btn-gray" onclick="quickSetProfitRange(7)" style="padding:5px 10px; font-size:0.8em;">Last 7 Days</button>
-                    <button type="button" class="btn btn-gray" onclick="quickSetProfitRange(30)" style="padding:5px 10px; font-size:0.8em;">Last 30 Days</button>
-                </div>
-
-                <!-- ACTIVE PERIOD BADGES -->
-                <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <div>
-                        <span style="font-size:0.85em; color:var(--text-muted);">Active Period:</span>
-                        <strong id="pm-date" style="color:var(--primary); font-size:0.95em; margin-left:4px;"></strong>
-                    </div>
-                    <div style="display:flex; gap:6px; align-items:center;">
-                        <span id="pm-orders-count-badge" style="background:var(--border-color); color:var(--text-main); padding:3px 10px; border-radius:12px; font-size:0.8em; font-weight:bold;">0 Orders</span>
-                        <span id="pm-aov-badge" style="background:var(--border-color); color:var(--text-muted); padding:3px 10px; border-radius:12px; font-size:0.8em; font-weight:bold;">Avg: ₹0.00</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- DRAWER CASH BALANCES -->
-            <div class="form-group" style="background: var(--bg-card); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+            <div class="form-group" style="background: var(--bg-card); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
                 <label style="font-size:0.9em; font-weight:bold;">Opening Cash in Drawer (₹)</label>
                 <div style="display:flex; gap:10px; align-items:center; margin-top:5px;">
                     <input type="number" id="pm-opening" placeholder="0" value="0" oninput="calculateClosingBalance()" style="font-size: 1.2em; font-weight:bold; width: 100%; max-width: 200px;">
-                    <small style="color:var(--text-muted);">Enter morning drawer till cash to verify physical drawer balance.</small>
+                    <small style="color:var(--text-muted);">Enter morning cash in till to calculate expected drawer closing cash.</small>
                 </div>
             </div>
 
-            <!-- SALES & PROFIT METRICS BREAKDOWN -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
                 <div>
                     <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Stock Valuation (At Cost):</span><span id="pm-open-stock" style="font-weight:bold;">₹ 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);" id="pm-label-gross-sales">Gross Sales:</span><span id="pm-tot-sales" style="font-weight:bold; color:var(--primary);">₹ 0.00</span></div>
+                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Gross Sales Today:</span><span id="pm-tot-sales" style="font-weight:bold; color:var(--primary);">₹ 0.00</span></div>
                     <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Cost of Goods Sold (COGS):</span><span id="pm-cogs" style="font-weight:bold;">₹ 0.00</span></div>
                     <div style="display:flex; justify-content:space-between; font-size: 0.9em;"><span style="color:var(--text-muted);">Discounts Given:</span><span id="pm-sell-disc">₹ 0.00</span></div>
                 </div>
                 <div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);" id="pm-label-tot-exp">Total Expenses:</span><span id="pm-tot-exp" style="color:var(--danger); font-weight:bold;">₹ 0.00</span></div>
+                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Total Expenses Today:</span><span id="pm-tot-exp" style="color:var(--danger); font-weight:bold;">₹ 0.00</span></div>
                     <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Shipping Charges:</span><span id="pm-sell-shipping">₹ 0.00</span></div>
                     <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Total Returns / Refunds:</span><span id="pm-sell-ret" style="color:var(--danger);">₹ 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em;"><span style="color:var(--text-muted);" id="pm-label-dues">Pending Dues Created:</span><span id="pm-today-dues" style="color:red; font-weight:bold;">₹ 0.00</span></div>
+                    <div style="display:flex; justify-content:space-between; font-size: 0.9em;"><span style="color:var(--text-muted);">Pending Dues Created Today:</span><span id="pm-today-dues" style="color:red; font-weight:bold;">₹ 0.00</span></div>
                 </div>
             </div>
 
             <!-- PAYMENT COLLECTIONS BREAKDOWN -->
             <div style="background: var(--bg-card); padding: 15px 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
-                <h4 style="margin:0 0 10px 0; font-size:0.85em; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Inflow Collections for Period</h4>
+                <h4 style="margin:0 0 10px 0; font-size:0.85em; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Today's Inflow Collections</h4>
                 <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; text-align:center;">
                     <div style="padding:10px; background:var(--bg-body); border-radius:6px; border:1px solid var(--border-color);">
                         <small style="color:var(--text-muted);">💵 Cash Collected</small>
@@ -1644,11 +1589,10 @@
                 </div>
             </div>
 
-            <!-- NET PROFIT & EXPECTED DRAWER CASH -->
             <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
                 <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 10px;">
                     <div>
-                        <span style="font-size: 1.15em; font-weight: bold;" id="pm-label-net-profit">Net Operating Profit:</span><br>
+                        <span style="font-size: 1.15em; font-weight: bold;">Net Day Profit (Operating Margin):</span><br>
                         <small style="color:var(--text-muted);">Sales - Product Cost - Expenses</small>
                     </div>
                     <span id="pm-net-profit" style="font-size: 1.4em; font-weight: 800; color: var(--success);">₹ 0.00</span>
@@ -1656,8 +1600,8 @@
                 <hr style="margin: 15px 0; border: none; border-top: 1px dashed var(--border-color);">
                 <div style="display:flex; justify-content:space-between; align-items: center;">
                     <div>
-                        <span style="font-size: 1.1em; color: var(--text-muted); font-weight: bold;">Expected Drawer Cash:</span><br>
-                        <small style="color:var(--text-muted);">Opening Cash + Cash Collected - Cash Expenses</small>
+                        <span style="font-size: 1.1em; color: var(--text-muted); font-weight: bold;">Expected Drawer Cash (EOD):</span><br>
+                        <small style="color:var(--text-muted);">Opening Cash + Today's Cash Sales - Cash Expenses</small>
                     </div>
                     <strong id="pm-closing-drawer" style="font-size: 1.5em; color: var(--primary);">₹ 0.00</strong>
                 </div>
@@ -2434,81 +2378,155 @@
     </div>
 
 
+    <!-- CLOUD SYNC STATUS & DIAGNOSTICS MODAL -->
+    <div id="cloudSyncModal" class="modal-bg" style="display:none; align-items:center; justify-content:center; z-index:99999;">
+        <div class="modal-box" style="max-width:520px; width:92%; border-radius:12px; padding:24px; background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-color); box-shadow:0 12px 30px rgba(0,0,0,0.4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
+                <h3 style="margin:0; font-size:1.2em; display:flex; align-items:center; gap:8px;">
+                    ☁️ Cloud Sync Status & Connect
+                </h3>
+                <button class="btn-close" onclick="closeModals()" style="font-size:1.3em; cursor:pointer; background:transparent; border:none; color:var(--text-main);">&times;</button>
+            </div>
+            
+            <div id="csm-status-card" style="padding:14px; border-radius:8px; margin-bottom:16px; border:1px solid #ffc107; background:rgba(255,193,7,0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="font-size:0.95em;">Sync Status:</strong>
+                    <span id="csm-badge" style="font-weight:bold; font-size:0.85em; padding:3px 8px; border-radius:4px; background:#ffc107; color:#000;">Offline Cached</span>
+                </div>
+                <div id="csm-detail" style="font-size:0.85em; margin-top:8px; line-height:1.4; color:var(--text-main);">
+                    Checking cloud connection...
+                </div>
+            </div>
 
+            <div style="background:var(--bg-body); padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:16px; font-size:0.85em;">
+                <div style="margin-bottom:8px;">
+                    <strong>Google Account:</strong> <span id="csm-user-email" style="color:#60a5fa; font-weight:bold;">Not Signed In</span>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong>Shop Sync Key:</strong> <code id="csm-shop-key" style="background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px;">lamination_hub_kurebhar</code>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong>Firebase Project ID:</strong> <span id="csm-project-id" style="color:#f59e0b; font-weight:bold;">billing-software-5aac9</span>
+                </div>
+                <div>
+                    <strong>Last Sync:</strong> <span id="csm-last-sync" style="color:var(--text-muted);">Never</span>
+                </div>
+            </div>
+            <div style="margin-bottom:14px;">
+                <button class="btn btn-warning" onclick="closeModals(); openFirebaseConfigModal();" style="width:100%; padding:8px; font-size:0.85em; font-weight:bold;">🔥 Change / Setup Firebase Account</button>
+            </div>
+
+            <div id="csm-google-action-box" style="margin-bottom:16px; display:none;">
+                <button class="btn-google" onclick="handleGoogleLogin()" style="width:100%; padding:10px; font-weight:bold; justify-content:center; display:flex; align-items:center; gap:8px; margin:0;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:18px; height:18px;">
+                    Sign in with Google to Connect Cloud
+                </button>
+                <small style="color:var(--text-muted); display:block; text-align:center; margin-top:6px;">Required once per browser to secure your shop's real-time cloud data.</small>
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button class="btn btn-outline" onclick="closeModals()" style="padding:8px 16px;">Close</button>
+                <button class="btn btn-green" onclick="reconnectCloudLive(true)" style="padding:8px 18px; font-weight:bold;">🔄 Reconnect Cloud Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE PROJECT CONFIGURATION SETUP MODAL -->
+    <div id="firebaseConfigModal" class="modal-bg" style="display:none; align-items:center; justify-content:center; z-index:99999;">
+        <div class="modal-box modal-box-large" style="max-width:650px; width:92%; border-radius:12px; padding:24px; background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-color); box-shadow:0 12px 30px rgba(0,0,0,0.4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
+                <h3 style="margin:0; font-size:1.2em; display:flex; align-items:center; gap:8px;">
+                    🔥 Setup & Change Firebase Account
+                </h3>
+                <button class="btn-close" onclick="closeModals()" style="font-size:1.3em; cursor:pointer; background:transparent; border:none; color:var(--text-main);">&times;</button>
+            </div>
+
+            <div style="background:rgba(245, 158, 11, 0.1); border:1px solid #f59e0b; border-radius:8px; padding:12px; margin-bottom:15px; font-size:0.85em; color:var(--text-main);">
+                <strong>💡 Tip before changing:</strong> If you have existing products, sales, or customer data you want to keep, make sure to click <strong>"⬇️ Export Backup"</strong> in Settings first. After switching to your new Firebase account, click <strong>"⬆️ Restore Data"</strong> to upload your data into the new project!
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight:bold; font-size:0.85em;">Paste Full Firebase Config Object or Snippet:</label>
+                <textarea id="fcm-paste-box" rows="4" placeholder='Paste your firebaseConfig code here, e.g.:
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "my-app.firebaseapp.com",
+  projectId: "my-app",
+  storageBucket: "my-app.firebasestorage.app",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcd"
+};' style="width:100%; font-family:monospace; font-size:0.85em; padding:8px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main); box-sizing:border-box;"></textarea>
+                <button type="button" class="btn btn-blue" onclick="parseFirebaseSnippet()" style="margin-top:6px; padding:5px 12px; font-size:0.8em;">⚡ Auto-Fill Fields from Paste</button>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:12px;">
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.8em; font-weight:bold;">Project ID *</label>
+                    <input type="text" id="fcm-projectId" placeholder="my-billing-app" style="font-family:monospace;">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.8em; font-weight:bold;">API Key *</label>
+                    <input type="text" id="fcm-apiKey" placeholder="AIzaSy..." style="font-family:monospace;">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.8em; font-weight:bold;">Auth Domain</label>
+                    <input type="text" id="fcm-authDomain" placeholder="my-billing-app.firebaseapp.com" style="font-family:monospace;">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.8em; font-weight:bold;">Storage Bucket</label>
+                    <input type="text" id="fcm-storageBucket" placeholder="my-billing-app.firebasestorage.app" style="font-family:monospace;">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.8em; font-weight:bold;">Messaging Sender ID</label>
+                    <input type="text" id="fcm-messagingSenderId" placeholder="1038495185083" style="font-family:monospace;">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label style="font-size:0.8em; font-weight:bold;">App ID</label>
+                    <input type="text" id="fcm-appId" placeholder="1:1038...:web:..." style="font-family:monospace;">
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:10px;">
+                <button type="button" class="btn btn-danger" onclick="resetFirebaseConfigToDefault()" style="padding:8px 14px; font-size:0.85em;">🔄 Reset to Original Config</button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn btn-outline" onclick="closeModals()" style="padding:8px 16px;">Cancel</button>
+                    <button type="button" class="btn btn-green" onclick="saveNewFirebaseConfig()" style="padding:8px 18px; font-weight:bold;">💾 Save & Connect New Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="receipt-print-area"></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
     <script>
         const manifest = { "name": "Billing Hub", "short_name": "Billing Hub", "start_url": ".", "display": "standalone", "background_color": "#2c3e50", "theme_color": "#007bff", "icons": [{"src": "https://via.placeholder.com/192/007bff/ffffff?text=BH", "sizes": "192x192", "type": "image/png"}] };
         const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         document.getElementById('manifest-placeholder').href = URL.createObjectURL(manifestBlob);
 
-        // ====================================================================
-        // FIREBASE REALTIME DATABASE & CLOUD CONFIGURATION
-        // ====================================================================
+        let customFirebaseConfig = null;
+        try {
+            const savedCfg = localStorage.getItem('custom_firebase_config');
+            if (savedCfg) customFirebaseConfig = JSON.parse(savedCfg);
+        } catch(e) {}
+
         const defaultFirebaseConfig = {
-            apiKey: "AIzaSyAXTQEr-dqojSa1shCQ6sP0HxTxDfSCaFE",
-            authDomain: "lamination-hub-dec25.firebaseapp.com",
-            databaseURL: "https://lamination-hub-dec25-default-rtdb.firebaseio.com",
-            projectId: "lamination-hub-dec25",
-            storageBucket: "lamination-hub-dec25.firebasestorage.app",
-            messagingSenderId: "1038495185083",
-            appId: "1:1038495185083:web:7007162773ce4284c9919e",
-            measurementId: "G-1WC8VBFKD5"
+            apiKey: "AIzaSyAUW6NDRMtw09OjTSts1_J3FXlPrbqNkrc",
+            authDomain: "billing-software-5aac9.firebaseapp.com",
+            databaseURL: "https://billing-software-5aac9-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "billing-software-5aac9",
+            storageBucket: "billing-software-5aac9.firebasestorage.app",
+            messagingSenderId: "44015079496",
+            appId: "1:44015079496:web:9e4559f1d482a7e078487d",
+            measurementId: "G-X9JB1CFTVZ"
         };
+        const firebaseConfig = customFirebaseConfig || defaultFirebaseConfig;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(); const auth = firebase.auth(); const provider = new firebase.auth.GoogleAuthProvider();
 
-        function getActiveFirebaseConfig() {
-            try {
-                let saved = localStorage.getItem('l_firebase_config');
-                if (saved) {
-                    let parsed = JSON.parse(saved);
-                    return { ...defaultFirebaseConfig, ...parsed };
-                }
-            } catch(e){}
-            return defaultFirebaseConfig;
-        }
-
-        function getActiveShopSyncKey() {
-            try {
-                let k = localStorage.getItem('l_shop_sync_key');
-                if (k && k.trim()) return k.trim();
-                let savedSettings = localStorage.getItem('l_settings');
-                if (savedSettings) {
-                    let s = JSON.parse(savedSettings);
-                    if (s.shopSyncKey && s.shopSyncKey.trim()) return s.shopSyncKey.trim();
-                    if (s.phone) {
-                        let cl = s.phone.replace(/\D/g, '');
-                        if (cl.length >= 10) return cl;
-                    }
-                }
-            } catch(e){}
-            return "default_shop";
-        }
-
-        const firebaseConfig = getActiveFirebaseConfig();
-        if (typeof firebase !== 'undefined' && firebase.apps && !firebase.apps.length) {
-            try {
-                firebase.initializeApp(firebaseConfig);
-            } catch(e) {
-                console.warn("Firebase initializeApp error:", e);
-            }
-        }
-        const db = (typeof firebase !== 'undefined' && firebase.firestore) ? firebase.firestore() : null;
-        const rtdb = (typeof firebase !== 'undefined' && firebase.database) ? firebase.database() : null;
-        const auth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null;
-        const provider = (typeof firebase !== 'undefined' && firebase.auth) ? new firebase.auth.GoogleAuthProvider() : null;
-
-        let activeShopSyncKey = getActiveShopSyncKey();
-        let currentUid = "local";
-        let docRef = null;
-        let rtdbRef = rtdb ? rtdb.ref("shops/" + activeShopSyncKey) : null;
-        let rtdbListener = null;
-        let unsubscribeSync = null;
         // ====================================================================
         // UNIVERSAL DATE PARSING & COMPARISON ENGINE (Cross-Device & Cross-Locale)
         // ====================================================================
@@ -2632,6 +2650,18 @@
             return `${y}-${m}-${day}`;
         }
 
+        // SHARED CLOUD SYNC KEY FOR PC + MOBILE APP
+        let shopSyncKey = localStorage.getItem('shop_sync_key') || 'lamination_hub_kurebhar';
+        try {
+            const sp = new URLSearchParams(window.location.search).get('sync');
+            if (sp && sp.trim()) {
+                shopSyncKey = sp.trim();
+                localStorage.setItem('shop_sync_key', shopSyncKey);
+            }
+        } catch(e) {}
+        
+        let currentUid = "local"; 
+        let docRef = db.collection("shops").doc(shopSyncKey); 
         let userRole = 'admin'; 
         let currentStaffName = 'Admin';
 
@@ -3004,115 +3034,369 @@
             try { if(localStorage.getItem('l_deleted')) deletedItems = JSON.parse(localStorage.getItem('l_deleted')); } catch(e){}
             applyTheme();
         }
-        function processCloudData(c) {
-            if (!c || typeof c !== 'object') return;
-            const mergeArrays = (localArr, cloudArr) => {
-                let combined = [...localArr];
-                if (cloudArr && Array.isArray(cloudArr)) {
-                    cloudArr.forEach(cItem => {
-                        let match = combined.findIndex(l => String(l.id) === String(cItem.id));
-                        if (match === -1) combined.push(cItem); else combined[match] = cItem;
-                    });
+
+        let unsubscribeSync = null;
+        let lastCloudSyncError = '';
+        let lastCloudSyncTime = '';
+
+        function updateCloudStatusUI(connected, text) {
+            let syncEl = document.getElementById('sync-text');
+            let badge = document.getElementById('sync-badge');
+            let lastSyncEl = document.getElementById('last-sync-time');
+            let pillEl = document.getElementById('cloud-pill-status');
+            let hintEl = document.getElementById('sync-action-hint');
+            let setGoogleBtn = document.getElementById('settings-google-btn');
+            let setGoogleStatus = document.getElementById('settings-google-status');
+
+            let user = (typeof auth !== 'undefined' && auth) ? auth.currentUser : null;
+            let timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            if (connected) {
+                lastCloudSyncTime = timeStr;
+                if (syncEl) { syncEl.innerText = text || `Live Connected (${shopSyncKey})`; syncEl.style.color = "#28a745"; }
+                if (badge) { badge.innerText = "Live Connected"; badge.style.background = "#28a745"; badge.style.color = "#fff"; }
+                if (lastSyncEl) lastSyncEl.innerText = `Synced: ${timeStr}`;
+                if (pillEl) { pillEl.innerText = "🟢 Cloud Sync Active"; pillEl.style.background = "#10b981"; }
+                if (hintEl) { hintEl.innerText = "Connected 🟢"; hintEl.style.color = "#4ade80"; }
+            } else {
+                if (syncEl) { syncEl.innerText = text || "Offline Cached"; syncEl.style.color = "#ffc107"; }
+                if (badge) {
+                    badge.innerText = user ? "Offline" : "Login Needed";
+                    badge.style.background = user ? "#ffc107" : "#ef4444";
+                    badge.style.color = user ? "#000" : "#fff";
                 }
-                return combined;
-            };
+                if (lastSyncEl && lastCloudSyncTime) lastSyncEl.innerText = `Last: ${lastCloudSyncTime}`;
+                if (pillEl) { pillEl.innerText = "🟡 Offline Cached Mode"; pillEl.style.background = "#f59e0b"; }
+                if (hintEl) { hintEl.innerText = "Click to Connect ⚡"; hintEl.style.color = "#60a5fa"; }
+            }
 
-            deletedItems = [...new Set([...deletedItems.map(String), ...(c.deletedItems || []).map(String)])];
-            inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
-            sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
-            expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
-            customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
-            suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
-            quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
-            if (c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
-            if (c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
-            if (c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
-            if (c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
-            (c.categories || []).forEach(cat => { if (!categories.includes(cat)) categories.push(cat); });
-            if (c.settings) settings = { ...settings, ...c.settings };
-            if (c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
-
-            try {
-                localStorage.setItem('l_inv', JSON.stringify(inventory));
-                localStorage.setItem('l_sales', JSON.stringify(sales));
-                localStorage.setItem('l_exp', JSON.stringify(expenses));
-                localStorage.setItem('l_cust', JSON.stringify(customers));
-                localStorage.setItem('l_sup', JSON.stringify(suppliers));
-                localStorage.setItem('l_quote', JSON.stringify(quotations));
-                localStorage.setItem('l_cat', JSON.stringify(categories));
-                localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
-                localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
-                localStorage.setItem('l_audit', JSON.stringify(auditLogs));
-                localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
-                localStorage.setItem('l_coupons', JSON.stringify(coupons));
-                localStorage.setItem('l_settings', JSON.stringify(settings));
-            } catch(e){}
-
-            refreshDisplays();
+            if (setGoogleStatus) {
+                setGoogleStatus.innerText = user ? `✅ Signed in (${user.email || 'Google User'})` : "❌ Not Signed in (Cloud Sync Offline)";
+                setGoogleStatus.style.color = user ? "#28a745" : "#ef4444";
+            }
+            if (setGoogleBtn) {
+                setGoogleBtn.style.display = user ? "none" : "inline-block";
+            }
         }
 
-        function startLiveSync() {
-            return new Promise((resolve) => {
-                let syncText = document.getElementById('sync-text');
+        function openFirebaseConfigModal() {
+            let activeCfg = customFirebaseConfig || defaultFirebaseConfig;
+            document.getElementById('fcm-apiKey').value = activeCfg.apiKey || '';
+            document.getElementById('fcm-authDomain').value = activeCfg.authDomain || '';
+            document.getElementById('fcm-projectId').value = activeCfg.projectId || '';
+            document.getElementById('fcm-storageBucket').value = activeCfg.storageBucket || '';
+            document.getElementById('fcm-messagingSenderId').value = activeCfg.messagingSenderId || '';
+            document.getElementById('fcm-appId').value = activeCfg.appId || '';
+            document.getElementById('fcm-paste-box').value = '';
+            document.getElementById('firebaseConfigModal').style.display = 'flex';
+        }
 
-                // 1. Prioritize Firebase Realtime Database
-                if (rtdb && rtdbRef) {
-                    if (syncText) { syncText.innerText = "Connecting Realtime..."; syncText.style.color = "#ffc107"; }
-                    if (rtdbListener) {
-                        try { rtdbRef.off('value', rtdbListener); } catch(e){}
-                    }
+        function parseFirebaseSnippet() {
+            let text = document.getElementById('fcm-paste-box').value.trim();
+            if (!text) return alert("Please paste your Firebase configuration snippet first.");
 
-                    rtdbListener = rtdbRef.on('value', snapshot => {
-                        if (snapshot.exists()) {
-                            const c = snapshot.val();
-                            processCloudData(c);
-                            if (syncText) {
-                                syncText.innerText = "Live Realtime Sync";
-                                syncText.style.color = "#28a745";
-                            }
-                        } else {
-                            if (syncText) {
-                                syncText.innerText = "Realtime Ready";
-                                syncText.style.color = "#17a2b8";
-                            }
-                        }
-                        resolve();
-                    }, err => {
-                        console.warn("RTDB sync error:", err);
-                        if (syncText) {
-                            syncText.innerText = "Sync Offline";
-                            syncText.style.color = "#dc3545";
-                        }
-                        resolve();
-                    });
-                    return;
+            let fields = {
+                apiKey: /apiKey\s*:\s*["']([^"']+)["']/,
+                authDomain: /authDomain\s*:\s*["']([^"']+)["']/,
+                projectId: /projectId\s*:\s*["']([^"']+)["']/,
+                storageBucket: /storageBucket\s*:\s*["']([^"']+)["']/,
+                messagingSenderId: /messagingSenderId\s*:\s*["']([^"']+)["']/,
+                appId: /appId\s*:\s*["']([^"']+)["']/
+            };
+
+            let matched = 0;
+            for (let k in fields) {
+                let m = text.match(fields[k]);
+                if (m && m[1]) {
+                    document.getElementById('fcm-' + k).value = m[1].trim();
+                    matched++;
                 }
+            }
 
-                // 2. Fallback to Firestore docRef
-                if (docRef && window.location.protocol !== 'file:') {
-                    if (unsubscribeSync) return resolve();
-                    if (syncText) { syncText.innerText = "Connecting Cloud..."; syncText.style.color = "#ffc107"; }
+            if (matched > 0) {
+                alert(`✓ Extracted ${matched} Firebase config parameters successfully! Click 'Save & Connect' to apply.`);
+            } else {
+                try {
+                    let cleaned = text.replace(/^(const|var|let)\s+\w+\s*=\s*/, '').replace(/;\s*$/, '');
+                    let obj = JSON.parse(cleaned);
+                    for (let k in fields) {
+                        if (obj[k]) {
+                            document.getElementById('fcm-' + k).value = obj[k];
+                            matched++;
+                        }
+                    }
+                    if (matched > 0) alert(`✓ Parsed ${matched} Firebase config fields from JSON!`);
+                    else alert("Could not parse config. Please enter the fields manually.");
+                } catch(e) {
+                    alert("Could not automatically parse the snippet. Please fill in the fields below manually.");
+                }
+            }
+        }
 
+        function saveNewFirebaseConfig() {
+            let apiKey = document.getElementById('fcm-apiKey').value.trim();
+            let projectId = document.getElementById('fcm-projectId').value.trim();
+            if (!apiKey || !projectId) return alert("Project ID and API Key are required.");
+
+            let newConfig = {
+                apiKey: apiKey,
+                authDomain: document.getElementById('fcm-authDomain').value.trim() || `${projectId}.firebaseapp.com`,
+                projectId: projectId,
+                storageBucket: document.getElementById('fcm-storageBucket').value.trim() || `${projectId}.firebasestorage.app`,
+                messagingSenderId: document.getElementById('fcm-messagingSenderId').value.trim() || '',
+                appId: document.getElementById('fcm-appId').value.trim() || ''
+            };
+
+            if (confirm(`Connect to Firebase Project '${projectId}'?\n\nThe app will reload to connect with your new Firebase credentials.`)) {
+                localStorage.setItem('custom_firebase_config', JSON.stringify(newConfig));
+                window.location.reload();
+            }
+        }
+
+        function resetFirebaseConfigToDefault() {
+            if (confirm("Reset Firebase configuration back to the original default project ('billing-software-5aac9')?")) {
+                localStorage.removeItem('custom_firebase_config');
+                window.location.reload();
+            }
+        }
+
+        function openCloudSyncDiagnosticsModal() {
+            let user = (typeof auth !== 'undefined' && auth) ? auth.currentUser : null;
+            let modal = document.getElementById('cloudSyncModal');
+            let badge = document.getElementById('csm-badge');
+            let detail = document.getElementById('csm-detail');
+            let email = document.getElementById('csm-user-email');
+            let key = document.getElementById('csm-shop-key');
+            let syncTime = document.getElementById('csm-last-sync');
+            let card = document.getElementById('csm-status-card');
+            let gBox = document.getElementById('csm-google-action-box');
+            let projEl = document.getElementById('csm-project-id');
+
+            if (projEl) {
+                let activeCfg = customFirebaseConfig || defaultFirebaseConfig;
+                projEl.innerText = activeCfg.projectId || 'Default';
+            }
+
+            if (email) email.innerText = user ? (user.email || user.uid) : "Not Signed In (Local Mode)";
+            if (key) key.innerText = shopSyncKey;
+            if (syncTime) syncTime.innerText = lastCloudSyncTime || "Never during this session";
+
+            if (user) {
+                if (gBox) gBox.style.display = 'none';
+                if (card) { card.style.borderColor = '#28a745'; card.style.background = 'rgba(40,167,69,0.1)'; }
+                if (badge) { badge.innerText = "Authorized"; badge.style.background = '#28a745'; badge.style.color = '#fff'; }
+                if (detail) detail.innerHTML = `Your Google account is signed in (${user.email || 'Google User'}). Real-time sync is listening to shop key: <strong>${shopSyncKey}</strong>.<br><small style="color:var(--text-muted); display:block; margin-top:6px;">All devices with this shop key share records automatically.</small>`;
+            } else {
+                if (gBox) gBox.style.display = 'block';
+                if (card) { card.style.borderColor = '#ef4444'; card.style.background = 'rgba(239,68,68,0.1)'; }
+                if (badge) { badge.innerText = "Sign-In Required"; badge.style.background = '#ef4444'; badge.style.color = '#fff'; }
+                let errNotice = lastCloudSyncError ? `<div style="color:#f87171; font-size:0.85em; margin-top:6px;">Notice: ${lastCloudSyncError}</div>` : '';
+                if (detail) detail.innerHTML = `Cloud Sync is currently in <strong>Offline Local Mode</strong> because this device is not authenticated with Google.<br>Please tap <strong>Sign in with Google</strong> below to connect.${errNotice}`;
+            }
+
+            if (modal) modal.style.display = 'flex';
+        }
+
+        async function reconnectCloudLive(showFeedback = false) {
+            if (unsubscribeSync) {
+                try { unsubscribeSync(); } catch(e){}
+                unsubscribeSync = null;
+            }
+            let user = (typeof auth !== 'undefined' && auth) ? auth.currentUser : null;
+            if (!user) {
+                if (showFeedback) openCloudSyncDiagnosticsModal();
+                return;
+            }
+            try {
+                let syncEl = document.getElementById('sync-text');
+                if (syncEl) { syncEl.innerText = `Connecting (${shopSyncKey})...`; syncEl.style.color = "#ffc107"; }
+                await startLiveSync(true);
+                await saveToStorage();
+                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                if (showFeedback) alert(`Cloud Reconnected Successfully! 🟢\n\nShop Key: ${shopSyncKey}\nUser: ${user.email || 'Google User'}`);
+                closeModals();
+            } catch(e) {
+                lastCloudSyncError = e.message || String(e);
+                updateCloudStatusUI(false, "Offline Cached");
+                if (showFeedback) alert("Could not connect to Cloud: " + (e.message || e));
+            }
+        }
+
+        function startLiveSync(force = false) {
+            return new Promise((resolve) => {
+                if (!docRef) return resolve();
+                if (unsubscribeSync && !force) return resolve();
+                if (unsubscribeSync) {
+                    try { unsubscribeSync(); } catch(e){}
+                    unsubscribeSync = null;
+                }
+                let isFirstFetch = true;
+                let syncText = document.getElementById('sync-text');
+                if (syncText) { syncText.innerText = `Connecting Cloud (${shopSyncKey})...`; syncText.style.color = "#ffc107"; }
+
+                try {
                     unsubscribeSync = docRef.onSnapshot(doc => {
                         if (doc.exists) {
                             const c = doc.data();
-                            processCloudData(c);
-                            if (syncText) {
-                                syncText.innerText = "Live Connected";
-                                syncText.style.color = "#28a745";
+                            const mergeArrays = (localArr, cloudArr) => {
+                                let combined = [...localArr];
+                                if(cloudArr && Array.isArray(cloudArr)) {
+                                    cloudArr.forEach(cItem => {
+                                        let match = combined.findIndex(l => String(l.id) === String(cItem.id));
+                                        if(match === -1) combined.push(cItem); else combined[match] = cItem;
+                                    });
+                                }
+                                return combined;
+                            };
+                            let cloudDeleted = (c.deletedItems || []).map(String);
+                            deletedItems = [...new Set([...deletedItems.map(String), ...cloudDeleted])];
+                            inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
+                            sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
+                            expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
+                            customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
+                            suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
+                            quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
+                            if(c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
+                            if(c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
+                            if(c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
+                            if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
+                            (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
+                            if(c.settings) settings = { ...settings, ...c.settings };
+                            if(c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
+
+                            // Keep local cache fresh across devices
+                            try {
+                                localStorage.setItem('l_inv', JSON.stringify(inventory));
+                                localStorage.setItem('l_sales', JSON.stringify(sales));
+                                localStorage.setItem('l_exp', JSON.stringify(expenses));
+                                localStorage.setItem('l_cust', JSON.stringify(customers));
+                                localStorage.setItem('l_sup', JSON.stringify(suppliers));
+                                localStorage.setItem('l_quote', JSON.stringify(quotations));
+                                localStorage.setItem('l_cat', JSON.stringify(categories));
+                                localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+                                if (c.creditNotes) localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
+                                if (c.auditLogs) localStorage.setItem('l_audit', JSON.stringify(auditLogs));
+                                if (c.heldBills) localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
+                                if (c.coupons) localStorage.setItem('l_coupons', JSON.stringify(coupons));
+                                if (c.settings) localStorage.setItem('l_settings', JSON.stringify(settings));
+                            } catch(e) {}
+
+                            refreshDisplays();
+                            try { if(typeof updateCharts === 'function') updateCharts(); } catch(e){}
+                            updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                            let curProfileId = document.getElementById('customerProfileModal')?.getAttribute('data-active-cust');
+                            if (curProfileId && document.getElementById('customerProfileModal')?.style.display === 'flex') {
+                                try { openCustomerProfile(curProfileId); } catch(e){}
                             }
                         }
-                        resolve();
-                    }, err => {
-                        console.warn("Firestore sync error:", err);
+                        if (isFirstFetch) { isFirstFetch = false; resolve(); }
+                    }, (err) => {
+                        console.warn("Firestore snapshot error:", err);
+                        lastCloudSyncError = err ? (err.message || String(err)) : "Offline";
+                        if (unsubscribeSync) {
+                            try { unsubscribeSync(); } catch(e){}
+                            unsubscribeSync = null;
+                        }
+                        updateCloudStatusUI(false, auth.currentUser ? "Offline Cached" : "Google Sign-in Required");
                         resolve();
                     });
-                    return;
+                } catch(e) {
+                    console.warn("startLiveSync attach error:", e);
+                    lastCloudSyncError = e.message || String(e);
+                    if (unsubscribeSync) { try { unsubscribeSync(); } catch(err){} unsubscribeSync = null; }
+                    updateCloudStatusUI(false, "Offline Cached");
+                    resolve();
                 }
-
-                resolve();
             });
         }
+
+        // Initialize local cache on script startup
+        loadLocalData();
+
+        // Listen for Firebase Auth changes as single source of truth
+        auth.onAuthStateChanged(async user => {
+            docRef = db.collection("shops").doc(shopSyncKey);
+            if (user) {
+                currentUid = user.uid;
+                await startLiveSync(true);
+                let loginStatus = document.getElementById('login-status');
+                if (loginStatus) loginStatus.innerText = `Secured (${user.email || 'Google Linked'}). Enter PIN.`;
+                let googleBtn = document.getElementById('googleLoginBtn');
+                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${user.email || 'Google Linked'}`;
+                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+            } else {
+                currentUid = "local";
+                // Auto-connect real-time cloud sync on all devices immediately
+                startLiveSync(true);
+                // Attempt anonymous auth fallback in background if needed by Firestore security rules
+                if (auth.signInAnonymously) {
+                    auth.signInAnonymously().catch(err => {
+                        console.log("Anonymous auth fallback notice:", err.message);
+                    });
+                }
+                let loginStatus = document.getElementById('login-status');
+                if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
+                let googleBtn = document.getElementById('googleLoginBtn');
+                if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
+            }
+        });
+
+        async function handleGoogleLogin() {
+            if (window.location.protocol === 'file:') return alert("Google Login cannot run locally (file://). Please use your online site (https://laminationhub.github.io/billingsoftware/) or a web server.");
+            try {
+                let googleBtn = document.getElementById('googleLoginBtn');
+                if (googleBtn) googleBtn.innerText = "Opening Google Sign-in...";
+                const res = await auth.signInWithPopup(provider);
+                currentUid = res.user.uid; 
+                docRef = db.collection("shops").doc(shopSyncKey);
+                loadLocalData();
+                await startLiveSync(true);
+                let loginStatus = document.getElementById('login-status');
+                if (loginStatus) loginStatus.innerText = `Secured (${res.user.email || 'Google Linked'}). Enter PIN.`;
+                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${res.user.email || 'Google Linked'}`;
+                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                alert(`Google Sign-In Connected! 🟢\nAccount: ${res.user.email || 'Google User'}\nLive Cloud Sync is now active!`);
+                closeModals();
+            } catch (e) {
+                alert("Google Sign-In was not completed: " + e.message);
+                updateCloudStatusUI(false, "Offline Cached");
+            }
+        }
+
+        // LOGIN WITH MULTI-STAFF PIN SUPPORT
+        async function handleLogin() {
+            const pass = document.getElementById('passInput').value;
+            if (currentUid === "local") loadLocalData();
+
+            let matchedStaff = (settings.staffList || []).find(s => s.pin === pass);
+
+            if (pass === appPass) {
+                userRole = 'admin'; currentStaffName = 'Admin';
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                initApp();
+                if (!auth.currentUser) {
+                    updateCloudStatusUI(false, "Google Sign-in Required");
+                }
+            } else if (matchedStaff) {
+                userRole = 'staff'; currentStaffName = matchedStaff.name;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                initApp();
+                if (!auth.currentUser) {
+                    updateCloudStatusUI(false, "Google Sign-in Required");
+                }
+            } else {
+                alert("Incorrect PIN!");
+            }
+        }
+
+        function lockScreen() {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('passInput').value = '';
+        }
+        function signOut() { auth.signOut().then(() => location.reload()); }
 
         async function saveToStorage() {
             localStorage.setItem('l_pass', appPass); localStorage.setItem('l_settings', JSON.stringify(settings));
@@ -3122,365 +3406,67 @@
             localStorage.setItem('l_cat', JSON.stringify(categories)); localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
             localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes)); localStorage.setItem('l_audit', JSON.stringify(auditLogs));
             localStorage.setItem('l_held_bills', JSON.stringify(heldBills)); localStorage.setItem('l_coupons', JSON.stringify(coupons));
-
-            // Sync to Realtime Database
-            if (rtdbRef) {
+            
+            if (docRef) {
                 try {
-                    await rtdbRef.set({
-                        appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons, lastUpdated: Date.now()
-                    });
-                } catch(e) {
-                    console.warn("RTDB save error:", e);
-                }
-            } else if (docRef && window.location.protocol !== 'file:') {
-                try {
-                    await docRef.set({
+                    const cleanPayload = JSON.parse(JSON.stringify({
                         appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons
-                    });
-                } catch(e){}
+                    }));
+                    await docRef.set(cleanPayload, { merge: true });
+                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                } catch(e) {
+                    console.warn("Firestore save error:", e);
+                    lastCloudSyncError = e.message || String(e);
+                    updateCloudStatusUI(false, "Offline Cached");
+                }
+            } else {
+                updateCloudStatusUI(false, "Offline Cached");
             }
         }
 
         async function forceCloudRefresh() {
-            let syncText = document.getElementById('sync-text');
-            if (syncText) { syncText.innerText = "Syncing Cloud..."; syncText.style.color = "#ffc107"; }
-
-            if (rtdbRef) {
-                try {
-                    const snapshot = await rtdbRef.once('value');
-                    if (snapshot.exists()) {
-                        const d = snapshot.val();
-                        processCloudData(d);
-                        saveToStorage();
-                        alert("✓ Realtime Database Synced Successfully!");
-                        initApp();
-                        refreshDisplays();
-                    } else {
-                        alert("Realtime Database connected! No remote records found yet. Uploading local data now...");
-                        saveToStorage();
-                    }
-                } catch(e) {
-                    alert("Realtime Database sync failed: " + e.message);
-                }
-            } else if (docRef) {
-                try {
-                    const doc = await docRef.get();
-                    if (doc.exists) {
-                        const d = doc.data();
-                        processCloudData(d);
-                        saveToStorage();
-                        alert("✓ Cloud Firestore Synced Successfully!");
-                        initApp();
-                        refreshDisplays();
-                    }
-                } catch(e) {
-                    alert("Firestore sync failed: " + e.message);
-                }
-            } else {
-                alert("Please configure Realtime Database URL or sign in with Google to sync.");
-            }
-        }
-
-        function saveAndReconnectFirebase() {
-            let dbUrl = (document.getElementById('cfg-rtdb-url')?.value || '').trim();
-            let syncKey = (document.getElementById('cfg-shop-sync-key')?.value || '').trim();
-            let apiKey = (document.getElementById('cfg-fb-apikey')?.value || '').trim();
-            let projectId = (document.getElementById('cfg-fb-projectid')?.value || '').trim();
-            let authDomain = (document.getElementById('cfg-fb-authdomain')?.value || '').trim();
-            let appId = (document.getElementById('cfg-fb-appid')?.value || '').trim();
-
-            let cfg = { ...defaultFirebaseConfig };
-            if (dbUrl) cfg.databaseURL = dbUrl;
-            if (apiKey) cfg.apiKey = apiKey;
-            if (projectId) cfg.projectId = projectId;
-            if (authDomain) cfg.authDomain = authDomain;
-            if (appId) cfg.appId = appId;
-
-            localStorage.setItem('l_firebase_config', JSON.stringify(cfg));
-            if (syncKey) {
-                localStorage.setItem('l_shop_sync_key', syncKey);
-                settings.shopSyncKey = syncKey;
-            } else {
-                localStorage.removeItem('l_shop_sync_key');
-                if (settings.shopSyncKey) delete settings.shopSyncKey;
-            }
-            saveToStorage();
-
-            alert("✓ Firebase Realtime Database Configuration Saved!\n\nReconnecting now...");
-            location.reload();
-        }
-
-        function resetToDefaultFirebaseConfig() {
-            if (!confirm("Reset Firebase configuration back to standard defaults?")) return;
-            localStorage.removeItem('l_firebase_config');
-            localStorage.removeItem('l_shop_sync_key');
-            alert("Firebase reset to defaults. Reloading app...");
-            location.reload();
-        }
-
-        // ====================================================================
-        // AUTHENTICATION & LOGIN ENGINE (Google, Staff PIN & Mobile Number)
-        // ====================================================================
-        async function handleGoogleLogin() {
-            if (!auth || !provider) {
-                return alert("Firebase Auth is not available in local mode. Please use PIN or Mobile login.");
-            }
+            if(!docRef) return;
             try {
-                const res = await auth.signInWithPopup(provider);
-                currentUid = res.user.uid;
-                if (db) docRef = db.collection("shops").doc(currentUid);
-                if (rtdb) rtdbRef = rtdb.ref("shops/" + currentUid);
-                await startLiveSync();
-                unlockAppUI('dashboard');
-            } catch (e) {
-                alert("Login failed: " + e.message);
-            }
-        }
-
-        // LOGIN WITH MULTI-STAFF PIN SUPPORT
-        async function handleLogin() {
-            const pass = (document.getElementById('passInput')?.value || '').trim();
-            if (currentUid === "local") loadLocalData();
-
-            let matchedStaff = (settings.staffList || []).find(s => s.pass === pass || s.pin === pass);
-            if (pass === appPass) {
-                userRole = 'admin';
-                currentStaffName = 'Admin';
-                unlockAppUI('dashboard');
-            } else if (matchedStaff) {
-                userRole = matchedStaff.role || 'staff';
-                currentStaffName = matchedStaff.name;
-                unlockAppUI('pos');
-            } else {
-                alert("Incorrect PIN!");
-            }
-        }
-
-        let generatedMobileOtp = "";
-        let otpTargetMobile = "";
-        let otpCountdownInterval = null;
-
-        function switchLoginMode(mode) {
-            let pinTab = document.getElementById('tab-login-pin');
-            let mobileTab = document.getElementById('tab-login-mobile');
-            let pinPanel = document.getElementById('login-panel-pin');
-            let mobilePanel = document.getElementById('login-panel-mobile');
-
-            if (mode === 'mobile') {
-                if (pinTab) pinTab.className = 'btn btn-gray';
-                if (mobileTab) mobileTab.className = 'btn btn-blue';
-                if (pinPanel) pinPanel.style.display = 'none';
-                if (mobilePanel) mobilePanel.style.display = 'block';
-                let mobInput = document.getElementById('loginMobileInput');
-                if (mobInput) mobInput.focus();
-            } else {
-                if (pinTab) pinTab.className = 'btn btn-blue';
-                if (mobileTab) mobileTab.className = 'btn btn-gray';
-                if (pinPanel) pinPanel.style.display = 'block';
-                if (mobilePanel) mobilePanel.style.display = 'none';
-                let passInput = document.getElementById('passInput');
-                if (passInput) passInput.focus();
-            }
-        }
-
-        function switchMobileSubMode(subMode) {
-            let pinBtn = document.getElementById('btn-sub-mobile-pin');
-            let otpBtn = document.getElementById('btn-sub-mobile-otp');
-            let pinPanel = document.getElementById('mobile-sub-pin-panel');
-            let otpPanel = document.getElementById('mobile-sub-otp-panel');
-
-            if (subMode === 'otp') {
-                if (pinBtn) pinBtn.className = 'btn btn-gray';
-                if (otpBtn) otpBtn.className = 'btn btn-primary';
-                if (pinPanel) pinPanel.style.display = 'none';
-                if (otpPanel) otpPanel.style.display = 'block';
-            } else {
-                if (pinBtn) pinBtn.className = 'btn btn-primary';
-                if (otpBtn) otpBtn.className = 'btn btn-gray';
-                if (pinPanel) pinPanel.style.display = 'block';
-                if (otpPanel) otpPanel.style.display = 'none';
-            }
-        }
-
-        async function handleMobilePinLogin() {
-            let mobileRaw = (document.getElementById('loginMobileInput')?.value || '').trim();
-            let mobile = mobileRaw.replace(/\D/g, '');
-            if (mobile.length !== 10) {
-                return alert("Please enter a valid 10-digit mobile number.");
-            }
-
-            let pin = (document.getElementById('loginMobilePin')?.value || '').trim();
-            if (!pin) {
-                return alert("Please enter your PIN or password.");
-            }
-
-            if (currentUid === "local") loadLocalData();
-
-            let cleanPhone = (p) => (p || '').toString().replace(/\D/g, '');
-
-            // 1. Check if matches staff member with phone + pin
-            let matchedStaff = (settings.staffList || []).find(s => 
-                (s.phone && cleanPhone(s.phone) === mobile && (s.pin === pin || s.pass === pin))
-            );
-
-            // 2. If no phone set on staff yet, allow matching pin and link phone
-            if (!matchedStaff) {
-                let pinMatchStaff = (settings.staffList || []).find(s => (!s.phone || cleanPhone(s.phone) === '') && (s.pin === pin || s.pass === pin));
-                if (pinMatchStaff) {
-                    pinMatchStaff.phone = mobile;
-                    saveToStorage();
-                    matchedStaff = pinMatchStaff;
-                }
-            }
-
-            // 3. Check admin
-            let adminPhone = cleanPhone(settings.phone);
-            let isAdmin = false;
-
-            if (pin === appPass) {
-                isAdmin = true;
-                if (!settings.phone || cleanPhone(settings.phone) === '') {
-                    settings.phone = mobile;
-                    saveToStorage();
-                }
-            } else if (adminPhone && adminPhone === mobile && pin === appPass) {
-                isAdmin = true;
-            }
-
-            if (isAdmin) {
-                userRole = 'admin';
-                currentStaffName = 'Admin';
-                unlockAppUI('dashboard');
-            } else if (matchedStaff) {
-                userRole = matchedStaff.role || 'staff';
-                currentStaffName = matchedStaff.name;
-                unlockAppUI('pos');
-            } else {
-                alert("Incorrect Mobile Number or PIN! Please verify your registered number and PIN.");
-            }
-        }
-
-        function sendMobileLoginOtp() {
-            let mobileRaw = (document.getElementById('loginMobileInput')?.value || '').trim();
-            let mobile = mobileRaw.replace(/\D/g, '');
-            if (mobile.length !== 10) {
-                return alert("Please enter a valid 10-digit mobile number first.");
-            }
-
-            if (currentUid === "local") loadLocalData();
-
-            let cleanPhone = (p) => (p || '').toString().replace(/\D/g, '');
-            let adminPhone = cleanPhone(settings.phone);
-            let matchedStaff = (settings.staffList || []).find(s => cleanPhone(s.phone) === mobile);
-
-            let isKnownNumber = (adminPhone && adminPhone === mobile) || !!matchedStaff || !adminPhone;
-            if (!isKnownNumber) {
-                if (!confirm("This mobile number (" + mobile + ") is not yet linked to Admin or Staff.\n\nWould you like to register it with this login?")) {
-                    return;
-                }
-            }
-
-            otpTargetMobile = mobile;
-            generatedMobileOtp = String(Math.floor(100000 + Math.random() * 900000));
-
-            let otpBox = document.getElementById('mobileOtpBox');
-            let banner = document.getElementById('otpLiveBanner');
-            let codeDisplay = document.getElementById('liveOtpCodeDisplay');
-            if (otpBox) otpBox.style.display = 'block';
-            if (banner) banner.style.display = 'block';
-            if (codeDisplay) codeDisplay.innerText = generatedMobileOtp;
-
-            let sendBtn = document.getElementById('btn-send-otp');
-            if (sendBtn) {
-                sendBtn.disabled = true;
-                let secsLeft = 30;
-                sendBtn.innerText = `Resend (${secsLeft}s)`;
-                if (otpCountdownInterval) clearInterval(otpCountdownInterval);
-                otpCountdownInterval = setInterval(() => {
-                    secsLeft--;
-                    if (secsLeft <= 0) {
-                        clearInterval(otpCountdownInterval);
-                        sendBtn.disabled = false;
-                        sendBtn.innerText = "Resend OTP";
-                    } else {
-                        sendBtn.innerText = `Resend (${secsLeft}s)`;
+                if (!auth.currentUser) {
+                    if (confirm("Live Cloud Sync requires Google Sign-in to authorize access.\n\nWould you like to Sign in with Google now?")) {
+                        await handleGoogleLogin();
+                        return;
                     }
-                }, 1000);
-            }
-
-            let otpInput = document.getElementById('loginOtpInput');
-            if (otpInput) {
-                otpInput.value = '';
-                otpInput.focus();
-            }
-
-            alert("🔐 One-Time Password Generated!\n\nYour Verification OTP: " + generatedMobileOtp + "\n(Valid for 5 minutes)");
-        }
-
-        function verifyMobileLoginOtp() {
-            let enteredOtp = (document.getElementById('loginOtpInput')?.value || '').trim();
-            if (!enteredOtp) {
-                return alert("Please enter the 6-digit OTP.");
-            }
-            if (!generatedMobileOtp || enteredOtp !== generatedMobileOtp) {
-                return alert("Invalid OTP! Please check the 6-digit code and try again.");
-            }
-
-            if (currentUid === "local") loadLocalData();
-
-            let cleanPhone = (p) => (p || '').toString().replace(/\D/g, '');
-            let adminPhone = cleanPhone(settings.phone);
-            let matchedStaff = (settings.staffList || []).find(s => cleanPhone(s.phone) === otpTargetMobile);
-
-            if (!settings.phone || adminPhone === '' || adminPhone === otpTargetMobile) {
-                if (!settings.phone || adminPhone === '') {
-                    settings.phone = otpTargetMobile;
-                    saveToStorage();
                 }
-                userRole = 'admin';
-                currentStaffName = 'Admin';
-                unlockAppUI('dashboard');
-            } else if (matchedStaff) {
-                userRole = matchedStaff.role || 'staff';
-                currentStaffName = matchedStaff.name;
-                unlockAppUI('pos');
-            } else {
-                userRole = 'admin';
-                currentStaffName = 'Admin (' + otpTargetMobile.slice(-4) + ')';
-                unlockAppUI('dashboard');
+                if (unsubscribeSync) { try { unsubscribeSync(); } catch(e){} unsubscribeSync = null; }
+                await startLiveSync(true);
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    appPass = d.appPass || appPass;
+                    settings = d.settings || settings;
+                    inventory = d.inventory || [];
+                    sales = d.sales || [];
+                    expenses = d.expenses || [];
+                    customers = d.customers || [];
+                    suppliers = d.suppliers || [];
+                    quotations = d.quotations || [];
+                    categories = d.categories || [];
+                    deletedItems = d.deletedItems || [];
+                    if (d.creditNotes) creditNotes = d.creditNotes;
+                    if (d.auditLogs) auditLogs = d.auditLogs;
+                    if (d.heldBills) heldBills = d.heldBills;
+                    if (d.coupons) coupons = d.coupons;
+                    saveToStorage();
+                    refreshDisplays();
+                    updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                    alert("Cloud Sync Successful! All records are up to date.");
+                    initApp();
+                } else {
+                    alert(`Connected to Cloud! Document for key '${shopSyncKey}' is empty. Pushing current data now...`);
+                    await saveToStorage();
+                }
+            } catch(e) {
+                console.error("Manual sync failed:", e);
+                lastCloudSyncError = e.message || String(e);
+                updateCloudStatusUI(false, "Offline Cached");
+                alert("Cloud Sync Failed: " + (e.message || e));
             }
-
-            generatedMobileOtp = "";
-        }
-
-        function unlockAppUI(defaultTab) {
-            let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
-            if (ls) ls.style.display = 'none';
-            let ma = document.getElementById('main-app');
-            if (ma) ma.style.display = 'flex';
-            applyTheme();
-            initApp();
-            switchTab(defaultTab || 'dashboard');
-            if (typeof applyStaffPermissions === 'function') applyStaffPermissions();
-        }
-
-        function lockScreen() {
-            let ls = document.getElementById('login-screen') || document.getElementById('auth-overlay');
-            if (ls) ls.style.display = 'flex';
-            let ma = document.getElementById('main-app');
-            if (ma) ma.style.display = 'none';
-            let pi = document.getElementById('passInput');
-            if (pi) pi.value = '';
-            let mi = document.getElementById('loginMobileInput');
-            if (mi) mi.value = '';
-            let mp = document.getElementById('loginMobilePin');
-            if (mp) mp.value = '';
-            let oi = document.getElementById('loginOtpInput');
-            if (oi) oi.value = '';
-            let ob = document.getElementById('mobileOtpBox');
-            if (ob) ob.style.display = 'none';
-            let lb = document.getElementById('otpLiveBanner');
-            if (lb) lb.style.display = 'none';
         }
 
         function handleLogoUpload(e) {
@@ -3544,7 +3530,7 @@
                 document.getElementById('set-staff-max-disc').value = settings.staffMaxDisc !== undefined ? settings.staffMaxDisc : 10;
             }
 
-            renderTaxDropdown(); renderStaffList();
+            renderTaxDropdown(); renderStaffList(); renderPairingQRCode();
             applyStaffPermissions();
             
             const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers', 'nav-reseller-orders', 'nav-reports'];
@@ -3553,33 +3539,6 @@
             updateHeldBillsBadge();
             renderPosCouponChips();
             renderCouponsList();
-            if (document.getElementById('cfg-rtdb-url')) {
-                let activeCfg = getActiveFirebaseConfig();
-                document.getElementById('cfg-rtdb-url').value = activeCfg.databaseURL || '';
-                document.getElementById('cfg-shop-sync-key').value = localStorage.getItem('l_shop_sync_key') || settings.shopSyncKey || (settings.phone ? settings.phone.replace(/\D/g,'') : '');
-                document.getElementById('cfg-fb-apikey').value = activeCfg.apiKey || '';
-                document.getElementById('cfg-fb-projectid').value = activeCfg.projectId || '';
-                document.getElementById('cfg-fb-authdomain').value = activeCfg.authDomain || '';
-                document.getElementById('cfg-fb-appid').value = activeCfg.appId || '';
-
-                let statusPill = document.getElementById('rtdb-status-pill');
-                if (statusPill) {
-                    if (rtdb && rtdbRef) {
-                        statusPill.innerText = "🟢 Realtime DB Connected";
-                        statusPill.style.background = "#dcfce7";
-                        statusPill.style.color = "#15803d";
-                    } else if (rtdb) {
-                        statusPill.innerText = "🟡 Realtime DB Ready";
-                        statusPill.style.background = "#fef9c3";
-                        statusPill.style.color = "#854d0e";
-                    } else {
-                        statusPill.innerText = "⚪ Local Mode";
-                        statusPill.style.background = "#f1f5f9";
-                        statusPill.style.color = "#475569";
-                    }
-                }
-            }
-
             if (userRole === 'staff') switchTab('pos'); else refreshDisplays();
         }
 
@@ -3590,7 +3549,7 @@
             if(list.length === 0) { container.innerHTML = '<small style="color:var(--text-muted)">No additional staff members added yet.</small>'; return; }
             container.innerHTML = list.map((s, idx) => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color);">
-                    <span><b>${s.name}</b> ${s.phone ? '<small style="color:var(--primary); font-weight:600; margin-left:6px;">📱 ' + s.phone + '</small>' : ''} (PIN: ****)</span>
+                    <span><b>${s.name}</b> (PIN: ****)</span>
                     <button class="btn btn-danger" style="padding:2px 8px; font-size:0.75em;" onclick="removeStaffMember(${idx})">✕</button>
                 </div>
             `).join('');
@@ -3598,13 +3557,11 @@
         function addNewStaffMember() {
             let name = document.getElementById('newStaffName').value.trim();
             let pin = document.getElementById('newStaffPin').value.trim();
-            let phone = (document.getElementById('newStaffPhone')?.value || '').replace(/\D/g, '');
             if(!name || pin.length < 4) return alert("Enter valid name and at least 4-digit PIN.");
             if(!settings.staffList) settings.staffList = [];
-            settings.staffList.push({ name, pin, phone: phone || '' });
+            settings.staffList.push({ name, pin });
             document.getElementById('newStaffName').value = '';
             document.getElementById('newStaffPin').value = '';
-            if (document.getElementById('newStaffPhone')) document.getElementById('newStaffPhone').value = '';
             saveToStorage(); renderStaffList(); alert(`Staff ${name} added!`);
         }
         function removeStaffMember(idx) {
@@ -3680,8 +3637,8 @@
             }
 
             if (currPosCat && posCatFilter) posCatFilter.value = currPosCat;
-            if (currInvCat && invCatFilter && Array.from(invCatFilter.options || []).some(o => o.value === currInvCat)) invCatFilter.value = currInvCat;
-            if (currInvSup && invSupFilter && Array.from(invSupFilter.options || []).some(o => o.value === currInvSup)) invSupFilter.value = currInvSup;
+            if (currInvCat && invCatFilter && Array.from(invCatFilter.options).some(o => o.value === currInvCat)) invCatFilter.value = currInvCat;
+            if (currInvSup && invSupFilter && Array.from(invSupFilter.options).some(o => o.value === currInvSup)) invSupFilter.value = currInvSup;
 
             const supSelect = document.getElementById('pSupplier');
             supSelect.innerHTML = '<option value="None">None</option>' + suppliers.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
@@ -4113,200 +4070,23 @@
         // ----------------------------------------------------
         // 5. DAILY PROFIT & BALANCES MODULE (FIXED & FULLY FUNCTIONAL)
         // ----------------------------------------------------
-        // ----------------------------------------------------
-        // ENHANCED PROFIT & BALANCES (DATE-WISE, MONTHLY & YEARLY SALES)
-        // ----------------------------------------------------
-        let currentProfitFilterMode = 'daily';
-
-        function openProfitModal(initialMode) {
-            if (initialMode && ['daily', 'monthly', 'yearly', 'custom'].includes(initialMode)) {
-                currentProfitFilterMode = initialMode;
-            }
-
+        function openProfitModal() {
             let now = new Date();
-            let y = now.getFullYear();
-            let m = String(now.getMonth() + 1).padStart(2, '0');
-            let d = String(now.getDate()).padStart(2, '0');
+            document.getElementById('pm-date').innerText = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
 
-            let dateInput = document.getElementById('pm-input-date');
-            if (dateInput && !dateInput.value) dateInput.value = `${y}-${m}-${d}`;
-
-            let monthInput = document.getElementById('pm-input-month');
-            if (monthInput && !monthInput.value) monthInput.value = `${y}-${m}`;
-
-            // Populate Year dropdown dynamically from sales and expense history
-            let yearSelect = document.getElementById('pm-input-year');
-            if (yearSelect) {
-                let existingYears = new Set();
-                existingYears.add(y);
-                existingYears.add(y - 1);
-                sales.forEach(s => {
-                    let pd = parseDateSafe(s.timestamp || s.isoDate || s.date);
-                    if (pd) existingYears.add(pd.getFullYear());
-                });
-                expenses.forEach(e => {
-                    let pd = parseDateSafe(e.timestamp || e.isoDate || e.date);
-                    if (pd) existingYears.add(pd.getFullYear());
-                });
-                let sortedYears = Array.from(existingYears).sort((a,b) => b - a);
-                yearSelect.innerHTML = sortedYears.map(yr => `<option value="${yr}">${yr}</option>`).join('');
-                yearSelect.value = String(y);
-            }
-
-            let fromInput = document.getElementById('pm-input-from');
-            let toInput = document.getElementById('pm-input-to');
-            if (fromInput && !fromInput.value) fromInput.value = `${y}-${m}-01`;
-            if (toInput && !toInput.value) toInput.value = `${y}-${m}-${d}`;
-
-            // Load opening balance
-            let todayStr = new Date().toLocaleDateString();
-            let savedOpening = parseFloat(localStorage.getItem('opening_cash_' + todayStr)) || settings.openingDrawerCash || 0;
-            let opInput = document.getElementById('pm-opening');
-            if (opInput) opInput.value = savedOpening;
-
-            switchProfitFilterTab(currentProfitFilterMode);
-            document.getElementById('profitModal').style.display = 'flex';
-        }
-
-        function switchProfitFilterTab(tab) {
-            currentProfitFilterMode = tab;
-
-            ['daily', 'monthly', 'yearly', 'custom'].forEach(t => {
-                let pill = document.getElementById('pm-pill-' + t);
-                let ctrl = document.getElementById('pm-ctrl-' + t);
-                if (pill) {
-                    if (t === tab) {
-                        pill.className = 'btn btn-warning pm-filter-pill';
-                    } else {
-                        pill.className = 'btn btn-gray pm-filter-pill';
-                    }
-                }
-                if (ctrl) {
-                    ctrl.style.display = (t === tab) ? 'flex' : 'none';
-                }
-            });
-
-            applyProfitFilter();
-        }
-
-        function quickSetProfitDate(which) {
-            let d = new Date();
-            if (which === 'yesterday') d.setDate(d.getDate() - 1);
-            let y = d.getFullYear();
-            let m = String(d.getMonth() + 1).padStart(2, '0');
-            let day = String(d.getDate()).padStart(2, '0');
-            let el = document.getElementById('pm-input-date');
-            if (el) el.value = `${y}-${m}-${day}`;
-            applyProfitFilter();
-        }
-
-        function quickSetProfitMonth(which) {
-            let d = new Date();
-            if (which === 'last_month') d.setMonth(d.getMonth() - 1);
-            let y = d.getFullYear();
-            let m = String(d.getMonth() + 1).padStart(2, '0');
-            let el = document.getElementById('pm-input-month');
-            if (el) el.value = `${y}-${m}`;
-            applyProfitFilter();
-        }
-
-        function quickSetProfitYear(which) {
-            let y = new Date().getFullYear();
-            if (which === 'last_year') y = y - 1;
-            let select = document.getElementById('pm-input-year');
-            if (select) select.value = String(y);
-            applyProfitFilter();
-        }
-
-        function quickSetProfitRange(days) {
-            let end = new Date();
-            let start = new Date();
-            start.setDate(start.getDate() - (days - 1));
-            let y1 = start.getFullYear(), m1 = String(start.getMonth() + 1).padStart(2, '0'), d1 = String(start.getDate()).padStart(2, '0');
-            let y2 = end.getFullYear(), m2 = String(end.getMonth() + 1).padStart(2, '0'), d2 = String(end.getDate()).padStart(2, '0');
-            let fromEl = document.getElementById('pm-input-from');
-            let toEl = document.getElementById('pm-input-to');
-            if (fromEl) fromEl.value = `${y1}-${m1}-${d1}`;
-            if (toEl) toEl.value = `${y2}-${m2}-${d2}`;
-            applyProfitFilter();
-        }
-
-        function applyProfitFilter() {
-            let periodSales = [];
-            let periodExpenses = [];
-            let periodLabel = "";
-
-            if (currentProfitFilterMode === 'daily') {
-                let val = (document.getElementById('pm-input-date')?.value || '');
-                let targetDate = val ? new Date(val + 'T00:00:00') : new Date();
-                periodLabel = targetDate.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-
-                periodSales = sales.filter(s => !s.returned && isSameDay(s.timestamp || s.isoDate || s.date, targetDate));
-                periodExpenses = expenses.filter(e => isSameDay(e.timestamp || e.isoDate || e.date, targetDate));
-            } else if (currentProfitFilterMode === 'monthly') {
-                let val = (document.getElementById('pm-input-month')?.value || '');
-                let [yrStr, moStr] = (val || '').split('-');
-                let yearNum = parseInt(yrStr) || new Date().getFullYear();
-                let monthIndex = (parseInt(moStr) || (new Date().getMonth() + 1)) - 1;
-
-                let dummyDate = new Date(yearNum, monthIndex, 1);
-                periodLabel = dummyDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) + ' (Monthly Sales)';
-
-                periodSales = sales.filter(s => !s.returned && isSameMonthYear(s.timestamp || s.isoDate || s.date, monthIndex, yearNum));
-                periodExpenses = expenses.filter(e => isSameMonthYear(e.timestamp || e.isoDate || e.date, monthIndex, yearNum));
-            } else if (currentProfitFilterMode === 'yearly') {
-                let val = (document.getElementById('pm-input-year')?.value || '');
-                let yearNum = parseInt(val) || new Date().getFullYear();
-                periodLabel = `Year ${yearNum} (Full Year Sales)`;
-
-                periodSales = sales.filter(s => !s.returned && isSameYear(s.timestamp || s.isoDate || s.date, yearNum));
-                periodExpenses = expenses.filter(e => isSameYear(e.timestamp || e.isoDate || e.date, yearNum));
-            } else if (currentProfitFilterMode === 'custom') {
-                let fromVal = document.getElementById('pm-input-from')?.value || '';
-                let toVal = document.getElementById('pm-input-to')?.value || '';
-                periodLabel = `${fromVal || 'Start'} to ${toVal || 'End'} (Custom Range)`;
-
-                periodSales = sales.filter(s => {
-                    if (s.returned) return false;
-                    let sDate = getIsoDateString(s.timestamp || s.isoDate || s.date);
-                    if (fromVal && sDate < fromVal) return false;
-                    if (toVal && sDate > toVal) return false;
-                    return true;
-                });
-                periodExpenses = expenses.filter(e => {
-                    let eDate = getIsoDateString(e.timestamp || e.isoDate || e.date);
-                    if (fromVal && eDate < fromVal) return false;
-                    if (toVal && eDate > toVal) return false;
-                    return true;
-                });
-            }
-
-            // Set period label and order count badges
-            let dateEl = document.getElementById('pm-date');
-            if (dateEl) dateEl.innerText = periodLabel;
+            // Active sales for today (universal date matching across devices)
+            let todaySales = sales.filter(s => !s.returned && s.date && isSameDay(s.date, now));
             
-            let ordersBadge = document.getElementById('pm-orders-count-badge');
-            if (ordersBadge) {
-                ordersBadge.innerText = `${periodSales.length} Order${periodSales.length === 1 ? '' : 's'}`;
-            }
+            // Total gross sales
+            let totSales = todaySales.reduce((sum, s) => sum + (s.total || 0), 0);
 
-            // Gross Sales
-            let totSales = periodSales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+            // Total expenses for today
+            let totExp = expenses.filter(e => e.date && isSameDay(e.date, now)).reduce((sum, e) => sum + (e.amt || 0), 0);
 
-            // Average Order Value badge
-            let aovBadge = document.getElementById('pm-aov-badge');
-            if (aovBadge) {
-                let aov = periodSales.length > 0 ? (totSales / periodSales.length) : 0;
-                aovBadge.innerText = `Avg: ₹${aov.toFixed(2)}`;
-            }
-
-            // Total expenses in period
-            let totExp = periodExpenses.reduce((sum, e) => sum + (parseFloat(e.amt) || 0), 0);
-
-            // Stock valuation at cost (current live inventory valuation)
+            // Stock valuation at cost (buy price * current stock)
             let stockValuation = inventory.reduce((sum, i) => sum + ((parseFloat(i.purchasePrice) || 0) * (parseFloat(i.stock) || 0)), 0);
 
-            // Cost of Goods Sold (COGS), collections, discounts, shipping, dues
+            // Cost of Goods Sold (COGS) for items sold today
             let cogs = 0;
             let discounts = 0;
             let shipping = 0;
@@ -4315,119 +4095,73 @@
             let cardCollected = 0;
             let duesCreated = 0;
 
-            periodSales.forEach(s => {
-                shipping += (parseFloat(s.shipping) || 0);
-                discounts += (parseFloat(s.discount) || 0);
-                duesCreated += (parseFloat(s.due) || 0);
+            todaySales.forEach(s => {
+                shipping += (s.shipping || 0);
+                discounts += (s.discount || 0);
+                duesCreated += (s.due || 0);
 
-                let collected = s.advancePaid !== undefined ? parseFloat(s.advancePaid) : (parseFloat(s.total) - (parseFloat(s.due) || 0));
+                let collected = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
                 let payMode = s.payMode || 'Cash';
                 if (payMode === 'UPI') upiCollected += collected;
                 else if (payMode === 'Card') cardCollected += collected;
-                else if (payMode === 'Split') {
-                    cashCollected += (parseFloat(s.splitCash) || 0);
-                    upiCollected += (parseFloat(s.splitUpi) || 0);
-                } else {
-                    cashCollected += collected;
-                }
+                else cashCollected += collected;
 
                 (s.items || []).forEach(item => {
                     let invItem = inventory.find(x => String(x.id) === String(item.id));
-                    let buyPrice = (invItem && invItem.purchasePrice !== undefined) ? (parseFloat(invItem.purchasePrice) || 0) : (parseFloat(item.purchasePrice) || 0);
-                    cogs += (buyPrice * (parseFloat(item.qty) || 1));
+                    let buyPrice = (invItem && invItem.purchasePrice) ? invItem.purchasePrice : (item.purchasePrice || 0);
+                    cogs += (buyPrice * (item.qty || 1));
                 });
             });
 
-            // Returns in period
-            let returnedInPeriod = sales.filter(s => {
-                if (!s.returned) return false;
-                if (currentProfitFilterMode === 'daily') {
-                    let val = document.getElementById('pm-input-date')?.value || '';
-                    let targetDate = val ? new Date(val + 'T00:00:00') : new Date();
-                    return isSameDay(s.timestamp || s.isoDate || s.date, targetDate);
-                } else if (currentProfitFilterMode === 'monthly') {
-                    let val = document.getElementById('pm-input-month')?.value || '';
-                    let [yrStr, moStr] = (val || '').split('-');
-                    let yearNum = parseInt(yrStr) || new Date().getFullYear();
-                    let monthIndex = (parseInt(moStr) || (new Date().getMonth() + 1)) - 1;
-                    return isSameMonthYear(s.timestamp || s.isoDate || s.date, monthIndex, yearNum);
-                } else if (currentProfitFilterMode === 'yearly') {
-                    let val = document.getElementById('pm-input-year')?.value || '';
-                    let yearNum = parseInt(val) || new Date().getFullYear();
-                    return isSameYear(s.timestamp || s.isoDate || s.date, yearNum);
-                } else {
-                    let fromVal = document.getElementById('pm-input-from')?.value || '';
-                    let toVal = document.getElementById('pm-input-to')?.value || '';
-                    let sDate = getIsoDateString(s.timestamp || s.isoDate || s.date);
-                    return (!fromVal || sDate >= fromVal) && (!toVal || sDate <= toVal);
-                }
-            });
-            let totReturns = returnedInPeriod.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+            // Returns today
+            let returnedToday = sales.filter(s => s.returned && s.date && isSameDay(s.date, now));
+            let totReturns = returnedToday.reduce((sum, s) => sum + (s.total || 0), 0);
 
-            // Net operating profit (Sales - COGS - Expenses)
+            // Net operating day profit (Sales - COGS - Expenses)
             let netProfit = totSales - cogs - totExp;
-            let marginPct = totSales > 0 ? ((netProfit / totSales) * 100).toFixed(1) : '0';
 
             // Set metrics into modal
-            if (document.getElementById('pm-open-stock')) document.getElementById('pm-open-stock').innerText = '₹ ' + stockValuation.toFixed(2);
-            if (document.getElementById('pm-tot-sales')) document.getElementById('pm-tot-sales').innerText = '₹ ' + totSales.toFixed(2);
-            if (document.getElementById('pm-cogs')) document.getElementById('pm-cogs').innerText = '₹ ' + cogs.toFixed(2);
-            if (document.getElementById('pm-sell-disc')) document.getElementById('pm-sell-disc').innerText = '₹ ' + discounts.toFixed(2);
-            if (document.getElementById('pm-tot-exp')) document.getElementById('pm-tot-exp').innerText = '₹ ' + totExp.toFixed(2);
-            if (document.getElementById('pm-sell-shipping')) document.getElementById('pm-sell-shipping').innerText = '₹ ' + shipping.toFixed(2);
-            if (document.getElementById('pm-sell-ret')) document.getElementById('pm-sell-ret').innerText = '₹ ' + totReturns.toFixed(2);
-            if (document.getElementById('pm-today-dues')) document.getElementById('pm-today-dues').innerText = '₹ ' + duesCreated.toFixed(2);
+            document.getElementById('pm-open-stock').innerText = '₹ ' + stockValuation.toFixed(2);
+            document.getElementById('pm-tot-sales').innerText = '₹ ' + totSales.toFixed(2);
+            document.getElementById('pm-cogs').innerText = '₹ ' + cogs.toFixed(2);
+            document.getElementById('pm-sell-disc').innerText = '₹ ' + discounts.toFixed(2);
+            document.getElementById('pm-tot-exp').innerText = '₹ ' + totExp.toFixed(2);
+            document.getElementById('pm-sell-shipping').innerText = '₹ ' + shipping.toFixed(2);
+            document.getElementById('pm-sell-ret').innerText = '₹ ' + totReturns.toFixed(2);
+            document.getElementById('pm-today-dues').innerText = '₹ ' + duesCreated.toFixed(2);
 
-            if (document.getElementById('pm-cash-in')) document.getElementById('pm-cash-in').innerText = '₹ ' + cashCollected.toFixed(2);
-            if (document.getElementById('pm-upi-in')) document.getElementById('pm-upi-in').innerText = '₹ ' + upiCollected.toFixed(2);
-            if (document.getElementById('pm-card-in')) document.getElementById('pm-card-in').innerText = '₹ ' + cardCollected.toFixed(2);
+            document.getElementById('pm-cash-in').innerText = '₹ ' + cashCollected.toFixed(2);
+            document.getElementById('pm-upi-in').innerText = '₹ ' + upiCollected.toFixed(2);
+            document.getElementById('pm-card-in').innerText = '₹ ' + cardCollected.toFixed(2);
 
             let netProfitEl = document.getElementById('pm-net-profit');
-            if (netProfitEl) {
-                netProfitEl.innerHTML = `₹ ${netProfit.toFixed(2)} <small style="font-size:0.65em; font-weight:normal; opacity:0.85;">(${marginPct}% margin)</small>`;
-                netProfitEl.style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
-            }
+            netProfitEl.innerText = '₹ ' + netProfit.toFixed(2);
+            netProfitEl.style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
 
-            // Update labels according to period
-            let periodSalesLabel = (currentProfitFilterMode === 'daily') ? 'Gross Sales (Day):' : (currentProfitFilterMode === 'monthly' ? 'Gross Sales (Month):' : (currentProfitFilterMode === 'yearly' ? 'Gross Sales (Year):' : 'Gross Sales (Period):'));
-            let grossLabelEl = document.getElementById('pm-label-gross-sales');
-            if (grossLabelEl) grossLabelEl.innerText = periodSalesLabel;
+            // Load saved opening balance or default to settings
+            let savedOpening = parseFloat(localStorage.getItem('opening_cash_' + todayStr)) || settings.openingDrawerCash || 0;
+            document.getElementById('pm-opening').value = savedOpening;
 
-            let periodExpLabel = (currentProfitFilterMode === 'daily') ? 'Total Expenses (Day):' : (currentProfitFilterMode === 'monthly' ? 'Total Expenses (Month):' : (currentProfitFilterMode === 'yearly' ? 'Total Expenses (Year):' : 'Total Expenses (Period):'));
-            let expLabelEl = document.getElementById('pm-label-tot-exp');
-            if (expLabelEl) expLabelEl.innerText = periodExpLabel;
-
-            let duesLabelEl = document.getElementById('pm-label-dues');
-            if (duesLabelEl) duesLabelEl.innerText = (currentProfitFilterMode === 'daily') ? 'Pending Dues Created Today:' : 'Pending Dues in Period:';
-
-            let netLabelEl = document.getElementById('pm-label-net-profit');
-            if (netLabelEl) netLabelEl.innerText = (currentProfitFilterMode === 'daily') ? 'Net Day Profit (Operating Margin):' : 'Net Operating Profit (Margin):';
-
-            // Store values for calculateClosingBalance()
-            window.periodCashSales = cashCollected;
-            window.periodCashExp = totExp;
+            // Store values on window for calculateClosingBalance()
             window.todayCashSales = cashCollected;
             window.todayCashExp = totExp;
 
             calculateClosingBalance();
+
+            document.getElementById('profitModal').style.display = 'flex';
         }
 
         function calculateClosingBalance() {
-            let opening = parseFloat(document.getElementById('pm-opening')?.value) || 0;
+            let opening = parseFloat(document.getElementById('pm-opening').value) || 0;
             let todayStr = new Date().toLocaleDateString();
-            try {
-                localStorage.setItem('opening_cash_' + todayStr, opening);
-            } catch(e) {}
-            if (typeof settings !== 'undefined' && settings) {
-                settings.openingDrawerCash = opening;
-            }
+            localStorage.setItem('opening_cash_' + todayStr, opening);
+            settings.openingDrawerCash = opening;
 
-            let cashSales = window.periodCashSales !== undefined ? window.periodCashSales : (window.todayCashSales || 0);
-            let cashExp = window.periodCashExp !== undefined ? window.periodCashExp : (window.todayCashExp || 0);
+            let cashSales = window.todayCashSales || 0;
+            let cashExp = window.todayCashExp || 0;
 
             let expectedDrawerCash = opening + cashSales - cashExp;
-            let el = document.getElementById('pm-closing-drawer');
-            if (el) el.innerText = '₹ ' + expectedDrawerCash.toFixed(2);
+            document.getElementById('pm-closing-drawer').innerText = '₹ ' + expectedDrawerCash.toFixed(2);
         }
 
         // ----------------------------------------------------
@@ -4846,25 +4580,20 @@
 
         // CHARTS
         function updateCharts() {
-            if (typeof Chart === 'undefined') return;
-            try {
-                const sCtx = document.getElementById('salesChart'); const pCtx = document.getElementById('expensePieChart');
-                if(!sCtx || !pCtx) return;
-                let dates = [], sData = [], eData = [];
-                for(let i=6; i>=0; i--) {
-                    let d = new Date(); d.setDate(d.getDate() - i); dates.push(d.toLocaleDateString('en-US', {weekday:'short'})); 
-                    sData.push(sales.filter(s => s.date && isSameDay(s.date, d) && !s.returned).reduce((a,b)=>a+(b.total||0), 0));
-                    eData.push(expenses.filter(e => e.date && isSameDay(e.date, d)).reduce((a,b)=>a+(b.amt||0), 0));
-                }
-                if(salesChartInstance) salesChartInstance.destroy();
-                salesChartInstance = new Chart(sCtx, { type: 'line', data: { labels: dates, datasets: [{ label: 'Sales (₹)', data: sData, borderColor: '#007bff', backgroundColor:'rgba(0,123,255,0.1)', fill:true, tension:0.3 }, { label: 'Expenses (₹)', data: eData, borderColor: '#dc3545', backgroundColor:'rgba(220,53,69,0.1)', fill:true, tension:0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
-
-                let catTotals = {}; expenses.forEach(e => { catTotals[e.cat||'Other'] = (catTotals[e.cat||'Other'] || 0) + e.amt; });
-                if(pieChartInstance) pieChartInstance.destroy();
-                pieChartInstance = new Chart(pCtx, { type: 'doughnut', data: { labels: Object.keys(catTotals), datasets: [{ data: Object.values(catTotals), backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6c757d', '#17a2b8', '#6610f2'] }] }, options: { responsive: true, maintainAspectRatio: false } });
-            } catch (e) {
-                console.warn("Chart update skipped:", e);
+            const sCtx = document.getElementById('salesChart'); const pCtx = document.getElementById('expensePieChart');
+            if(!sCtx || !pCtx) return;
+            let dates = [], sData = [], eData = [];
+            for(let i=6; i>=0; i--) {
+                let d = new Date(); d.setDate(d.getDate() - i); dates.push(d.toLocaleDateString('en-US', {weekday:'short'})); 
+                sData.push(sales.filter(s => s.date && isSameDay(s.date, d) && !s.returned).reduce((a,b)=>a+(b.total||0), 0));
+                eData.push(expenses.filter(e => e.date && isSameDay(e.date, d)).reduce((a,b)=>a+(b.amt||0), 0));
             }
+            if(salesChartInstance) salesChartInstance.destroy();
+            salesChartInstance = new Chart(sCtx, { type: 'line', data: { labels: dates, datasets: [{ label: 'Sales (₹)', data: sData, borderColor: '#007bff', backgroundColor:'rgba(0,123,255,0.1)', fill:true, tension:0.3 }, { label: 'Expenses (₹)', data: eData, borderColor: '#dc3545', backgroundColor:'rgba(220,53,69,0.1)', fill:true, tension:0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
+
+            let catTotals = {}; expenses.forEach(e => { catTotals[e.cat||'Other'] = (catTotals[e.cat||'Other'] || 0) + e.amt; });
+            if(pieChartInstance) pieChartInstance.destroy();
+            pieChartInstance = new Chart(pCtx, { type: 'doughnut', data: { labels: Object.keys(catTotals), datasets: [{ data: Object.values(catTotals), backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6c757d', '#17a2b8', '#6610f2'] }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
 
         // BARCODE CAMERA
@@ -6064,23 +5793,6 @@
             logAudit('SETTINGS', 'Updated business profile & staff permissions');
             saveToStorage(); alert("Settings saved successfully!"); initApp();
         }
-        function updatePassword() {
-            const p = (document.getElementById('new-pass')?.value || '').trim();
-            if (!p) return alert("Enter valid password");
-            appPass = p;
-            saveToStorage();
-            alert("Admin password updated!");
-            if (document.getElementById('new-pass')) document.getElementById('new-pass').value = '';
-        }
-
-        function signOut() {
-            if (typeof auth !== 'undefined' && auth && auth.signOut) {
-                auth.signOut().then(() => location.reload()).catch(() => location.reload());
-            } else {
-                location.reload();
-            }
-        }
-
         function exportData() { const b = new Blob([JSON.stringify({ pass: appPass, settings, inventory, sales, expenses, customers, suppliers, quotations, categories, deletedItems, creditNotes, auditLogs, heldBills, coupons })], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'Backup.json'; a.click(); }
         function importData(e) { const r = new FileReader(); r.onload = async function(ev) { try { const d = JSON.parse(ev.target.result); appPass = d.pass || appPass; settings = d.settings || settings; inventory = d.inventory || []; sales = d.sales || []; expenses = d.expenses || []; customers = d.customers || []; suppliers = d.suppliers || []; quotations = d.quotations || []; categories = d.categories || []; deletedItems = d.deletedItems || []; await saveToStorage(); alert("Restored!"); location.reload(); } catch(err){ alert("Invalid file"); } }; r.readAsText(e.target.files[0]); }
         function toggleCalc() { let c = document.getElementById('calc-container'); c.style.display = c.style.display === 'none' ? 'block' : 'none'; }
@@ -7831,6 +7543,86 @@
             alert(`✅ Success!\nAuto-generated unique Barcode / SKU for ${updated} product(s) successfully!`);
         }
 
+
+        // ----------------------------------------------------
+        // MOBILE APP & REAL-TIME CLOUD SYNC PAIRING HELPERS
+        // ----------------------------------------------------
+        function saveCustomSyncKey() {
+            let key = document.getElementById('inputShopSyncKey').value.trim();
+            if (!key) return alert("Please enter a valid Shop Sync Key.");
+            if (confirm(`Change Cloud Sync Key to '${key}'?\n\nAll your devices (PC .exe & Mobile App) must use this same key to share live data.`)) {
+                shopSyncKey = key;
+                localStorage.setItem('shop_sync_key', shopSyncKey);
+                if (unsubscribeSync) { unsubscribeSync(); unsubscribeSync = null; }
+                docRef = db.collection("shops").doc(shopSyncKey);
+                startLiveSync();
+                renderPairingQRCode();
+                alert("Sync Key updated successfully! Scan the new QR code on your mobile phone to connect.");
+            }
+        }
+
+        function copyPairingLink() {
+            let host = window.location.origin;
+            if (host.startsWith('file:') || host.includes('127.0.0.1') || host.includes('localhost')) {
+                host = 'https://laminationhub.web.app';
+            }
+            let pairUrl = `${host}/?sync=${encodeURIComponent(shopSyncKey)}`;
+            navigator.clipboard.writeText(pairUrl);
+            alert("Mobile Pairing link copied to clipboard!\n\n" + pairUrl);
+        }
+
+        function renderPairingQRCode() {
+            let qrContainer = document.getElementById('mobile-pair-qrcode');
+            if (!qrContainer) return;
+            qrContainer.innerHTML = '';
+            let host = window.location.origin;
+            if (host.startsWith('file:') || host.includes('127.0.0.1') || host.includes('localhost')) {
+                host = 'https://laminationhub.web.app';
+            }
+            let pairUrl = `${host}/?sync=${encodeURIComponent(shopSyncKey)}`;
+            let textEl = document.getElementById('mobile-pair-url-text');
+            if (textEl) textEl.innerText = pairUrl;
+
+            new QRCode(qrContainer, {
+                text: pairUrl,
+                width: 140,
+                height: 140,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+
+        // PWA Install Prompt handling
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const banner = document.getElementById('mobile-install-banner');
+            if (banner) banner.style.display = 'flex';
+        });
+
+        function installPWAApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    deferredPrompt = null;
+                    dismissInstallBanner();
+                });
+            } else {
+                alert("To install on Mobile:\n\n1. Open this app in Chrome on your phone.\n2. Tap the 3 dots (⋮) menu in Chrome.\n3. Tap 'Install app' or 'Add to Home screen'.");
+            }
+        }
+
+        function dismissInstallBanner() {
+            const banner = document.getElementById('mobile-install-banner');
+            if (banner) banner.style.display = 'none';
+        }
+
+        // Service Worker registration
+        if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
 
     </script>
 </body>
