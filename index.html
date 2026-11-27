@@ -27,21 +27,21 @@
             --bg-body: #0f172a; --bg-card: #1e293b; --bg-sidebar: #0b1329; --text-main: #f1f5f9; --text-muted: #94a3b8; 
             --border-color: #334155; --table-header: #1e293b;
         }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; background-color: var(--bg-body); color: var(--text-main); height: 100vh; overflow: hidden; transition: background 0.3s, color 0.3s; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; background-color: var(--bg-body); color: var(--text-main); height: 100vh; height: 100dvh; overflow: hidden; transition: background 0.3s, color 0.3s; }
         
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-sidebar); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { background: var(--bg-card); padding: 40px; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 350px; color: var(--text-main); }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-sidebar); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 12px; box-sizing: border-box; }
+        .login-box { background: var(--bg-card); padding: 40px; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 350px; max-width: 92vw; box-sizing: border-box; color: var(--text-main); }
         .login-box h2 { margin-top: 0; color: var(--text-main); }
-        .login-box input { width: 100%; padding: 12px; margin: 20px 0; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1.1em; text-align: center; outline: none; background: var(--bg-body); color: var(--text-main); }
+        .login-box input { width: 100%; box-sizing: border-box; padding: 12px; margin: 20px 0; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1.1em; text-align: center; outline: none; background: var(--bg-body); color: var(--text-main); }
         .login-box input:focus { border-color: var(--primary); }
         
         .btn-google { background: white; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-bottom: 15px; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: 600; transition: 0.2s; }
         .btn-google:hover { background: #f8f9fa; }
         .btn-google img { width: 18px; }
 
-        #main-app { display: none; height: 100vh; width: 100%; flex-direction: row; }
-        .sidebar { width: 260px; background: var(--bg-sidebar); color: white; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); overflow-y: auto; }
-        .sidebar-header { padding: 25px 20px; background: rgba(0,0,0,0.1); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        #main-app { display: none; height: 100vh; height: 100dvh; width: 100%; flex-direction: row; overflow: hidden; position: relative; }
+        .sidebar { width: 260px; background: var(--bg-sidebar); color: white; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); overflow-y: auto; box-sizing: border-box; }
+        .sidebar-header { padding: 25px 20px; background: rgba(0,0,0,0.1); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; }
         
         #cloud-sync-status { padding: 8px; font-size: 11px; text-align: center; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(255,255,255,0.05); }
 
@@ -52,12 +52,12 @@
         .nav-links li { padding: 12px 20px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 12px; font-size: 0.9em; border-left: 4px solid transparent; color: #cbd5e1; }
         .nav-links li:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-links li.active { background: rgba(255,255,255,0.1); border-left-color: var(--primary); font-weight: 600; color: white; }
-        .main-content { flex: 1; padding: 25px; overflow-y: auto; padding-bottom: 80px; }
+        .main-content { flex: 1; padding: 25px; overflow-y: auto; overflow-x: hidden; min-width: 0; padding-bottom: 80px; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
         .view-section { display: none; animation: fadeIn 0.3s ease; } 
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .container { background: var(--bg-card); padding: 22px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 22px; border: 1px solid var(--border-color); }
+        .container { background: var(--bg-card); padding: 22px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 22px; border: 1px solid var(--border-color); box-sizing: border-box; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap; }
         .header h1 { margin: 0; font-size: 1.6em; font-weight: 700; color: var(--text-main); }
         
@@ -80,7 +80,7 @@
         body.dark-theme .btn-gray { background: #334155; color: #f1f5f9; }
         .btn:hover { opacity: 0.9; transform: translateY(-1px); }
         
-        .table-wrap { width: 100%; overflow-x: auto; }
+        .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table.app-table { width: 100%; border-collapse: collapse; }
         table.app-table th { background: var(--table-header); color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75em; padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color); }
         table.app-table td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9em; color: var(--text-main); }
@@ -91,15 +91,15 @@
         .product-card { background: var(--bg-card); padding: 12px; border: 1px solid var(--border-color); border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
         .product-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
-        .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
-        .modal-box { background: var(--bg-card); color: var(--text-main); padding: 30px; border-radius: 14px; width: 450px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px); padding: 12px; box-sizing: border-box; }
+        .modal-box { background: var(--bg-card); color: var(--text-main); padding: 30px; border-radius: 14px; width: 450px; max-width: 95vw; max-height: 88vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); box-sizing: border-box; }
         .modal-box-large { width: 750px; max-width: 95vw; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 0.85em; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; outline: none; background: var(--bg-body); color: var(--text-main); }
         
-        .checkout-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
-        .search-bar { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border-color); outline: none; min-width: 200px; font-size: 0.9em; background: var(--bg-body); color: var(--text-main); }
+        .checkout-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color); gap: 8px; }
+        .search-bar { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border-color); outline: none; min-width: 200px; font-size: 0.9em; background: var(--bg-body); color: var(--text-main); box-sizing: border-box; }
         
         /* Banner Styles */
         .alert-banner { padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -120,7 +120,7 @@
                 background: white !important; 
                 color: black !important; 
             }
-            #main-app, .sidebar, .main-content, #login-screen, .modal-bg, #calculator-widget { 
+            #main-app, .sidebar, .main-content, #login-screen, .modal-bg, #calculator-widget, .mobile-topbar, #mobile-sidebar-backdrop, .mobile-bottom-nav, .mobile-drawer-close { 
                 display: none !important; 
             }
             #receipt-print-area { 
@@ -236,6 +236,158 @@
             min-height: 85px; overflow: hidden;
         }
 
+        /* === MOBILE PREVIEW & RESPONSIVE LAYOUT === */
+        .mobile-topbar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: var(--bg-sidebar);
+            color: #ffffff;
+            padding: 10px 12px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            z-index: 9000;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .mobile-menu-btn {
+            background: rgba(255,255,255,0.14);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 11px;
+            font-size: 1.15em;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mobile-drawer-close {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.18);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            width: 30px;
+            height: 30px;
+            font-size: 1em;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+        #mobile-sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 9400;
+            backdrop-filter: blur(2px);
+        }
+        #mobile-sidebar-backdrop.active { display: block; }
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            z-index: 9100;
+            justify-content: space-around;
+            align-items: center;
+            padding: 5px 4px;
+            box-sizing: border-box;
+        }
+        .mobile-bottom-nav button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.72em;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            flex: 1;
+            min-width: 0;
+        }
+        .mobile-bottom-nav button span.mob-icon { font-size: 1.35em; line-height: 1.1; }
+        .mobile-bottom-nav button.active { color: var(--primary); background: rgba(0,123,255,0.08); }
+
+        @media (max-width: 900px) {
+            #main-app { flex-direction: column; }
+            .mobile-topbar { display: flex; }
+            .mobile-drawer-close { display: inline-flex; }
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: 270px;
+                max-width: 82vw;
+                z-index: 9500;
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+            }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .main-content { width: 100%; padding: 12px; padding-bottom: 85px; }
+            .billing-workspace { flex-direction: column; gap: 14px; }
+            .billing-workspace > .container { min-width: 0 !important; width: 100% !important; flex: none !important; padding: 14px !important; }
+            #dashboard-view > div[style*="display:flex"] > .container {
+                flex: 1 1 100% !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                height: 240px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-bottom-nav { display: flex; }
+            #calculator-widget { bottom: 68px !important; right: 12px !important; z-index: 9200 !important; }
+            #calculator-widget > button { width: 46px !important; height: 46px !important; font-size: 18px !important; }
+            .container { padding: 14px; margin-bottom: 14px; }
+            .header { gap: 10px; margin-bottom: 14px; }
+            .header h1 { font-size: 1.25em; }
+            .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+            .metric-card { padding: 12px; }
+            .metric-card .value { font-size: 1.25em; word-break: break-word; }
+            .modal-box, .modal-box-large { width: 96vw !important; max-width: 96vw !important; padding: 16px !important; max-height: 88dvh !important; }
+            table.app-table th, table.app-table td { padding: 8px 9px; font-size: 0.82em; }
+            #mobile-install-banner { margin: 6px 0 12px 0 !important; padding: 10px 12px !important; flex-wrap: wrap; gap: 8px; }
+        }
+
+        @media (max-width: 600px) {
+            .login-box { padding: 24px 18px; width: 92vw; }
+            .search-bar { min-width: 0 !important; flex: 1 1 100%; width: 100% !important; }
+            .hotkeys-badge { display: none !important; }
+            #posSearch { flex: 1 1 100% !important; min-width: 0 !important; }
+            #posCategoryFilter { flex: 1 1 100%; }
+            .products-grid { grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 8px; }
+            .product-card { padding: 9px; }
+            .modal-box div[style*="grid-template-columns: 1fr 1fr 1fr 1fr"],
+            .modal-box div[style*="grid-template-columns:repeat(4, 1fr)"],
+            .modal-box div[style*="grid-template-columns: repeat(4, 1fr)"] {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .modal-box div[style*="grid-template-columns: 1fr 1fr 1fr"],
+            .modal-box div[style*="grid-template-columns:repeat(3, 1fr)"],
+            .modal-box div[style*="grid-template-columns: 1fr 1fr"],
+            .modal-box div[style*="grid-template-columns:1fr 1fr"],
+            .container div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+            .btn { padding: 8px 12px; font-size: 0.84em; }
+        }
+
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -264,8 +416,23 @@
     </div>
 
     <div id="main-app">
+        <div id="mobile-sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+        <div class="mobile-topbar">
+            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                <button type="button" class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open Navigation">☰</button>
+                <div style="min-width:0;">
+                    <div id="mobile-topbar-title" style="font-weight:700; font-size:1.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Billing Hub</div>
+                    <div id="mobile-sync-pill" onclick="openCloudSyncDiagnosticsModal()" style="font-size:0.72em; color:#ffc107; cursor:pointer;">🟡 Connecting...</div>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                <button type="button" class="btn btn-blue" style="padding:6px 10px; font-size:0.8em;" onclick="switchTab('pos')">🧾 Bill</button>
+                <button type="button" class="btn btn-dark" style="padding:6px 9px; font-size:0.8em; background:rgba(255,255,255,0.14);" onclick="toggleDarkMode()" title="Theme">🌙</button>
+            </div>
+        </div>
         <div class="sidebar">
             <div class="sidebar-header">
+                <button type="button" class="mobile-drawer-close" onclick="closeMobileSidebar()" aria-label="Close Navigation">✕</button>
                 <div class="profile-pic-container">
                     <img id="sidebar-img" src="https://via.placeholder.com/80" alt="Profile">
                 </div>
@@ -387,7 +554,7 @@
             <div id="pos-view" class="view-section">
                 <div class="billing-workspace">
                     <div class="container" style="flex: 2; min-width: 300px;">
-                        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
                             <input type="text" id="posSearch" placeholder="🔍 Search or scan..." style="flex: 1; font-size: 1.1em; padding:10px; border:1px solid var(--border-color); border-radius:8px;" oninput="refreshDisplays()" onkeypress="if(event.key==='Enter') handleBarcodeScan(this.value)">
                             <select id="posCategoryFilter" style="padding:10px; border:1px solid var(--border-color); border-radius:8px;" onchange="refreshDisplays()">
                                 <option value="All">All Categories</option>
@@ -1039,9 +1206,9 @@
                 <div class="container">
                     <h3>👥 Staff & Multi-Cashier Management</h3>
                     <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 15px;">Create separate PINs for your employees. Their name will be stamped on bills they process.</p>
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <input type="text" id="newStaffName" placeholder="Staff Name (e.g. Rahul)" style="flex: 1;">
-                        <input type="password" id="newStaffPin" placeholder="4-digit PIN" style="width: 130px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <input type="text" id="newStaffName" placeholder="Staff Name (e.g. Rahul)" style="flex: 1; min-width: 150px;">
+                        <input type="password" id="newStaffPin" placeholder="4-digit PIN" style="width: 130px; flex: 0 1 130px;">
                         <button class="btn btn-blue" onclick="addNewStaffMember()">+ Add Staff</button>
                     </div>
                     <div id="staffListContainer" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto;"></div>
@@ -1343,13 +1510,24 @@
                         <button class="btn btn-danger" onclick="updatePassword()">Update Admin Pass</button>
                     </div>
                     <hr style="margin:25px 0; border:none; border-top:1px solid var(--border-color);">
-                    <button class="btn btn-green" onclick="exportData()">⬇️ Export Backup</button>
-                    <button class="btn btn-gray" onclick="document.getElementById('importFile').click()">⬆️ Restore Data</button>
-                    <button class="btn btn-blue" onclick="forceCloudRefresh()" style="float:right;">🔄 Manual Cloud Sync</button>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-green" onclick="exportData()">⬇️ Export Backup</button>
+                            <button class="btn btn-gray" onclick="document.getElementById('importFile').click()">⬆️ Restore Data</button>
+                        </div>
+                        <button class="btn btn-blue" onclick="forceCloudRefresh()">🔄 Manual Cloud Sync</button>
+                    </div>
                     <input type="file" id="importFile" style="display: none;" onchange="importData(event)">
                 </div>
             </div>
         </div>
+        <nav class="mobile-bottom-nav" id="mobileBottomNav">
+            <button type="button" id="mob-nav-dashboard" class="active" onclick="switchTab('dashboard')"><span class="mob-icon">📊</span><span>Home</span></button>
+            <button type="button" id="mob-nav-pos" onclick="switchTab('pos')"><span class="mob-icon">🧾</span><span>New Bill</span></button>
+            <button type="button" id="mob-nav-inventory" onclick="switchTab('inventory')"><span class="mob-icon">📦</span><span>Stock</span></button>
+            <button type="button" id="mob-nav-suppliers" onclick="switchTab('suppliers')"><span class="mob-icon">🚚</span><span>Suppliers</span></button>
+            <button type="button" id="mob-nav-more" onclick="toggleMobileSidebar()"><span class="mob-icon">☰</span><span>Menu</span></button>
+        </nav>
     </div>
 
     <!-- MODALS SECTION -->
@@ -3169,6 +3347,8 @@ const firebaseConfig = {
                 if (lastSyncEl) lastSyncEl.innerText = `Synced: ${timeStr}`;
                 if (pillEl) { pillEl.innerText = "🟢 Cloud Sync Active"; pillEl.style.background = "#10b981"; }
                 if (hintEl) { hintEl.innerText = "Connected 🟢"; hintEl.style.color = "#4ade80"; }
+                let mobPill = document.getElementById('mobile-sync-pill');
+                if (mobPill) { mobPill.innerText = `🟢 Live (${shopSyncKey})`; mobPill.style.color = "#4ade80"; }
             } else {
                 if (syncEl) { syncEl.innerText = text || "Offline Cached"; syncEl.style.color = "#ffc107"; }
                 if (badge) {
@@ -3179,6 +3359,8 @@ const firebaseConfig = {
                 if (lastSyncEl && lastCloudSyncTime) lastSyncEl.innerText = `Last: ${lastCloudSyncTime}`;
                 if (pillEl) { pillEl.innerText = "🟡 Offline Cached Mode"; pillEl.style.background = "#f59e0b"; }
                 if (hintEl) { hintEl.innerText = "Click to Connect ⚡"; hintEl.style.color = "#60a5fa"; }
+                let mobPill = document.getElementById('mobile-sync-pill');
+                if (mobPill) { mobPill.innerText = "🟡 Offline Cached"; mobPill.style.color = "#ffc107"; }
             }
 
             if (setGoogleStatus) {
@@ -3596,6 +3778,7 @@ const firebaseConfig = {
         }
 
         function lockScreen() {
+            closeMobileSidebar();
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('passInput').value = '';
@@ -3683,6 +3866,8 @@ const firebaseConfig = {
             document.getElementById('brand-name').innerText = settings.name;
             document.getElementById('brand-city').innerText = settings.city;
             document.getElementById('logged-staff-name').innerText = currentStaffName;
+            let mobTopTitle = document.getElementById('mobile-topbar-title');
+            if (mobTopTitle) mobTopTitle.innerText = settings.name || 'Billing Hub';
             document.getElementById('set-name').value = settings.name;
             document.getElementById('set-city').value = settings.city;
             document.getElementById('set-gst').value = settings.gst || '';
@@ -3733,6 +3918,9 @@ const firebaseConfig = {
             
             const adminTabs = ['nav-dashboard', 'nav-expenses', 'nav-settings', 'nav-suppliers', 'nav-quotations', 'nav-resellers', 'nav-reseller-orders', 'nav-reports'];
             adminTabs.forEach(id => { if(document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none'; });
+            ['mob-nav-dashboard', 'mob-nav-suppliers'].forEach(id => {
+                if (document.getElementById(id)) document.getElementById(id).style.display = userRole === 'admin' ? 'flex' : 'none';
+            });
             
             updateHeldBillsBadge();
             renderPosCouponChips();
@@ -3805,13 +3993,37 @@ const firebaseConfig = {
             }
         }
 
+        function openMobileSidebar() {
+            let sb = document.querySelector('.sidebar');
+            let bd = document.getElementById('mobile-sidebar-backdrop');
+            if (sb) sb.classList.add('mobile-open');
+            if (bd) bd.classList.add('active');
+        }
+        function closeMobileSidebar() {
+            let sb = document.querySelector('.sidebar');
+            let bd = document.getElementById('mobile-sidebar-backdrop');
+            if (sb) sb.classList.remove('mobile-open');
+            if (bd) bd.classList.remove('active');
+        }
+        function toggleMobileSidebar() {
+            let sb = document.querySelector('.sidebar');
+            if (sb && sb.classList.contains('mobile-open')) closeMobileSidebar();
+            else openMobileSidebar();
+        }
+
         function switchTab(t) {
+            closeMobileSidebar();
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
             let targetView = document.getElementById(t + '-view');
             if (targetView) targetView.classList.add('active');
             if (document.getElementById('nav-' + t)) document.getElementById('nav-' + t).classList.add('active');
             if (t === 'reports') document.getElementById('nav-settings').classList.add('active');
+            document.querySelectorAll('#mobileBottomNav button').forEach(b => b.classList.remove('active'));
+            let mobBtn = document.getElementById('mob-nav-' + t);
+            if (mobBtn) mobBtn.classList.add('active');
+            let mainEl = document.querySelector('.main-content');
+            if (mainEl) mainEl.scrollTop = 0;
             refreshDisplays();
             if (t === 'reports') generateReport();
         }
