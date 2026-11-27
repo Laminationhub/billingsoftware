@@ -3367,65 +3367,70 @@ const firebaseConfig = {
                 try {
                     unsubscribeSync = docRef.onSnapshot(doc => {
                         clearTimeout(connectionTimer);
-                        if (doc.exists) {
-                            const c = doc.data();
-                            const mergeArrays = (localArr, cloudArr) => {
-                                let combined = [...localArr];
-                                if(cloudArr && Array.isArray(cloudArr)) {
-                                    cloudArr.forEach(cItem => {
-                                        let match = combined.findIndex(l => String(l.id) === String(cItem.id));
-                                        if(match === -1) combined.push(cItem); else combined[match] = cItem;
-                                    });
+                        try {
+                            if (doc.exists) {
+                                const c = doc.data();
+                                const mergeArrays = (localArr, cloudArr) => {
+                                    let combined = [...localArr];
+                                    if(cloudArr && Array.isArray(cloudArr)) {
+                                        cloudArr.forEach(cItem => {
+                                            let match = combined.findIndex(l => String(l.id) === String(cItem.id));
+                                            if(match === -1) combined.push(cItem); else combined[match] = cItem;
+                                        });
+                                    }
+                                    return combined;
+                                };
+                                let cloudDeleted = (c.deletedItems || []).map(String);
+                                deletedItems = [...new Set([...deletedItems.map(String), ...cloudDeleted])];
+                                inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
+                                sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
+                                expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
+                                customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
+                                suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
+                                quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
+                                if(c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
+                                if(c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
+                                if(c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
+                                if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
+                                (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
+                                if(c.settings) settings = { ...settings, ...c.settings };
+                                if(c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
+
+                                // Keep local cache fresh across devices
+                                try {
+                                    localStorage.setItem('l_inv', JSON.stringify(inventory));
+                                    localStorage.setItem('l_sales', JSON.stringify(sales));
+                                    localStorage.setItem('l_exp', JSON.stringify(expenses));
+                                    localStorage.setItem('l_cust', JSON.stringify(customers));
+                                    localStorage.setItem('l_sup', JSON.stringify(suppliers));
+                                    localStorage.setItem('l_quote', JSON.stringify(quotations));
+                                    localStorage.setItem('l_cat', JSON.stringify(categories));
+                                    localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
+                                    if (c.creditNotes) localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
+                                    if (c.auditLogs) localStorage.setItem('l_audit', JSON.stringify(auditLogs));
+                                    if (c.heldBills) localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
+                                    if (c.coupons) localStorage.setItem('l_coupons', JSON.stringify(coupons));
+                                    if (c.settings) localStorage.setItem('l_settings', JSON.stringify(settings));
+                                } catch(e) {}
+
+                                try { refreshDisplays(); } catch(dispErr) { console.error("Display refresh error:", dispErr); }
+                                try { if(typeof updateCharts === 'function') updateCharts(); } catch(e){}
+                                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                                let curProfileId = document.getElementById('customerProfileModal')?.getAttribute('data-active-cust');
+                                if (curProfileId && document.getElementById('customerProfileModal')?.style.display === 'flex') {
+                                    try { openCustomerProfile(curProfileId); } catch(e){}
                                 }
-                                return combined;
-                            };
-                            let cloudDeleted = (c.deletedItems || []).map(String);
-                            deletedItems = [...new Set([...deletedItems.map(String), ...cloudDeleted])];
-                            inventory = mergeArrays(inventory, c.inventory || []).filter(x => !deletedItems.includes(String(x.id)));
-                            sales = mergeArrays(sales, c.sales || []).filter(x => !deletedItems.includes(String(x.id)));
-                            expenses = mergeArrays(expenses, c.expenses || []).filter(x => !deletedItems.includes(String(x.id)));
-                            customers = mergeArrays(customers, c.customers || []).filter(x => !deletedItems.includes(String(x.id)));
-                            suppliers = mergeArrays(suppliers, c.suppliers || []).filter(x => !deletedItems.includes(String(x.id)));
-                            quotations = mergeArrays(quotations, c.quotations || []).filter(x => !deletedItems.includes(String(x.id)));
-                            if(c.creditNotes) creditNotes = mergeArrays(creditNotes, c.creditNotes || []);
-                            if(c.auditLogs) auditLogs = mergeArrays(auditLogs, c.auditLogs || []);
-                            if(c.heldBills) heldBills = mergeArrays(heldBills, c.heldBills || []);
-                            if(c.coupons) coupons = mergeArrays(coupons, c.coupons || []);
-                            (c.categories || []).forEach(cat => { if(!categories.includes(cat)) categories.push(cat); });
-                            if(c.settings) settings = { ...settings, ...c.settings };
-                            if(c.appPass) { appPass = c.appPass; try { localStorage.setItem('l_pass', appPass); } catch(e){} }
-
-                            // Keep local cache fresh across devices
-                            try {
-                                localStorage.setItem('l_inv', JSON.stringify(inventory));
-                                localStorage.setItem('l_sales', JSON.stringify(sales));
-                                localStorage.setItem('l_exp', JSON.stringify(expenses));
-                                localStorage.setItem('l_cust', JSON.stringify(customers));
-                                localStorage.setItem('l_sup', JSON.stringify(suppliers));
-                                localStorage.setItem('l_quote', JSON.stringify(quotations));
-                                localStorage.setItem('l_cat', JSON.stringify(categories));
-                                localStorage.setItem('l_deleted', JSON.stringify(deletedItems));
-                                if (c.creditNotes) localStorage.setItem('l_creditnotes', JSON.stringify(creditNotes));
-                                if (c.auditLogs) localStorage.setItem('l_audit', JSON.stringify(auditLogs));
-                                if (c.heldBills) localStorage.setItem('l_held_bills', JSON.stringify(heldBills));
-                                if (c.coupons) localStorage.setItem('l_coupons', JSON.stringify(coupons));
-                                if (c.settings) localStorage.setItem('l_settings', JSON.stringify(settings));
-                            } catch(e) {}
-
-                            refreshDisplays();
-                            try { if(typeof updateCharts === 'function') updateCharts(); } catch(e){}
-                            updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                            let curProfileId = document.getElementById('customerProfileModal')?.getAttribute('data-active-cust');
-                            if (curProfileId && document.getElementById('customerProfileModal')?.style.display === 'flex') {
-                                try { openCustomerProfile(curProfileId); } catch(e){}
+                            } else {
+                                // Doc does not exist yet in new project, initialize it from current local data
+                                console.log("Initializing shop cloud document:", shopSyncKey);
+                                saveToStorage();
+                                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
                             }
-                        } else {
-                            // Doc does not exist yet in new project, initialize it from current local data
-                            console.log("Initializing shop cloud document:", shopSyncKey);
-                            saveToStorage();
-                            updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+                        } catch (snapErr) {
+                            console.error("Snapshot processing error:", snapErr);
+                        } finally {
+                            if (isFirstFetch) { isFirstFetch = false; resolve(); }
                         }
-                        if (isFirstFetch) { isFirstFetch = false; resolve(); }
                     }, (err) => {
                         clearTimeout(connectionTimer);
                         console.warn("Firestore snapshot error:", err);
@@ -3452,6 +3457,7 @@ const firebaseConfig = {
         loadLocalData();
 
         // Listen for Firebase Auth changes as single source of truth
+        let isGoogleLoginInProgress = false;
         auth.onAuthStateChanged(async user => {
             docRef = db.collection("shops").doc(shopSyncKey);
             let googleBtn = document.getElementById('googleLoginBtn');
@@ -3459,29 +3465,35 @@ const firebaseConfig = {
 
             if (user && !user.isAnonymous) {
                 currentUid = user.uid;
-                await startLiveSync(true);
+                if (!isGoogleLoginInProgress) {
+                    await Promise.race([startLiveSync(true), new Promise(r => setTimeout(r, 4000))]);
+                }
                 let emailStr = user.email || (user.providerData && user.providerData[0] && user.providerData[0].email) || 'Google User';
                 if (loginStatus) loginStatus.innerText = `Secured (${emailStr}). Enter PIN.`;
                 if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${emailStr}`;
                 updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
             } else if (user && user.isAnonymous) {
                 currentUid = user.uid;
-                await startLiveSync(true);
-                if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
-                if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
+                if (!isGoogleLoginInProgress) {
+                    await Promise.race([startLiveSync(true), new Promise(r => setTimeout(r, 4000))]);
+                }
+                if (loginStatus && !isGoogleLoginInProgress) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
+                if (googleBtn && !isGoogleLoginInProgress) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
                 updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
             } else {
                 currentUid = "local";
                 // Auto-connect real-time cloud sync on all devices immediately
-                startLiveSync(true);
-                // Attempt anonymous auth fallback in background if needed by Firestore security rules
-                if (auth.signInAnonymously) {
-                    auth.signInAnonymously().catch(err => {
-                        console.log("Anonymous auth fallback notice:", err.message);
-                    });
+                if (!isGoogleLoginInProgress) {
+                    startLiveSync(true);
+                    // Attempt anonymous auth fallback in background if needed by Firestore security rules
+                    if (auth.signInAnonymously) {
+                        auth.signInAnonymously().catch(err => {
+                            console.log("Anonymous auth fallback notice:", err.message);
+                        });
+                    }
+                    if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
+                    if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
                 }
-                if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
-                if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
             }
         });
 
@@ -3496,25 +3508,23 @@ const firebaseConfig = {
                 return alert("Google Login cannot run locally from a file:// URL.\n\nPlease enter PIN (default: 1234) below to Unlock System, or open your online site at:\nhttps://laminationhub.github.io/billingsoftware/");
             }
 
+            isGoogleLoginInProgress = true;
+            let googleAuthSucceeded = false;
             try {
                 if (googleBtn) googleBtn.innerText = "Opening Google Sign-in...";
                 if (loginStatus) loginStatus.innerHTML = `<span style="color:#3b82f6;">Opening Google Sign-in window...</span>`;
 
-                // If previous session is stale or anonymous without email, sign out first for clean login
-                if (auth.currentUser && !auth.currentUser.email) {
-                    await auth.signOut().catch(() => {});
-                }
-
-                // Race against safety timeout so button never hangs indefinitely
+                // Invoke signInWithPopup immediately inside click gesture so browsers don't block popup
                 const timeoutPromise = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error("Sign-in timed out. If a pop-up window did not appear, check if your browser blocked pop-ups in the address bar.")), 25000)
                 );
 
                 const res = await Promise.race([auth.signInWithPopup(provider), timeoutPromise]);
+                googleAuthSucceeded = true;
                 currentUid = res.user.uid; 
                 docRef = db.collection("shops").doc(shopSyncKey);
                 loadLocalData();
-                await startLiveSync(true);
+                await Promise.race([startLiveSync(true), new Promise(r => setTimeout(r, 4000))]);
                 let userEmail = res.user.email || (res.user.providerData && res.user.providerData[0] && res.user.providerData[0].email) || 'Google Account';
                 
                 if (loginStatus) loginStatus.innerText = `Secured (${userEmail}). Logged in as Admin.`;
@@ -3526,7 +3536,7 @@ const firebaseConfig = {
                 currentStaffName = 'Admin';
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'flex';
-                initApp();
+                try { initApp(); } catch (initErr) { console.error("initApp error after Google login:", initErr); }
                 closeModals();
             } catch (e) {
                 console.error("Google login error:", e);
@@ -3544,8 +3554,9 @@ const firebaseConfig = {
                 }
                 updateCloudStatusUI(false, "Offline Cached");
             } finally {
+                isGoogleLoginInProgress = false;
                 let googleBtn = document.getElementById('googleLoginBtn');
-                if (googleBtn && googleBtn.innerText === "Opening Google Sign-in...") {
+                if (!googleAuthSucceeded && googleBtn && (googleBtn.innerText || '').includes("Opening Google Sign-in")) {
                     googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
                 }
             }
@@ -3837,7 +3848,7 @@ const firebaseConfig = {
             let now = new Date();
             let activeSales = sales.filter(s => !s.returned);
             let daySales = activeSales.filter(s => isSameDay(s.timestamp || s.isoDate || s.date, now)).reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
-            let dayExp = expenses.filter(e => isSameDay(e.timestamp || e.isoDate || e.date, now)).reduce((a, b) => a + (parseFloat(e.amt) || 0), 0);
+            let dayExp = expenses.filter(e => isSameDay(e.timestamp || e.isoDate || e.date, now)).reduce((a, b) => a + (parseFloat(b.amt) || 0), 0);
             window.currentDaySales = daySales; window.currentDayExp = dayExp;
 
             document.getElementById('dash-sales').innerText = "₹" + activeSales.reduce((a, b) => a + (parseFloat(b.total) || 0), 0).toFixed(2);
@@ -3954,9 +3965,9 @@ const firebaseConfig = {
             );
 
             // Compute overall metrics
-            let totalSupBought = suppliers.reduce((sum, s) => sum + (s.totalBought || 0), 0);
-            let totalSupPaid = suppliers.reduce((sum, s) => sum + (s.totalPaid || 0), 0);
-            let totalSupDue = suppliers.reduce((sum, s) => sum + (s.due || 0), 0);
+            let totalSupBought = suppliers.reduce((sum, s) => sum + (parseFloat(s.totalBought) || 0), 0);
+            let totalSupPaid = suppliers.reduce((sum, s) => sum + (parseFloat(s.totalPaid) || 0), 0);
+            let totalSupDue = suppliers.reduce((sum, s) => sum + (parseFloat(s.due) || 0), 0);
 
             if (document.getElementById('sup-metric-bought')) document.getElementById('sup-metric-bought').innerText = '₹' + totalSupBought.toFixed(2);
             if (document.getElementById('sup-metric-paid')) document.getElementById('sup-metric-paid').innerText = '₹' + totalSupPaid.toFixed(2);
@@ -3964,7 +3975,10 @@ const firebaseConfig = {
 
             if (document.getElementById('supplierTableBody')) {
                 document.getElementById('supplierTableBody').innerHTML = filteredSuppliers.map(s => {
-                    let dueVal = s.due !== undefined ? s.due : ((s.totalBought || 0) - (s.totalPaid || 0) + (s.openingBalance || 0));
+                    let sBought = parseFloat(s.totalBought) || 0;
+                    let sPaid = parseFloat(s.totalPaid) || 0;
+                    let sOpen = parseFloat(s.openingBalance) || 0;
+                    let dueVal = s.due !== undefined ? (parseFloat(s.due) || 0) : (sBought - sPaid + sOpen);
                     let balanceBadge = '';
                     if (dueVal > 0) {
                         balanceBadge = `<span style="color:red; font-weight:bold;">Due: ₹${dueVal.toFixed(2)}</span><br><small style="color:var(--text-muted);">To Pay</small>`;
@@ -3987,8 +4001,8 @@ const firebaseConfig = {
                     return `<tr>
                         <td><b>${s.name}</b><br><small style="color:var(--text-muted);">${s.company||'--'}</small></td>
                         <td>📱 ${s.phone}<br><small>WA: ${s.wa||'--'}</small></td>
-                        <td><b style="color:var(--primary);">₹${(s.totalBought||0).toFixed(2)}</b></td>
-                        <td><b style="color:var(--success);">₹${(s.totalPaid||0).toFixed(2)}</b></td>
+                        <td><b style="color:var(--primary);">₹${sBought.toFixed(2)}</b></td>
+                        <td><b style="color:var(--success);">₹${sPaid.toFixed(2)}</b></td>
                         <td>${balanceBadge}</td>
                         <td>${btns}</td>
                     </tr>`;
@@ -4836,13 +4850,14 @@ const firebaseConfig = {
             let s = suppliers.find(x => String(x.id) === String(supId));
             if (!s) return alert("Supplier not found.");
 
-            s.totalBought = (s.totalBought || 0) + billAmount;
-            s.totalPaid = (s.totalPaid || 0) + paidNow;
-            s.due = (s.totalBought - s.totalPaid) + (s.openingBalance || 0);
+            s.totalBought = (parseFloat(s.totalBought) || 0) + billAmount;
+            s.totalPaid = (parseFloat(s.totalPaid) || 0) + paidNow;
+            s.due = (s.totalBought - s.totalPaid) + (parseFloat(s.openingBalance) || 0);
 
-            if (!s.history) s.history = [];
+            if (!s.history || !Array.isArray(s.history)) s.history = [];
             s.history.push({
                 id: Date.now().toString(),
+                timestamp: Date.now(),
                 date: new Date().toLocaleDateString(),
                 type: 'Purchase',
                 ref: billNo ? `Bill #${billNo}` : 'Direct Purchase',
@@ -4855,6 +4870,7 @@ const firebaseConfig = {
             if (paidNow > 0) {
                 expenses.push({
                     id: Date.now(),
+                    timestamp: Date.now(),
                     cat: 'Raw Materials',
                     date: new Date().toLocaleDateString(),
                     desc: `Paid to ${s.name} for Bill ${billNo ? '#' + billNo : ''} (${payMode})`,
@@ -4912,6 +4928,7 @@ const firebaseConfig = {
                 if (!s.history || !Array.isArray(s.history)) s.history = [];
                 s.history.push({
                     id: Date.now().toString(),
+                    timestamp: Date.now(),
                     date: new Date().toLocaleDateString(),
                     type: 'Payment',
                     ref: payMode + (note ? ' - ' + note : ''),
@@ -4922,6 +4939,7 @@ const firebaseConfig = {
 
                 expenses.push({ 
                     id: Date.now(), 
+                    timestamp: Date.now(),
                     cat: 'Raw Materials', 
                     date: new Date().toLocaleDateString(), 
                     desc: `Supplier Payment: ${s.name} (${payMode})`, 
@@ -5133,13 +5151,13 @@ const firebaseConfig = {
             let dates = [], sData = [], eData = [];
             for(let i=6; i>=0; i--) {
                 let d = new Date(); d.setDate(d.getDate() - i); dates.push(d.toLocaleDateString('en-US', {weekday:'short'})); 
-                sData.push(sales.filter(s => s.date && isSameDay(s.date, d) && !s.returned).reduce((a,b)=>a+(b.total||0), 0));
-                eData.push(expenses.filter(e => e.date && isSameDay(e.date, d)).reduce((a,b)=>a+(b.amt||0), 0));
+                sData.push(sales.filter(s => (s.timestamp || s.isoDate || s.date) && isSameDay(s.timestamp || s.isoDate || s.date, d) && !s.returned).reduce((a,b)=>a+(parseFloat(b.total)||0), 0));
+                eData.push(expenses.filter(e => (e.timestamp || e.isoDate || e.date) && isSameDay(e.timestamp || e.isoDate || e.date, d)).reduce((a,b)=>a+(parseFloat(b.amt)||0), 0));
             }
             if(salesChartInstance) salesChartInstance.destroy();
             salesChartInstance = new Chart(sCtx, { type: 'line', data: { labels: dates, datasets: [{ label: 'Sales (₹)', data: sData, borderColor: '#007bff', backgroundColor:'rgba(0,123,255,0.1)', fill:true, tension:0.3 }, { label: 'Expenses (₹)', data: eData, borderColor: '#dc3545', backgroundColor:'rgba(220,53,69,0.1)', fill:true, tension:0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
 
-            let catTotals = {}; expenses.forEach(e => { catTotals[e.cat||'Other'] = (catTotals[e.cat||'Other'] || 0) + e.amt; });
+            let catTotals = {}; expenses.forEach(e => { catTotals[e.cat||'Other'] = (catTotals[e.cat||'Other'] || 0) + (parseFloat(e.amt) || 0); });
             if(pieChartInstance) pieChartInstance.destroy();
             pieChartInstance = new Chart(pCtx, { type: 'doughnut', data: { labels: Object.keys(catTotals), datasets: [{ data: Object.values(catTotals), backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6c757d', '#17a2b8', '#6610f2'] }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
