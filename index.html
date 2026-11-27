@@ -2630,7 +2630,13 @@ const firebaseConfig = {
         };
         const firebaseConfig = customFirebaseConfig || defaultFirebaseConfig;
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(); const auth = firebase.auth(); const provider = new firebase.auth.GoogleAuthProvider();
+        const db = firebase.firestore(); 
+        const auth = firebase.auth(); 
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        provider.addScope('https://www.googleapis.com/auth/userinfo.email');
+        provider.setCustomParameters({ prompt: 'select_account' });
 
         // ====================================================================
         // UNIVERSAL DATE PARSING & COMPARISON ENGINE (Cross-Device & Cross-Locale)
@@ -3448,13 +3454,21 @@ const firebaseConfig = {
         // Listen for Firebase Auth changes as single source of truth
         auth.onAuthStateChanged(async user => {
             docRef = db.collection("shops").doc(shopSyncKey);
-            if (user) {
+            let googleBtn = document.getElementById('googleLoginBtn');
+            let loginStatus = document.getElementById('login-status');
+
+            if (user && !user.isAnonymous) {
                 currentUid = user.uid;
                 await startLiveSync(true);
-                let loginStatus = document.getElementById('login-status');
-                if (loginStatus) loginStatus.innerText = `Secured (${user.email || 'Google Linked'}). Enter PIN.`;
-                let googleBtn = document.getElementById('googleLoginBtn');
-                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${user.email || 'Google Linked'}`;
+                let emailStr = user.email || (user.providerData && user.providerData[0] && user.providerData[0].email) || 'Google User';
+                if (loginStatus) loginStatus.innerText = `Secured (${emailStr}). Enter PIN.`;
+                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${emailStr}`;
+                updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
+            } else if (user && user.isAnonymous) {
+                currentUid = user.uid;
+                await startLiveSync(true);
+                if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
+                if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
                 updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
             } else {
                 currentUid = "local";
@@ -3466,9 +3480,7 @@ const firebaseConfig = {
                         console.log("Anonymous auth fallback notice:", err.message);
                     });
                 }
-                let loginStatus = document.getElementById('login-status');
                 if (loginStatus) loginStatus.innerText = `Connected (${shopSyncKey}). Enter PIN.`;
-                let googleBtn = document.getElementById('googleLoginBtn');
                 if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
             }
         });
@@ -3483,11 +3495,12 @@ const firebaseConfig = {
                 docRef = db.collection("shops").doc(shopSyncKey);
                 loadLocalData();
                 await startLiveSync(true);
+                let userEmail = res.user.email || (res.user.providerData && res.user.providerData[0] && res.user.providerData[0].email) || 'Google Account';
                 let loginStatus = document.getElementById('login-status');
-                if (loginStatus) loginStatus.innerText = `Secured (${res.user.email || 'Google Linked'}). Enter PIN.`;
-                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${res.user.email || 'Google Linked'}`;
+                if (loginStatus) loginStatus.innerText = `Secured (${userEmail}). Enter PIN.`;
+                if (googleBtn) googleBtn.innerHTML = `✅ Signed in: ${userEmail}`;
                 updateCloudStatusUI(true, `Live Connected (${shopSyncKey})`);
-                alert(`Google Sign-In Connected! 🟢\nAccount: ${res.user.email || 'Google User'}\nLive Cloud Sync is now active!`);
+                alert(`Google Sign-In Connected! 🟢\nAccount: ${userEmail}\nLive Cloud Sync is now active!`);
                 closeModals();
             } catch (e) {
                 if (googleBtn) googleBtn.innerHTML = `<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> Sign in with Google`;
