@@ -1538,72 +1538,170 @@
         </div>
     </div>
 
-    <!-- ENHANCED DAILY PROFIT & BALANCES MODAL -->
+    <!-- ENHANCED DAILY PROFIT, BALANCES & DATE-WISE ANALYTICS MODAL -->
     <div id="profitModal" class="modal-bg">
-        <div class="modal-box modal-box-large" style="background: var(--bg-body); padding: 25px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                <h2 style="margin: 0;">📊 Daily Profit & Balances</h2>
-                <span style="color:#999; cursor:pointer; font-size:1.5em; line-height:1;" onclick="closeModals()">✕</span>
-            </div>
-            <p style="color:var(--text-muted); font-size:0.9em; margin-bottom: 15px;">Date: <strong id="pm-date"></strong></p>
-
-            <div class="form-group" style="background: var(--bg-card); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
-                <label style="font-size:0.9em; font-weight:bold;">Opening Cash in Drawer (₹)</label>
-                <div style="display:flex; gap:10px; align-items:center; margin-top:5px;">
-                    <input type="number" id="pm-opening" placeholder="0" value="0" oninput="calculateClosingBalance()" style="font-size: 1.2em; font-weight:bold; width: 100%; max-width: 200px;">
-                    <small style="color:var(--text-muted);">Enter morning cash in till to calculate expected drawer closing cash.</small>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+        <div class="modal-box modal-box-large" style="background: var(--bg-body); padding: 22px; max-width: 920px; width: 95vw; max-height: 88vh; overflow-y: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Stock Valuation (At Cost):</span><span id="pm-open-stock" style="font-weight:bold;">₹ 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Gross Sales Today:</span><span id="pm-tot-sales" style="font-weight:bold; color:var(--primary);">₹ 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Cost of Goods Sold (COGS):</span><span id="pm-cogs" style="font-weight:bold;">₹ 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em;"><span style="color:var(--text-muted);">Discounts Given:</span><span id="pm-sell-disc">₹ 0.00</span></div>
+                    <h2 style="margin: 0; font-size: 1.4em; display:flex; align-items:center; gap:8px;">📊 Daily Profit, Balances & Date-Wise Analytics</h2>
+                    <small style="color:var(--text-muted);">Track daily net profit, drawer cash, and period-over-period date-wise financial analytics</small>
                 </div>
-                <div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Total Expenses Today:</span><span id="pm-tot-exp" style="color:var(--danger); font-weight:bold;">₹ 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Shipping Charges:</span><span id="pm-sell-shipping">₹ 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 10px;"><span style="color:var(--text-muted);">Total Returns / Refunds:</span><span id="pm-sell-ret" style="color:var(--danger);">₹ 0.00</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size: 0.9em;"><span style="color:var(--text-muted);">Pending Dues Created Today:</span><span id="pm-today-dues" style="color:red; font-weight:bold;">₹ 0.00</span></div>
+                <span style="color:#999; cursor:pointer; font-size:1.6em; line-height:1;" onclick="closeModals()">✕</span>
+            </div>
+
+            <!-- MODAL SUBNAV TABS -->
+            <div class="subnav-tabs" style="margin-bottom: 15px;">
+                <button type="button" class="subnav-tab active" id="btn-pm-tab-day" onclick="switchProfitTab('day')">📅 Single Day P/L & Cash Drawer</button>
+                <button type="button" class="subnav-tab" id="btn-pm-tab-analytics" onclick="switchProfitTab('analytics')">📈 Date-Wise Analytics & History Table</button>
+            </div>
+
+            <!-- VIEW 1: SINGLE DAY P/L & DRAWER VIEW -->
+            <div id="pm-view-day">
+                <!-- DATE SELECTION TOOLBAR -->
+                <div style="background: var(--bg-card); padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <label style="font-weight:bold; font-size:0.85em; color:var(--text-muted);">SELECT DATE:</label>
+                        <input type="date" id="pm-date-picker" onchange="renderProfitForSelectedDate(this.value)" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main); font-weight:bold;">
+                        <button type="button" class="btn btn-blue" onclick="setProfitDateQuick('today')" style="padding:5px 10px; font-size:0.8em;">Today</button>
+                        <button type="button" class="btn btn-gray" onclick="setProfitDateQuick('yesterday')" style="padding:5px 10px; font-size:0.8em;">Yesterday</button>
+                    </div>
+                    <div id="pm-date-display" style="font-size:0.95em; font-weight:bold; color:var(--primary);"></div>
+                </div>
+
+                <div class="form-group" style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+                    <label style="font-size:0.85em; font-weight:bold;">Opening Cash in Drawer for this Date (₹)</label>
+                    <div style="display:flex; gap:10px; align-items:center; margin-top:4px;">
+                        <input type="number" id="pm-opening" placeholder="0" value="0" oninput="calculateClosingBalance()" style="font-size: 1.1em; font-weight:bold; width: 100%; max-width: 180px;">
+                        <small style="color:var(--text-muted);">Enter morning cash in till to calculate expected drawer closing cash for this day.</small>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: var(--bg-card); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 8px;"><span style="color:var(--text-muted);">Stock Valuation (Current at Cost):</span><span id="pm-open-stock" style="font-weight:bold;">₹ 0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 8px;"><span style="color:var(--text-muted);">Gross Sales on Date:</span><span id="pm-tot-sales" style="font-weight:bold; color:var(--primary);">₹ 0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 8px;"><span style="color:var(--text-muted);">Cost of Goods Sold (COGS):</span><span id="pm-cogs" style="font-weight:bold;">₹ 0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 8px;"><span style="color:var(--text-muted);">Gross Product Margin:</span><span id="pm-gross-margin" style="font-weight:bold; color:var(--success);">₹ 0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em;"><span style="color:var(--text-muted);">Discounts Given:</span><span id="pm-sell-disc">₹ 0.00</span></div>
+                    </div>
+                    <div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 8px;"><span style="color:var(--text-muted);">Total Expenses on Date:</span><span id="pm-tot-exp" style="color:var(--danger); font-weight:bold;">₹ 0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 8px;"><span style="color:var(--text-muted);">Shipping Charges:</span><span id="pm-sell-shipping">₹ 0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em; margin-bottom: 8px;"><span style="color:var(--text-muted);">Returns / Refunds:</span><span id="pm-sell-ret" style="color:var(--danger);">₹ 0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; font-size: 0.9em;"><span style="color:var(--text-muted);">Pending Dues Created:</span><span id="pm-today-dues" style="color:red; font-weight:bold;">₹ 0.00</span></div>
+                    </div>
+                </div>
+
+                <!-- PAYMENT COLLECTIONS BREAKDOWN -->
+                <div style="background: var(--bg-card); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+                    <h4 style="margin:0 0 10px 0; font-size:0.85em; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Inflow Payment Collections (On Date)</h4>
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; text-align:center;">
+                        <div style="padding:10px; background:var(--bg-body); border-radius:6px; border:1px solid var(--border-color);">
+                            <small style="color:var(--text-muted);">💵 Cash Collected</small>
+                            <div id="pm-cash-in" style="font-size:1.2em; font-weight:bold; color:var(--text-main); margin-top:4px;">₹ 0.00</div>
+                        </div>
+                        <div style="padding:10px; background:var(--bg-body); border-radius:6px; border:1px solid var(--border-color);">
+                            <small style="color:var(--text-muted);">📱 UPI / QR Received</small>
+                            <div id="pm-upi-in" style="font-size:1.2em; font-weight:bold; color:#10b981; margin-top:4px;">₹ 0.00</div>
+                        </div>
+                        <div style="padding:10px; background:var(--bg-body); border-radius:6px; border:1px solid var(--border-color);">
+                            <small style="color:var(--text-muted);">💳 Card Collected</small>
+                            <div id="pm-card-in" style="font-size:1.2em; font-weight:bold; color:#6366f1; margin-top:4px;">₹ 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-card); padding: 18px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+                    <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 10px;">
+                        <div>
+                            <span style="font-size: 1.15em; font-weight: bold;">Net Day Profit (Operating Margin):</span><br>
+                            <small style="color:var(--text-muted);">Sales - Product Cost - Expenses</small>
+                        </div>
+                        <span id="pm-net-profit" style="font-size: 1.4em; font-weight: 800; color: var(--success);">₹ 0.00</span>
+                    </div>
+                    <hr style="margin: 12px 0; border: none; border-top: 1px dashed var(--border-color);">
+                    <div style="display:flex; justify-content:space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 1.1em; color: var(--text-muted); font-weight: bold;">Expected Drawer Cash (EOD):</span><br>
+                            <small style="color:var(--text-muted);">Opening Cash + Cash Inflows - Cash Expenses</small>
+                        </div>
+                        <strong id="pm-closing-drawer" style="font-size: 1.5em; color: var(--primary);">₹ 0.00</strong>
+                    </div>
+                </div>
+
+                <!-- ORDERS & EXPENSES BREAKDOWN FOR THE CHOSEN DATE -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <h4 style="margin:0 0 8px 0; font-size:0.9em; display:flex; justify-content:space-between;">
+                            <span>🧾 Bills Generated (<span id="pm-day-bills-count">0</span>)</span>
+                            <span id="pm-day-bills-sum" style="color:var(--primary); font-weight:bold;">₹0.00</span>
+                        </h4>
+                        <div id="pm-day-bills-list" style="max-height:160px; overflow-y:auto; font-size:0.85em;"></div>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <h4 style="margin:0 0 8px 0; font-size:0.9em; display:flex; justify-content:space-between;">
+                            <span>💸 Expenses Logged (<span id="pm-day-exp-count">0</span>)</span>
+                            <span id="pm-day-exp-sum" style="color:var(--danger); font-weight:bold;">₹0.00</span>
+                        </h4>
+                        <div id="pm-day-exp-list" style="max-height:160px; overflow-y:auto; font-size:0.85em;"></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- PAYMENT COLLECTIONS BREAKDOWN -->
-            <div style="background: var(--bg-card); padding: 15px 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
-                <h4 style="margin:0 0 10px 0; font-size:0.85em; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Today's Inflow Collections</h4>
-                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; text-align:center;">
-                    <div style="padding:10px; background:var(--bg-body); border-radius:6px; border:1px solid var(--border-color);">
-                        <small style="color:var(--text-muted);">💵 Cash Collected</small>
-                        <div id="pm-cash-in" style="font-size:1.2em; font-weight:bold; color:var(--text-main); margin-top:4px;">₹ 0.00</div>
-                    </div>
-                    <div style="padding:10px; background:var(--bg-body); border-radius:6px; border:1px solid var(--border-color);">
-                        <small style="color:var(--text-muted);">📱 UPI / QR Received</small>
-                        <div id="pm-upi-in" style="font-size:1.2em; font-weight:bold; color:#10b981; margin-top:4px;">₹ 0.00</div>
-                    </div>
-                    <div style="padding:10px; background:var(--bg-body); border-radius:6px; border:1px solid var(--border-color);">
-                        <small style="color:var(--text-muted);">💳 Card Collected</small>
-                        <div id="pm-card-in" style="font-size:1.2em; font-weight:bold; color:#6366f1; margin-top:4px;">₹ 0.00</div>
+            <!-- VIEW 2: DATE-WISE ANALYTICS & HISTORY TABLE -->
+            <div id="pm-view-analytics" style="display:none;">
+                <div style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <label style="font-weight:bold; font-size:0.85em; color:var(--text-muted);">PERIOD:</label>
+                            <select id="pm-range-select" onchange="handleProfitRangeChange()" style="padding:6px 10px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-main); font-weight:600;">
+                                <option value="7days">Last 7 Days</option>
+                                <option value="15days">Last 15 Days</option>
+                                <option value="30days" selected>Last 30 Days</option>
+                                <option value="thisMonth">This Month</option>
+                                <option value="lastMonth">Last Month</option>
+                                <option value="custom">Custom Date Range</option>
+                            </select>
+                            <div id="pm-custom-range-inputs" style="display:none; gap:6px; align-items:center;">
+                                <input type="date" id="pm-range-from" style="padding:5px 8px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;">
+                                <span style="font-size:0.85em; color:var(--text-muted);">to</span>
+                                <input type="date" id="pm-range-to" style="padding:5px 8px; border-radius:6px; border:1px solid var(--border-color); font-size:0.85em;">
+                                <button type="button" class="btn btn-blue" onclick="renderDateWiseAnalytics()" style="padding:5px 10px; font-size:0.8em;">Apply</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-green" onclick="exportDateWiseProfitCSV()" style="font-size:0.85em; padding:6px 12px;">📥 Export Date-Wise CSV</button>
                     </div>
                 </div>
-            </div>
 
-            <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 10px;">
-                    <div>
-                        <span style="font-size: 1.15em; font-weight: bold;">Net Day Profit (Operating Margin):</span><br>
-                        <small style="color:var(--text-muted);">Sales - Product Cost - Expenses</small>
-                    </div>
-                    <span id="pm-net-profit" style="font-size: 1.4em; font-weight: 800; color: var(--success);">₹ 0.00</span>
+                <!-- AGGREGATE SUMMARY METRICS -->
+                <div class="metrics-grid" style="margin-bottom: 15px;">
+                    <div class="metric-card success" style="padding:12px;"><h3>Period Sales</h3><p class="value" id="pma-tot-sales" style="font-size:1.4em;">₹0.00</p></div>
+                    <div class="metric-card" style="border-left-color: #6366f1; padding:12px;"><h3>Period COGS</h3><p class="value" id="pma-tot-cogs" style="font-size:1.4em;">₹0.00</p></div>
+                    <div class="metric-card danger" style="padding:12px;"><h3>Period Expenses</h3><p class="value" id="pma-tot-exp" style="font-size:1.4em;">₹0.00</p></div>
+                    <div class="metric-card warning" style="padding:12px;"><h3>Net Profit</h3><p class="value" id="pma-net-profit" style="font-size:1.4em;">₹0.00</p></div>
                 </div>
-                <hr style="margin: 15px 0; border: none; border-top: 1px dashed var(--border-color);">
-                <div style="display:flex; justify-content:space-between; align-items: center;">
-                    <div>
-                        <span style="font-size: 1.1em; color: var(--text-muted); font-weight: bold;">Expected Drawer Cash (EOD):</span><br>
-                        <small style="color:var(--text-muted);">Opening Cash + Today's Cash Sales - Cash Expenses</small>
+
+                <div class="container" style="padding:0; margin:0;">
+                    <div class="table-wrap" style="max-height:360px; overflow-y:auto;">
+                        <table class="app-table" style="font-size:0.88em; margin:0;">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Bills</th>
+                                    <th>Gross Sales</th>
+                                    <th>Cost (COGS)</th>
+                                    <th>Gross Margin</th>
+                                    <th>Expenses</th>
+                                    <th>Net Profit</th>
+                                    <th>Margin %</th>
+                                    <th>Inflow (Cash/UPI)</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pm-analytics-tbody"></tbody>
+                            <tfoot id="pm-analytics-tfoot" style="background:var(--table-header); font-weight:bold; border-top:2px solid var(--border-color);"></tfoot>
+                        </table>
                     </div>
-                    <strong id="pm-closing-drawer" style="font-size: 1.5em; color: var(--primary);">₹ 0.00</strong>
                 </div>
             </div>
         </div>
@@ -4070,23 +4168,92 @@ const firebaseConfig = {
         // ----------------------------------------------------
         // 5. DAILY PROFIT & BALANCES MODULE (FIXED & FULLY FUNCTIONAL)
         // ----------------------------------------------------
-        function openProfitModal() {
-            let now = new Date();
-            document.getElementById('pm-date').innerText = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+        let activeProfitDate = null;
+        let activeProfitTab = 'day';
 
-            // Active sales for today (universal date matching across devices)
-            let todaySales = sales.filter(s => !s.returned && s.date && isSameDay(s.date, now));
+        function switchProfitTab(tab) {
+            activeProfitTab = tab;
+            let btnDay = document.getElementById('btn-pm-tab-day');
+            let btnAnalytics = document.getElementById('btn-pm-tab-analytics');
+            let viewDay = document.getElementById('pm-view-day');
+            let viewAnalytics = document.getElementById('pm-view-analytics');
+
+            if (tab === 'day') {
+                if (btnDay) btnDay.classList.add('active');
+                if (btnAnalytics) btnAnalytics.classList.remove('active');
+                if (viewDay) viewDay.style.display = 'block';
+                if (viewAnalytics) viewAnalytics.style.display = 'none';
+                if (activeProfitDate) renderProfitForSelectedDate(activeProfitDate);
+            } else {
+                if (btnDay) btnDay.classList.remove('active');
+                if (btnAnalytics) btnAnalytics.classList.add('active');
+                if (viewDay) viewDay.style.display = 'none';
+                if (viewAnalytics) viewAnalytics.style.display = 'block';
+                renderDateWiseAnalytics();
+            }
+        }
+
+        function setProfitDateQuick(which) {
+            let d = new Date();
+            if (which === 'yesterday') {
+                d.setDate(d.getDate() - 1);
+            }
+            let isoStr = getIsoDateString(d);
+            let picker = document.getElementById('pm-date-picker');
+            if (picker) picker.value = isoStr;
+            renderProfitForSelectedDate(isoStr);
+        }
+
+        function openProfitModal(targetDateIso = null) {
+            let initialDate = targetDateIso ? parseDateSafe(targetDateIso) : new Date();
+            let isoStr = getIsoDateString(initialDate);
+            activeProfitDate = isoStr;
+
+            let picker = document.getElementById('pm-date-picker');
+            if (picker) picker.value = isoStr;
+
+            // Initialize custom range default dates
+            let rFrom = document.getElementById('pm-range-from');
+            let rTo = document.getElementById('pm-range-to');
+            if (rFrom && !rFrom.value) {
+                let monthAgo = new Date();
+                monthAgo.setDate(monthAgo.getDate() - 29);
+                rFrom.value = getIsoDateString(monthAgo);
+            }
+            if (rTo && !rTo.value) {
+                rTo.value = getIsoDateString(new Date());
+            }
+
+            switchProfitTab(targetDateIso ? 'day' : activeProfitTab);
+            renderProfitForSelectedDate(isoStr);
+            document.getElementById('profitModal').style.display = 'flex';
+        }
+
+        function renderProfitForSelectedDate(isoDateStr) {
+            if (!isoDateStr) isoDateStr = getIsoDateString(new Date());
+            activeProfitDate = isoDateStr;
+            window.currentProfitDateStr = isoDateStr;
+
+            let targetDate = parseDateSafe(isoDateStr) || new Date();
+            let isToday = isSameDay(targetDate, new Date());
+            let dateTitle = targetDate.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
             
-            // Total gross sales
-            let totSales = todaySales.reduce((sum, s) => sum + (s.total || 0), 0);
+            let displayEl = document.getElementById('pm-date-display');
+            if (displayEl) {
+                displayEl.innerHTML = (isToday ? '🌟 Today: ' : '📅 ') + dateTitle;
+            }
 
-            // Total expenses for today
-            let totExp = expenses.filter(e => e.date && isSameDay(e.date, now)).reduce((sum, e) => sum + (e.amt || 0), 0);
+            // Filter sales for the selected date
+            let targetSales = sales.filter(s => !s.returned && isSameDay(s.timestamp || s.isoDate || s.date, targetDate));
+            let totSales = targetSales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
 
-            // Stock valuation at cost (buy price * current stock)
+            // Filter expenses for the selected date
+            let targetExpenses = expenses.filter(e => isSameDay(e.timestamp || e.isoDate || e.date, targetDate));
+            let totExp = targetExpenses.reduce((sum, e) => sum + (parseFloat(e.amt) || 0), 0);
+
+            // Stock valuation (at cost)
             let stockValuation = inventory.reduce((sum, i) => sum + ((parseFloat(i.purchasePrice) || 0) * (parseFloat(i.stock) || 0)), 0);
 
-            // Cost of Goods Sold (COGS) for items sold today
             let cogs = 0;
             let discounts = 0;
             let shipping = 0;
@@ -4095,35 +4262,43 @@ const firebaseConfig = {
             let cardCollected = 0;
             let duesCreated = 0;
 
-            todaySales.forEach(s => {
-                shipping += (s.shipping || 0);
-                discounts += (s.discount || 0);
-                duesCreated += (s.due || 0);
+            targetSales.forEach(s => {
+                shipping += (parseFloat(s.shipping) || 0);
+                discounts += (parseFloat(s.discount) || 0);
+                duesCreated += (parseFloat(s.due) || 0);
 
-                let collected = s.advancePaid !== undefined ? s.advancePaid : (s.total - (s.due || 0));
+                let collected = s.advancePaid !== undefined ? (parseFloat(s.advancePaid) || 0) : ((parseFloat(s.total) || 0) - (parseFloat(s.due) || 0));
                 let payMode = s.payMode || 'Cash';
-                if (payMode === 'UPI') upiCollected += collected;
-                else if (payMode === 'Card') cardCollected += collected;
-                else cashCollected += collected;
+                if (payMode === 'Split') {
+                    cashCollected += (parseFloat(s.splitCash) || 0);
+                    upiCollected += (parseFloat(s.splitUpi) || 0);
+                } else if (payMode === 'UPI') {
+                    upiCollected += collected;
+                } else if (payMode === 'Card') {
+                    cardCollected += collected;
+                } else {
+                    cashCollected += collected;
+                }
 
                 (s.items || []).forEach(item => {
-                    let invItem = inventory.find(x => String(x.id) === String(item.id));
-                    let buyPrice = (invItem && invItem.purchasePrice) ? invItem.purchasePrice : (item.purchasePrice || 0);
-                    cogs += (buyPrice * (item.qty || 1));
+                    let invItem = inventory.find(x => String(x.id) === String(item.id) || x.name === item.name);
+                    let buyPrice = (invItem && invItem.purchasePrice !== undefined) ? (parseFloat(invItem.purchasePrice) || 0) : (parseFloat(item.purchasePrice) || 0);
+                    cogs += (buyPrice * (parseFloat(item.qty) || 1));
                 });
             });
 
-            // Returns today
-            let returnedToday = sales.filter(s => s.returned && s.date && isSameDay(s.date, now));
-            let totReturns = returnedToday.reduce((sum, s) => sum + (s.total || 0), 0);
+            // Returns on this date
+            let returnedOnDate = sales.filter(s => s.returned && isSameDay(s.timestamp || s.isoDate || s.date, targetDate));
+            let totReturns = returnedOnDate.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
 
-            // Net operating day profit (Sales - COGS - Expenses)
-            let netProfit = totSales - cogs - totExp;
+            let grossMargin = totSales - cogs;
+            let netProfit = grossMargin - totExp;
 
             // Set metrics into modal
             document.getElementById('pm-open-stock').innerText = '₹ ' + stockValuation.toFixed(2);
             document.getElementById('pm-tot-sales').innerText = '₹ ' + totSales.toFixed(2);
             document.getElementById('pm-cogs').innerText = '₹ ' + cogs.toFixed(2);
+            document.getElementById('pm-gross-margin').innerText = '₹ ' + grossMargin.toFixed(2);
             document.getElementById('pm-sell-disc').innerText = '₹ ' + discounts.toFixed(2);
             document.getElementById('pm-tot-exp').innerText = '₹ ' + totExp.toFixed(2);
             document.getElementById('pm-sell-shipping').innerText = '₹ ' + shipping.toFixed(2);
@@ -4138,30 +4313,296 @@ const firebaseConfig = {
             netProfitEl.innerText = '₹ ' + netProfit.toFixed(2);
             netProfitEl.style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
 
-            // Load saved opening balance or default to settings
-            let savedOpening = parseFloat(localStorage.getItem('opening_cash_' + todayStr)) || settings.openingDrawerCash || 0;
+            // Load saved opening balance for this specific date
+            let savedOpening = parseFloat(localStorage.getItem('opening_cash_' + isoDateStr));
+            if (isNaN(savedOpening)) {
+                savedOpening = isToday ? (settings.openingDrawerCash || 0) : 0;
+            }
             document.getElementById('pm-opening').value = savedOpening;
 
-            // Store values on window for calculateClosingBalance()
             window.todayCashSales = cashCollected;
             window.todayCashExp = totExp;
 
             calculateClosingBalance();
 
-            document.getElementById('profitModal').style.display = 'flex';
+            // Populate Orders List for this date
+            let billsListEl = document.getElementById('pm-day-bills-list');
+            let billsCountEl = document.getElementById('pm-day-bills-count');
+            let billsSumEl = document.getElementById('pm-day-bills-sum');
+            if (billsCountEl) billsCountEl.innerText = targetSales.length;
+            if (billsSumEl) billsSumEl.innerText = '₹' + totSales.toFixed(2);
+
+            if (billsListEl) {
+                if (targetSales.length === 0) {
+                    billsListEl.innerHTML = '<div style="color:var(--text-muted); padding:8px 0;">No sales recorded on this date.</div>';
+                } else {
+                    billsListEl.innerHTML = targetSales.slice().reverse().map(s => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color);">
+                            <div>
+                                <b>#${s.id}</b> - ${s.cust}
+                                <small style="display:block; color:var(--text-muted); font-size:0.8em;">${s.payMode || 'Cash'} ${s.due > 0 ? '| Due: ₹' + s.due.toFixed(2) : ''}</small>
+                            </div>
+                            <div style="text-align:right;">
+                                <b>₹${(parseFloat(s.total) || 0).toFixed(2)}</b>
+                                <button class="btn btn-blue" style="padding:1px 6px; font-size:0.75em; display:block; margin-top:2px;" onclick="viewPastBill('${s.id}')">View</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Populate Expenses List for this date
+            let expListEl = document.getElementById('pm-day-exp-list');
+            let expCountEl = document.getElementById('pm-day-exp-count');
+            let expSumEl = document.getElementById('pm-day-exp-sum');
+            if (expCountEl) expCountEl.innerText = targetExpenses.length;
+            if (expSumEl) expSumEl.innerText = '₹' + totExp.toFixed(2);
+
+            if (expListEl) {
+                if (targetExpenses.length === 0) {
+                    expListEl.innerHTML = '<div style="color:var(--text-muted); padding:8px 0;">No expenses logged on this date.</div>';
+                } else {
+                    expListEl.innerHTML = targetExpenses.map(e => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color);">
+                            <div>
+                                <b>${e.cat || 'Expense'}</b>: ${e.desc || '--'}
+                            </div>
+                            <b style="color:var(--danger);">₹${(parseFloat(e.amt) || 0).toFixed(2)}</b>
+                        </div>
+                    `).join('');
+                }
+            }
         }
 
         function calculateClosingBalance() {
-            let opening = parseFloat(document.getElementById('pm-opening').value) || 0;
-            let todayStr = new Date().toLocaleDateString();
-            localStorage.setItem('opening_cash_' + todayStr, opening);
-            settings.openingDrawerCash = opening;
-
+            let opening = parseFloat(document.getElementById('pm-opening')?.value) || 0;
+            let dateStr = window.currentProfitDateStr || getIsoDateString(new Date());
+            localStorage.setItem('opening_cash_' + dateStr, opening);
+            if (isSameDay(dateStr, new Date())) {
+                settings.openingDrawerCash = opening;
+            }
             let cashSales = window.todayCashSales || 0;
             let cashExp = window.todayCashExp || 0;
-
             let expectedDrawerCash = opening + cashSales - cashExp;
-            document.getElementById('pm-closing-drawer').innerText = '₹ ' + expectedDrawerCash.toFixed(2);
+            let drawerEl = document.getElementById('pm-closing-drawer');
+            if (drawerEl) drawerEl.innerText = '₹ ' + expectedDrawerCash.toFixed(2);
+        }
+
+        function handleProfitRangeChange() {
+            let val = document.getElementById('pm-range-select').value;
+            let customDiv = document.getElementById('pm-custom-range-inputs');
+            if (customDiv) {
+                customDiv.style.display = (val === 'custom') ? 'flex' : 'none';
+            }
+            if (val !== 'custom') {
+                renderDateWiseAnalytics();
+            }
+        }
+
+        function getDateRangeBounds(rangeKey) {
+            let now = new Date();
+            let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            let startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+
+            if (rangeKey === '7days') {
+                startDate.setDate(startDate.getDate() - 6);
+            } else if (rangeKey === '15days') {
+                startDate.setDate(startDate.getDate() - 14);
+            } else if (rangeKey === '30days') {
+                startDate.setDate(startDate.getDate() - 29);
+            } else if (rangeKey === 'thisMonth') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            } else if (rangeKey === 'lastMonth') {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            } else if (rangeKey === 'custom') {
+                let fromVal = document.getElementById('pm-range-from')?.value;
+                let toVal = document.getElementById('pm-range-to')?.value;
+                if (fromVal) startDate = parseDateSafe(fromVal);
+                if (toVal) {
+                    let d = parseDateSafe(toVal);
+                    if (d) endDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+                }
+            }
+            return { startDate, endDate };
+        }
+
+        function renderDateWiseAnalytics() {
+            let rangeKey = document.getElementById('pm-range-select')?.value || '30days';
+            let { startDate, endDate } = getDateRangeBounds(rangeKey);
+            if (!startDate || !endDate) return;
+
+            // Generate calendar dates backwards from endDate to startDate
+            let daysList = [];
+            let curr = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+            let startFloor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+
+            while (curr >= startFloor) {
+                daysList.push(new Date(curr));
+                curr.setDate(curr.getDate() - 1);
+            }
+
+            let grandSales = 0, grandCogs = 0, grandExp = 0, grandProfit = 0, grandBills = 0, grandCash = 0, grandUpi = 0;
+            let rowsHTML = '';
+
+            daysList.forEach(dayDate => {
+                let daySales = sales.filter(s => !s.returned && isSameDay(s.timestamp || s.isoDate || s.date, dayDate));
+                let dayExpenses = expenses.filter(e => isSameDay(e.timestamp || e.isoDate || e.date, dayDate));
+
+                let sTotal = daySales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+                let eTotal = dayExpenses.reduce((sum, e) => sum + (parseFloat(e.amt) || 0), 0);
+                let cogs = 0;
+                let cashIn = 0;
+                let upiIn = 0;
+
+                daySales.forEach(s => {
+                    let collected = s.advancePaid !== undefined ? (parseFloat(s.advancePaid) || 0) : ((parseFloat(s.total) || 0) - (parseFloat(s.due) || 0));
+                    let payMode = s.payMode || 'Cash';
+                    if (payMode === 'Split') {
+                        cashIn += (parseFloat(s.splitCash) || 0);
+                        upiIn += (parseFloat(s.splitUpi) || 0);
+                    } else if (payMode === 'UPI') {
+                        upiIn += collected;
+                    } else {
+                        cashIn += collected;
+                    }
+
+                    (s.items || []).forEach(item => {
+                        let invItem = inventory.find(x => String(x.id) === String(item.id) || x.name === item.name);
+                        let buyPrice = (invItem && invItem.purchasePrice !== undefined) ? (parseFloat(invItem.purchasePrice) || 0) : (parseFloat(item.purchasePrice) || 0);
+                        cogs += (buyPrice * (parseFloat(item.qty) || 1));
+                    });
+                });
+
+                let grossMargin = sTotal - cogs;
+                let netProfit = grossMargin - eTotal;
+                let marginPct = sTotal > 0 ? ((netProfit / sTotal) * 100).toFixed(1) : '0.0';
+
+                grandSales += sTotal;
+                grandCogs += cogs;
+                grandExp += eTotal;
+                grandProfit += netProfit;
+                grandBills += daySales.length;
+                grandCash += cashIn;
+                grandUpi += upiIn;
+
+                let isoStr = getIsoDateString(dayDate);
+                let dateLabel = dayDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                let dayOfWeek = dayDate.toLocaleDateString('en-IN', { weekday: 'short' });
+                let profitBadge = netProfit >= 0 ? 
+                    `<span style="color:var(--success); font-weight:bold;">₹${netProfit.toFixed(2)}</span>` : 
+                    `<span style="color:var(--danger); font-weight:bold;">₹${netProfit.toFixed(2)}</span>`;
+
+                rowsHTML += `
+                    <tr style="${daySales.length > 0 || dayExpenses.length > 0 ? '' : 'opacity:0.6;'}">
+                        <td><b>${dateLabel}</b> <small style="color:var(--text-muted);">(${dayOfWeek})</small></td>
+                        <td>${daySales.length}</td>
+                        <td><b>₹${sTotal.toFixed(2)}</b></td>
+                        <td style="color:#6366f1;">₹${cogs.toFixed(2)}</td>
+                        <td style="color:var(--success);">₹${grossMargin.toFixed(2)}</td>
+                        <td style="color:var(--danger);">₹${eTotal.toFixed(2)}</td>
+                        <td>${profitBadge}</td>
+                        <td><small style="font-weight:bold; color:${parseFloat(marginPct) >= 0 ? 'var(--success)' : 'var(--danger)'};">${marginPct}%</small></td>
+                        <td><small>💵 ₹${cashIn.toFixed(0)} | 📱 ₹${upiIn.toFixed(0)}</small></td>
+                        <td>
+                            <button type="button" class="btn btn-blue" style="padding:2px 8px; font-size:0.75em;" onclick="openProfitModal('${isoStr}')">👁️ Day P/L</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            let tbody = document.getElementById('pm-analytics-tbody');
+            if (tbody) tbody.innerHTML = rowsHTML || '<tr><td colspan="10" style="text-align:center; padding:15px;">No records for the selected date range.</td></tr>';
+
+            // Summary cards
+            if (document.getElementById('pma-tot-sales')) document.getElementById('pma-tot-sales').innerText = '₹' + grandSales.toFixed(2);
+            if (document.getElementById('pma-tot-cogs')) document.getElementById('pma-tot-cogs').innerText = '₹' + grandCogs.toFixed(2);
+            if (document.getElementById('pma-tot-exp')) document.getElementById('pma-tot-exp').innerText = '₹' + grandExp.toFixed(2);
+            let pmaProfitEl = document.getElementById('pma-net-profit');
+            if (pmaProfitEl) {
+                pmaProfitEl.innerText = '₹' + grandProfit.toFixed(2);
+                pmaProfitEl.style.color = grandProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+            }
+
+            // Footer row
+            let tfoot = document.getElementById('pm-analytics-tfoot');
+            let grandMarginPct = grandSales > 0 ? ((grandProfit / grandSales) * 100).toFixed(1) : '0.0';
+            if (tfoot) {
+                tfoot.innerHTML = `
+                    <tr>
+                        <td>TOTALS</td>
+                        <td>${grandBills}</td>
+                        <td>₹${grandSales.toFixed(2)}</td>
+                        <td style="color:#6366f1;">₹${grandCogs.toFixed(2)}</td>
+                        <td style="color:var(--success);">₹${(grandSales - grandCogs).toFixed(2)}</td>
+                        <td style="color:var(--danger);">₹${grandExp.toFixed(2)}</td>
+                        <td style="color:${grandProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">₹${grandProfit.toFixed(2)}</td>
+                        <td>${grandMarginPct}%</td>
+                        <td><small>💵 ₹${grandCash.toFixed(0)} | 📱 ₹${grandUpi.toFixed(0)}</small></td>
+                        <td></td>
+                    </tr>
+                `;
+            }
+        }
+
+        function exportDateWiseProfitCSV() {
+            let rangeKey = document.getElementById('pm-range-select')?.value || '30days';
+            let { startDate, endDate } = getDateRangeBounds(rangeKey);
+            if (!startDate || !endDate) return alert("Select a valid date range.");
+
+            let daysList = [];
+            let curr = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+            let startFloor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            while (curr >= startFloor) {
+                daysList.push(new Date(curr));
+                curr.setDate(curr.getDate() - 1);
+            }
+
+            let rows = [["Date", "Day", "Bills_Count", "Gross_Sales", "COGS", "Gross_Margin", "Expenses", "Net_Profit", "Margin_Pct", "Cash_Collected", "UPI_Collected"]];
+
+            daysList.forEach(dayDate => {
+                let daySales = sales.filter(s => !s.returned && isSameDay(s.timestamp || s.isoDate || s.date, dayDate));
+                let dayExpenses = expenses.filter(e => isSameDay(e.timestamp || e.isoDate || e.date, dayDate));
+
+                let sTotal = daySales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+                let eTotal = dayExpenses.reduce((sum, e) => sum + (parseFloat(e.amt) || 0), 0);
+                let cogs = 0, cashIn = 0, upiIn = 0;
+
+                daySales.forEach(s => {
+                    let collected = s.advancePaid !== undefined ? (parseFloat(s.advancePaid) || 0) : ((parseFloat(s.total) || 0) - (parseFloat(s.due) || 0));
+                    let payMode = s.payMode || 'Cash';
+                    if (payMode === 'Split') {
+                        cashIn += (parseFloat(s.splitCash) || 0);
+                        upiIn += (parseFloat(s.splitUpi) || 0);
+                    } else if (payMode === 'UPI') {
+                        upiIn += collected;
+                    } else {
+                        cashIn += collected;
+                    }
+
+                    (s.items || []).forEach(item => {
+                        let invItem = inventory.find(x => String(x.id) === String(item.id) || x.name === item.name);
+                        let buyPrice = (invItem && invItem.purchasePrice !== undefined) ? (parseFloat(invItem.purchasePrice) || 0) : (parseFloat(item.purchasePrice) || 0);
+                        cogs += (buyPrice * (parseFloat(item.qty) || 1));
+                    });
+                });
+
+                let grossMargin = sTotal - cogs;
+                let netProfit = grossMargin - eTotal;
+                let marginPct = sTotal > 0 ? ((netProfit / sTotal) * 100).toFixed(1) : '0.0';
+
+                let dateLabel = dayDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                let dayOfWeek = dayDate.toLocaleDateString('en-IN', { weekday: 'short' });
+
+                rows.push([`"${dateLabel}"`, `"${dayOfWeek}"`, daySales.length, sTotal.toFixed(2), cogs.toFixed(2), grossMargin.toFixed(2), eTotal.toFixed(2), netProfit.toFixed(2), `"${marginPct}%"`, cashIn.toFixed(2), upiIn.toFixed(2)]);
+            });
+
+            let csvContent = rows.map(e => e.join(",")).join("\n");
+            let blob = new Blob([csvContent], { type: 'text/csv' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Date_Wise_Profit_Analytics_${rangeKey}.csv`;
+            a.click();
         }
 
         // ----------------------------------------------------
